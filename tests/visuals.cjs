@@ -1,0 +1,23 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
+const root=path.join(__dirname,'..'),{inspect}=require('../tools/inspect-atlas.cjs');
+const atlas=inspect(path.join(root,'dist/assets/hunter-directions.png'));
+assert.equal(atlas.width,1774);assert.equal(atlas.height,887);assert.equal(atlas.frames.length,8);
+assert.ok(atlas.transparentRatio>.3);assert.ok(atlas.frames.every(f=>f.bodyHeight>350&&f.pixels>10000));
+const window={Image:class{constructor(){this.complete=true;this.naturalWidth=1774;}}};
+vm.runInNewContext(fs.readFileSync(path.join(root,'dist/art.js'),'utf8'),{window,Math});
+for(let i=0;i<8;i++){assert.equal(window.HUNTER_ART.direction(i*Math.PI/4),i);assert.equal(window.HUNTER_ART.direction(i*Math.PI/4+Math.PI*2),i);}
+assert.equal(window.HUNTER_ART.spriteStatus().ready,true);
+const calls=[],noop=()=>{},context=new Proxy({drawImage:(...args)=>calls.push(args)},{get:(o,k)=>k in o?o[k]:k==='createLinearGradient'||k==='createRadialGradient'?()=>({addColorStop:noop}):noop,set:(o,k,v)=>(o[k]=v,true)});
+for(let i=0;i<8;i++)window.HUNTER_ART.hunter(context,100,100,i*Math.PI/4,'#bbddcc',1.15,false,1,true,'blade',{slash:.1,charging:.3});
+assert.equal(calls.length,8);assert.equal(new Set(calls.map(c=>c[1]+','+c[2])).size,8);
+vm.runInNewContext(fs.readFileSync(path.join(root,'dist/feedback.js'),'utf8'),{window,Math});
+const fx=window.HUNTER_FEEDBACK,player=Object.freeze({x:600,y:390}),canvas={width:1200,height:780,clientWidth:1200,clientHeight:780,getContext:()=>context};
+const view={dt:.02,screenPoint:p=>({x:p.x/1200,y:p.y/780}),player,phase:'pickup',capture:0,rich:true,dpr:1};
+for(const kind of ['attack','cast','dash','capture','equip','heal','boon','hit'])fx.emit(kind,{x:600,y:390,color:'#bcd5ac',colors:['#aaddcc','#eebb99','#bb99dd'],angle:.4});
+assert.equal(fx.snapshot().length,8);for(let i=0;i<100;i++)fx.render(canvas,view);
+assert.equal(fx.snapshot().length,0,'Effects expire while gameplay is paused for a reward');
+for(let i=0;i<100;i++)fx.emit('cast',{x:600,y:390});assert.equal(fx.snapshot().length,18);
+fx.render(canvas,{...view,phase:'intro'});assert.equal(fx.snapshot().length,0);
+fx.emit('attack');fx.clear();assert.equal(fx.snapshot().length,0);
+console.log('Visuals: transparent eight-direction atlas, render paths, bounded event pool, paused animation expiry and reset passed.');
