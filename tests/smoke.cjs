@@ -29,9 +29,11 @@ vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/world-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/expedition-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/journey-data.js'),'utf8'),sandbox);
+vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/campaign-data.js'),'utf8'),sandbox);
 const expeditionHook='window.expeditionTest={saveCamp,resumeCamp,canSaveCamp,claimDiscovery,discoveryBlocked,openCamp,telegraphInfo,attackCue,updateJourneyHint,allWorldSites};window.cameraTest={setViewRange,readViewRange,cameraWorldRect,worldMapSvg,changeViewByWheel,VIEW_RANGE,get range(){return viewRange}};';
 const releaseHook='window.releaseTest={openSettings,openRecords,openCredits,updateRelease,updateReleaseSettings,releaseSettings,endRun};';
-vm.runInNewContext(code.replace('makeGround();reset();requestAnimationFrame(frame);',hook+expeditionHook+releaseHook+'makeGround();reset();'),sandbox);
+const campaignHook='window.campaignTest={openAtlas,closeAtlas,travelWorld,openInventory,useCampaignItem,campaignWorld,journeyMods,setupCampaignObjective,interactCampaignNode,completeCampaignWorld,get map(){return WORLD}};';
+vm.runInNewContext(code.replace('makeGround();reset();requestAnimationFrame(frame);',hook+expeditionHook+releaseHook+campaignHook+'makeGround();reset();'),sandbox);
 const g=window.testGame;
 function test(name,fn){try{storage.clear();storageFail=false;fn();console.log('PASS '+name);passed++;}catch(e){console.error('FAIL '+name);throw e;}}
 function tick(seconds){for(let n=0;n<Math.ceil(seconds/.02);n++)g.update(.02);}
@@ -39,6 +41,19 @@ function start(){g.reset();g.enterRoom(0,'hunt');}
 function choice(data,value){return el('modal-card').querySelectorAll(`[data-${data}]`).find(b=>b.dataset[data]===String(value));}
 function keyEvent(type,code,options={}){const event={code,repeat:false,target:{tagName:'CANVAS'},preventDefault(){this.defaultPrevented=true;},defaultPrevented:false,...options};for(const listener of windowListeners.get(type)||[])listener(event);return event;}
 function continueWorld(){const first=el('modal-card').querySelectorAll('[data-boon]')[0];if(g.state.pendingBoons?.length&&first)g.chooseBoon(first.dataset.boon);el('world-continue').onclick();}
+
+test('Hunter gait tracks travel, settles against walls, and freezes with paused attacks',()=>{
+ g.startPractice();g.player.x=500;g.player.y=500;g.keys.KeyD=true;tick(.25);g.keys.KeyD=false;
+ assert.ok(g.player.moveBlend>.5);assert.ok(g.player.stridePhase>0);assert.ok(g.player.x>500);
+ g.player.x=80;g.keys.KeyA=true;const blockedPhase=g.player.stridePhase;tick(.7);
+ assert.equal(g.player.x,80);assert.equal(g.player.stridePhase,blockedPhase);assert.ok(g.player.moveBlend<.001);g.keys.KeyA=false;
+ g.mouse.x=900;g.mouse.y=500;g.basicAttack();assert.equal(g.player.attackPoseWeapon,'blade');assert.ok(g.player.attackPoseTime>0);
+ const poseTime=g.player.attackPoseTime,motionTime=g.player.motionTime;g.pause();tick(.5);
+ assert.equal(g.player.attackPoseTime,poseTime);assert.equal(g.player.motionTime,motionTime);g.closeModal();tick(.5);assert.equal(g.player.attackPoseTime,0);
+ g.state.weapon='bow';g.basicAttack(true);assert.equal(g.player.attackPoseWeapon,'bow');assert.equal(g.player.attackStrong,true);
+ const shot=g.player.attackPoseTime;g.basicAttack();assert.equal(g.player.attackPoseTime,shot,'Cooldown does not restart the arm animation');
+ g.reset();assert.equal(g.player.attackPoseTime,0);assert.equal(g.player.moveBlend,0);
+});
 test('Intro, start, weapon attack and pause state',()=>{assert.equal(g.state.phase,'intro');start();assert.equal(g.enemies.length,4);const e=g.enemies[0];g.player.x=e.x-60;g.player.y=e.y;g.mouse.x=e.x;g.mouse.y=e.y;const hp=e.hp;g.basicAttack();assert.ok(e.hp<hp);const time=g.state.time;g.pause();tick(1);assert.equal(g.state.time,time);g.closeModal();assert.equal(g.state.phase,'playing');});
 test('Shadow pressure exposes a living enemy; channel grants a shadow',()=>{start();const e=g.enemies.find(e=>e.type==='archer');g.damageEnemy(e,5,100);assert.ok(e.hp>0&&e.exposed>0);g.player.x=e.x;g.player.y=e.y;g.keys.KeyE=true;for(let i=0;i<55;i++)g.updateCapture(.02);assert.equal(g.state.phase,'pickup');assert.ok(g.state.owned.has('archer'));assert.equal(g.state.captures,1);choice('equip',0).onclick();assert.equal(g.state.slots[0],'archer');assert.equal(g.state.phase,'playing');});
 test('Capture interruption, full-focus instant capture and harvesting',()=>{start();let e=g.enemies[0];g.expose(e);g.player.x=e.x;g.player.y=e.y;g.keys.KeyE=true;g.updateCapture(.4);assert.ok(g.state.capture>0);g.player.invincible=0;g.hitPlayer(10);assert.equal(g.state.capture,0);g.player.focus=100;g.updateCapture(.05);assert.equal(g.state.phase,'pickup');assert.equal(g.player.focus,0);el('sacrifice').onclick();assert.equal(g.player.hp,100);e=g.enemies[1];g.expose(e);g.damageEnemy(e,1,1,'basic');assert.ok(e.dead);assert.equal(g.state.kills,2);});
@@ -153,7 +168,7 @@ test('World objectives preserve ambient enemies, retry resources and unlock the 
  g.state.corruption=80;g.state.objective.lantern.hp=0;g.updateObjective(.1);el('mission-retry').onclick();assert.equal(g.player.hp,72);assert.equal(g.state.corruption,0);assert.equal(g.enemies.filter(e=>!e.mission).length,31);el('mission-start').onclick();
  for(let i=0;i<4;i++){for(const e of g.enemies.filter(e=>e.mission))g.gainKill(e);g.updateObjective(9);}assert.equal(g.state.phase,'worldComplete');assert.ok(g.state.world.completed.has('defend'));assert.equal(g.enemies.filter(e=>!e.mission).length,31);continueWorld();
  for(const id of ['capture','chase']){const s=sites.find(s=>s.id===id);g.player.x=s.x;g.player.y=s.y+90;g.interactWorld();el('mission-start').onclick();const e=g.enemies.find(e=>e.id===g.state.objective.targetId);assert.ok(Math.abs(e.x-s.x)<400&&Math.abs(e.y-s.y)<300);g.expose(e);g.player.x=e.x;g.player.y=e.y;g.player.focus=100;g.keys.KeyE=true;g.updateCapture(.05);choice('equip',0).onclick();g.updateObjective(.1);assert.equal(g.state.phase,'worldComplete');continueWorld();}
- assert.equal(g.state.world.completed.size,3);g.player.x=boss.x;g.player.y=boss.y;g.interactWorld();assert.equal(g.state.objective.kind,'boss');const b=g.enemies.find(e=>e.boss);assert.ok(b.x>2500&&b.y<700);b.hp=500;g.update(.1);assert.ok(g.enemies.filter(e=>e.mission).every(e=>e.x>2500));g.draw();g.gainKill(b);g.updateWorld(.02);assert.equal(g.state.phase,'end');
+ assert.equal(g.state.world.completed.size,3);g.player.x=boss.x;g.player.y=boss.y;g.interactWorld();assert.equal(g.state.objective.kind,'boss');const b=g.enemies.find(e=>e.boss);assert.ok(b.x>2500&&b.y<700);b.hp=500;g.update(.1);assert.ok(g.enemies.filter(e=>e.mission).every(e=>e.x>2500));g.draw();g.gainKill(b);g.updateWorld(.02);assert.equal(g.state.phase,'worldVictory');assert.ok(g.state.campaign.cleared.includes('forest'));
 });
 test('Practice and tutorial return to the small arena without expedition state',()=>{
  expedition();g.startPractice();assert.equal(g.state.world,null);assert.equal(g.enemies.length,1);assert.ok(el('world-hud').classList.contains('hidden'));g.draw();g.beginTutorial();assert.equal(g.state.world,null);assert.ok(g.state.tutorial);g.draw();
@@ -484,12 +499,56 @@ test('Acquisition and weaving show short icon cards while retaining optional ful
  const html=el('modal-card').innerHTML;assert.match(html,/acquisition-sigil/);assert.equal(el('modal-card').querySelectorAll('[data-equip]').length,3);assert.match(html,/<details class="visual-details">/);
  choice('equip',0).onclick();assert.ok(window.HUNTER_FEEDBACK.snapshot().some(e=>e.kind==='equip'));g.openBuild();assert.match(el('modal-card').innerHTML,/ability-grid/);assert.match(el('modal-card').innerHTML,/推荐组合/);
 });
+test('All five campaigns finish through their actual mission handlers and AND-gated travel',()=>{
+ const c=window.HUNTER_CAMPAIGN,x=window.campaignTest;g.reset();x.openAtlas('forge');assert.ok(el('atlas-travel').disabled);assert.equal(x.travelWorld('forge'),false);x.closeAtlas();
+ x.openAtlas('forest');assert.ok(x.travelWorld('forest'));el('world-begin').onclick();
+ for(const w of c.worlds){
+  assert.equal(g.state.world.id,w.id);assert.ok(window.expeditionTest.canSaveCamp());assert.ok(g.enemies.every(e=>g.worldPositionFree(e.x,e.y,e.r)));g.draw();
+  const originalVisit=g.state.world.visit;assert.ok(window.expeditionTest.saveCamp());assert.ok(window.expeditionTest.resumeCamp());assert.equal(g.state.world.visit,originalVisit);assert.equal(g.state.world.id,w.id);
+  for(const site of x.map.sites.filter(s=>!['camp','boss'].includes(s.kind))){
+   g.player.x=site.x;g.player.y=site.y;g.interactWorld();assert.equal(g.state.phase,'briefing');assert.equal(g.state.objective.kind,site.kind);el('mission-start').onclick();
+   const o=g.state.objective;
+   if(o.kind==='hunt'){for(const e of g.enemies.filter(e=>o.targets.includes(e.id)))g.gainKill(e);g.updateObjective(.02);}
+   else if(o.nodes){
+    if(o.kind==='sequence'){g.player.x=o.nodes[1].x;g.player.y=o.nodes[1].y;g.interactWorld();assert.equal(o.activated.length,0);}
+    if(o.kind==='purify'){g.player.x=o.nodes[0].x;g.player.y=o.nodes[0].y;g.interactWorld();assert.equal(o.activated.length,0);for(const e of g.enemies.filter(e=>e.mission))g.gainKill(e);}
+    for(const n of o.nodes){g.player.x=n.x;g.player.y=n.y;g.draw();g.interactWorld();}
+   }else if(o.kind==='defend'){for(let wave=0;wave<4;wave++){for(const e of g.enemies.filter(e=>e.mission))g.gainKill(e);g.updateObjective(9);}}
+   else{const target=g.enemies.find(e=>e.id===o.targetId);assert.ok(target);g.gainKill(target,o.kind==='capture');g.updateObjective(.02);}
+   assert.equal(g.state.phase,'worldComplete');assert.ok(g.state.world.completed.has(site.id));assert.ok(Object.hasOwn(g.state.campaign.claims,originalVisit+':mission:'+site.id));continueWorld();
+  }
+  const boss=x.map.sites.find(s=>s.kind==='boss');g.player.x=boss.x;g.player.y=boss.y;g.interactWorld();const target=g.enemies.find(e=>e.boss);assert.equal(target.type,w.bossType);assert.equal(target.level,w.level+2);
+  target.cd=0;g.updateEnemy(target,.02);if(w.id!=='forest')assert.ok([w.bossMove,'slam'].includes(target.attack));g.gainKill(target);g.updateWorld(.02);assert.equal(g.state.phase,'worldVictory');assert.ok(g.state.campaign.cleared.includes(w.id));assert.ok(g.state.campaign.inventory[w.loot[3]]>0);
+  const inventory=JSON.stringify(g.state.campaign.inventory);x.completeCampaignWorld();assert.equal(JSON.stringify(g.state.campaign.inventory),inventory,'No double victory reward');
+  if(w.id==='forge')assert.ok(!c.unlocked(g.state.campaign,'ruins'),'Both branch worlds are required');
+  const next=c.worlds[w.number];if(next){x.openAtlas(next.id);assert.ok(!el('atlas-travel').disabled);assert.ok(x.travelWorld(next.id));el('world-begin').onclick();assert.equal(g.state.world.completed.size,0);assert.equal(g.state.journey.perks.length,0);}
+ }
+ assert.equal(g.state.campaign.cleared.length,5);x.openAtlas('forge');assert.ok(x.travelWorld('forge'));el('world-begin').onclick();assert.equal(g.state.world.id,'forge');assert.equal(g.state.world.completed.size,0);assert.ok(Object.keys(g.state.campaign.inventory).length>=5);
+ g.reset();assert.equal(g.state.campaign.cleared.length,5);assert.equal(g.state.phase,'intro');
+});
+test('Saved enemy drops and retried mission guards cannot duplicate inventory rewards',()=>{
+ expedition();const x=window.expeditionTest,c=window.HUNTER_CAMPAIGN;
+ const enemy=g.enemies.find(e=>!e.scout),id=enemy.id,visit=g.state.world.visit;g.gainKill(enemy);const first=JSON.stringify(g.state.campaign.inventory);assert.ok(Object.hasOwn(g.state.campaign.claims,visit+':enemy:'+id));
+ x.resumeCamp();assert.ok(g.enemies.some(e=>e.id===id&&!e.dead));g.gainKill(g.enemies.find(e=>e.id===id));assert.equal(JSON.stringify(g.state.campaign.inventory),first);
+ const s=window.campaignTest.map.sites.find(s=>s.kind==='defend');g.player.x=s.x;g.player.y=s.y;g.interactWorld();el('mission-start').onclick();for(const e of g.enemies.filter(e=>e.mission))g.gainKill(e);const inventory=JSON.stringify(g.state.campaign.inventory);g.state.objective.lantern.hp=0;g.updateObjective(.1);el('mission-retry').onclick();el('mission-start').onclick();for(const e of g.enemies.filter(e=>e.mission))g.gainKill(e);assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);
+ assert.ok(c.valid(g.state.campaign));
+});
+test('Inventory effects, camp persistence, atlas pause and locked travel work together',()=>{
+ expedition();const x=window.campaignTest;g.state.campaign.inventory={leaf:2,fang:1,heart:1,tideglass:1,compass:1,crown:1};g.player.hp=40;window.expeditionTest.openCamp();x.openInventory('camp');assert.ok(x.useCampaignItem('leaf'));assert.equal(g.player.hp,62);assert.equal(g.state.campaign.inventory.leaf,1);assert.ok(x.useCampaignItem('fang'));assert.equal(x.journeyMods().attack,1.1);assert.ok(x.useCampaignItem('heart'));assert.equal(x.journeyMods().attack,1);assert.equal(x.journeyMods().incoming,.9);assert.ok(x.useCampaignItem('tideglass'));assert.equal(x.journeyMods().heal,10);assert.ok(x.useCampaignItem('compass'));assert.equal(x.journeyMods().dash,.85);assert.ok(x.useCampaignItem('crown'));assert.equal(x.journeyMods().skill,1.15);
+ el('inventory-close').onclick();assert.equal(g.state.phase,'camp');assert.ok(window.expeditionTest.resumeCamp());assert.equal(g.player.hp,62);assert.equal(g.state.campaign.inventory.leaf,1);assert.equal(g.state.campaign.equipped,'crown');
+ g.player.x=800;g.player.y=1300;x.openAtlas('forest');assert.ok(el('atlas-travel').disabled);const time=g.state.time;g.update(10);assert.equal(g.state.time,time);keyEvent('keydown','Escape');assert.equal(g.state.phase,'playing');assert.equal(g.player.x,800);
+ g.startPractice();assert.equal(x.journeyMods().skill,1);g.beginTutorial();assert.equal(x.journeyMods().skill,1);
+});
+test('Campaign missing storage, new camp metadata and forged world ids fail safely',()=>{
+ expedition();const ex=window.HUNTER_EXPEDITION,save=JSON.parse(storage.get(ex.key));assert.equal(save.world.worldId,'forest');assert.ok(save.world.visit);save.world.worldId='missing';assert.ok(!ex.valid(save));save.world.worldId='forge';save.world.visit='<script>';assert.ok(!ex.valid(save));
+ storageFail=true;const x=window.campaignTest;g.state.campaign.inventory.fang=1;window.expeditionTest.openCamp();x.openInventory('camp');assert.ok(x.useCampaignItem('fang'));assert.equal(x.journeyMods().attack,1.1);g.reset();assert.equal(g.state.campaign.equipped,'fang');storageFail=false;
+});
 if(fs.existsSync(require('node:path').join(__dirname,'../release/影子猎手-直接玩.html'))){
  test('Portable single HTML boots from inline scripts with no external loader',()=>{
   const portableWindow={devicePixelRatio:1,addEventListener:noop};
   const portable={window:portableWindow,document,localStorage,requestAnimationFrame:noop,console,Math,setInterval:noop};
   const html=fs.readFileSync(require('node:path').join(__dirname,'../release/影子猎手-直接玩.html'),'utf8');
-  const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];assert.equal(scripts.length,9);
+  const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];assert.equal(scripts.length,10);
   for(const script of scripts)vm.runInNewContext(script[1],portable);
   assert.equal(portableWindow.shadowHunter.snapshot().phase,'intro');el('skip-intro').onclick();assert.equal(portableWindow.shadowHunter.snapshot().phase,'worldIntro');el('world-begin').onclick();
   assert.equal(portableWindow.shadowHunter.snapshot().phase,'playing');assert.ok(portableWindow.shadowHunter.snapshot().enemies.length>=30);assert.ok(portableWindow.HUNTER_AUDIO);assert.ok(portableWindow.HUNTER_ART);assert.ok(html.includes('data:image/png;base64,'));

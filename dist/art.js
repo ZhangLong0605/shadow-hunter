@@ -1,4 +1,4 @@
-/* Eight-direction hunter atlas with procedural motion; enemies, foliage and light remain local Canvas artwork. */
+/* Eight-direction textured character rig; enemies, foliage and light remain local Canvas artwork. */
 'use strict';
 window.HUNTER_ART=(()=>{
  const tau=Math.PI*2;
@@ -6,12 +6,144 @@ window.HUNTER_ART=(()=>{
  if(hunterAtlas)hunterAtlas.src='assets/hunter-directions.png';
  // Each pose pivots around its boots, rather than the centre of its flowing cape.
  const poses=[
-  [0,0,444,444,273,443,425],[444,0,443,444,229,443,425],
+  [0,0,488,444,273,443,425],[444,0,443,444,229,443,425],
   [887,0,444,444,231,438,421],[1331,0,443,444,177,443,426],
-  [0,444,444,443,245,411,412],[444,444,443,443,277,413,414],
+  [0,444,488,443,245,411,412],[444,444,443,443,277,413,414],
   [887,444,444,443,219,401,398],[1331,444,443,443,237,411,412]
  ];
  function direction(angle){return Math.round(((angle%tau)+tau)%tau/(tau/8))%8;}
+ const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
+ const smooth=n=>{n=clamp(n);return n*n*(3-2*n);};
+ // Anatomical anchors in each source pose. Skin weights keep the original painted
+ // armour, boots and bowblade attached to their joints; no second weapon is overlaid.
+ const rigs=[
+  {hips:[[281,258],[332,261]],knees:[[262,344],[335,338]],feet:[[254,424],[348,404]],shoulder:[312,124],elbow:[321,193],hand:[330,258],off:[[350,136],[353,200],[353,241]],blade:[[323,248],[420,279],[451,246],[488,250],[488,444],[433,444],[417,329],[343,288]],cape:-1},
+  {hips:[[211,258],[286,257]],knees:[[191,333],[293,331]],feet:[[177,424],[314,414]],shoulder:[315,130],elbow:[337,194],hand:[355,253],off:[[188,132],[174,193],[183,248]],blade:[[344,244],[396,270],[418,240],[443,240],[443,444],[408,437],[382,320],[344,276]],cape:-1},
+  {hips:[[201,257],[268,257]],knees:[[177,335],[285,333]],feet:[[144,423],[306,421]],shoulder:[296,125],elbow:[310,191],hand:[326,252],off:[[169,128],[147,193],[140,252]],blade:[[315,243],[385,272],[416,241],[444,240],[444,444],[401,435],[353,315],[315,277]],cape:-1},
+  {hips:[[117,253],[192,257]],knees:[[103,331],[214,336]],feet:[[86,410],[237,426]],shoulder:[215,130],elbow:[225,192],hand:[218,249],off:[[91,132],[76,196],[65,249]],blade:[[208,242],[294,278],[324,267],[331,253],[344,274],[354,300],[355,332],[342,363],[316,408],[309,411],[322,358],[319,333],[308,315],[285,307],[240,282],[208,272]],cape:1},
+  {hips:[[208,239],[254,239]],knees:[[205,317],[280,314]],feet:[[199,400],[291,382]],shoulder:[206,107],elbow:[199,167],hand:[182,213],off:[[243,125],[241,181],[244,224]],blade:[[189,202],[132,231],[65,212],[0,212],[0,414],[81,414],[151,276],[194,235]],cape:1},
+  {hips:[[218,269],[305,268]],knees:[[208,331],[313,335]],feet:[[188,402],[331,407]],shoulder:[313,121],elbow:[337,181],hand:[354,227],off:[[238,140],[229,194],[222,243]],blade:[[346,215],[397,239],[428,213],[443,211],[443,414],[405,411],[370,286],[344,248]],cape:-1},
+  {hips:[[176,268],[279,268]],knees:[[162,325],[289,324]],feet:[[147,388],[304,393]],shoulder:[300,113],elbow:[321,179],hand:[337,232],off:[[178,123],[162,181],[159,228]],blade:[[327,218],[379,242],[410,215],[444,215],[444,407],[391,405],[355,287],[327,249]],cape:-1},
+  {hips:[[212,266],[265,263]],knees:[[203,327],[276,332]],feet:[[206,396],[290,408]],shoulder:[276,107],elbow:[281,169],hand:[294,225],off:[[245,125],[239,182],[240,225]],blade:[[286,212],[371,239],[420,210],[443,212],[443,430],[396,426],[321,290],[286,247]],cape:-1}
+ ];
+ function createMotion(){return {motionTime:0,stridePhase:0,moveBlend:0,moveHeading:0,attackPoseTime:0,attackPoseDuration:0,attackPoseAngle:0,attackPoseWeapon:'blade',attackStrong:false};}
+ function advanceMotion(m,dx,dy,dt,options={}){
+  if(!Number.isFinite(m.stridePhase))Object.assign(m,createMotion());
+  if(!(dt>0))return;
+  m.motionTime+=dt;m.attackPoseTime=Math.max(0,m.attackPoseTime-dt);
+  const travelled=Math.hypot(dx,dy),walking=!options.dash&&!options.capture&&travelled>.001;
+  const target=walking?clamp(travelled/dt/200):0;
+  m.moveBlend+=(target-m.moveBlend)*(1-Math.exp(-dt*15));
+  if(m.moveBlend<.001)m.moveBlend=0;
+  if(walking){m.moveHeading=Math.atan2(dy,dx);m.stridePhase=(m.stridePhase+travelled*tau/120)%tau;}
+ }
+ function beginAttack(m,weapon,angle,charged=false){
+  m.attackPoseDuration=charged?.46:weapon==='cast'?.38:.3;
+  m.attackPoseTime=m.attackPoseDuration;m.attackPoseWeapon=weapon;m.attackPoseAngle=angle;m.attackStrong=charged;
+ }
+ function curve(t,points){for(let i=1;i<points.length;i++){if(t<=points[i][0]){const [a,x]=points[i-1],[b,y]=points[i];return x+(y-x)*smooth((t-a)/(b-a));}}return points[points.length-1][1];}
+ function motionPose(time,moving,angle,weapon,m={}){
+  const weight=Number.isFinite(m.moveBlend)?m.moveBlend:moving?1:0,phase=Number.isFinite(m.stridePhase)?m.stridePhase:time*11;
+  const progress=m.attackPoseTime>0?clamp(1-m.attackPoseTime/m.attackPoseDuration):1,active=m.attackPoseTime>0;
+  const swing=active?curve(progress,[[0,m.attackStrong?-.65:0],[.18,-.8],[.53,.65],[.72,.75],[1,0]]):0;
+  const facing=Math.cos(angle)>=0?1:-1,charge=active?0:clamp((m.charging||0)/.55),bow=weapon==='bow'&&m.attackPoseWeapon!=='cast';
+  return {phase,weight,heading:Number.isFinite(m.moveHeading)?m.moveHeading:angle,progress,active,charge,bow,
+   upper:bow?facing*(-charge*.23+(active?Math.sin(progress*Math.PI)*.24:0)):facing*(swing*(m.attackStrong?1.15:1)-charge*.65),
+   fore:bow?facing*(-charge*.4+(active?Math.sin(progress*Math.PI)*.6:0)):facing*(active?Math.sin(progress*Math.PI)*-.38:-charge*.2),
+   off:bow?facing*(charge*.6+(active?Math.sin(progress*Math.PI)*-.5:0)):facing*swing*-.28,
+   bob:Math.abs(Math.sin(phase))*weight*2.2+Math.sin(time*2.1)*.45,
+   lean:(Math.cos(m.moveHeading||0)*weight*.025)+(active?facing*Math.sin(progress*Math.PI)*.035:0),dash:m.dash>0};
+ }
+ function rotatePoint(p,pivot,a){const x=p[0]-pivot[0],y=p[1]-pivot[1],c=Math.cos(a),s=Math.sin(a);return [pivot[0]+x*c-y*s,pivot[1]+x*s+y*c];}
+ function segmentDistance(p,a,b){const x=b[0]-a[0],y=b[1]-a[1],t=clamp(((p[0]-a[0])*x+(p[1]-a[1])*y)/(x*x+y*y||1));return Math.hypot(p[0]-a[0]-x*t,p[1]-a[1]-y*t);}
+ function inside(p,polygon){let yes=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const a=polygon[i],b=polygon[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])yes=!yes;}return yes;}
+ function weights(p,r){
+  const weapon=inside(p,r.blade),arm=Math.max(weapon?1:0,smooth(1-segmentDistance(p,r.shoulder,r.elbow)/42),smooth(1-segmentDistance(p,r.elbow,r.hand)/32));
+  const off=smooth(1-Math.min(segmentDistance(p,r.off[0],r.off[1]),segmentDistance(p,r.off[1],r.off[2]))/30)*(1-arm);
+  const legs=r.hips.map((h,i)=>smooth((p[1]-h[1])/65)*smooth(1-segmentDistance(p,h,r.feet[i])/51)*(1-arm)*(1-off));
+  const sum=legs[0]+legs[1];if(sum>1){legs[0]/=sum;legs[1]/=sum;}
+  const centre=(r.hips[0][0]+r.hips[1][0])/2;
+  const cape=smooth((r.cape*(p[0]-centre)-48)/110)*smooth((p[1]-115)/155)*(1-arm)*(1-off)*(1-Math.max(...legs));
+  return {arm,off,legs,cape,fore:smooth((p[1]-r.elbow[1]+12)/45),offFore:smooth((p[1]-r.off[1][1]+8)/40)};
+ }
+ function armPoint(p,shoulder,elbow,upper,fore,blend){
+  const lower=rotatePoint(p,elbow,fore*blend);return rotatePoint(lower,shoulder,upper);
+ }
+ function deform(p,w,r,a){
+  let x=p[0],y=p[1];
+  for(let i=0;i<2;i++)if(w.legs[i]){
+   const cycle=a.phase+i*Math.PI,step=Math.sin(cycle),lift=Math.max(0,Math.cos(cycle)),forward=Math.cos(a.heading),depth=Math.sin(a.heading);
+   const upper=step*(forward*.24+(i?-.035:.035))*a.weight;
+   const lower=(upper-lift*.48*(forward>=0?1:-1)*Math.abs(forward)*a.weight);
+   const t=smooth((p[1]-r.knees[i][1]+10)/38),q=armPoint(p,r.hips[i],r.knees[i],upper,lower-upper,t);
+   x+=(q[0]-p[0])*w.legs[i];y+=(q[1]-p[1]+(depth*step*24-lift*15)*a.weight*smooth((p[1]-r.hips[i][1])/130))*w.legs[i];
+  }
+  if(w.arm){const walk=Math.sin(a.phase+Math.PI)*.065*a.weight*(a.active||a.charge?0:1),q=armPoint(p,r.shoulder,r.elbow,a.upper+walk,a.fore,w.fore);x+=(q[0]-p[0])*w.arm;y+=(q[1]-p[1])*w.arm;}
+  if(w.off){const q=armPoint(p,r.off[0],r.off[1],a.off+Math.sin(a.phase)*.12*a.weight,0,w.offFore);x+=(q[0]-p[0])*w.off;y+=(q[1]-p[1])*w.off;}
+  x+=(Math.sin(a.phase-.7)*11*a.weight-Math.cos(a.heading)*(a.dash?55:18*a.weight))*w.cape;
+  y+=(Math.cos(a.phase)*4*a.weight+(a.dash?-18:0))*w.cape;
+  return [x,y];
+ }
+ const meshes=[];
+ function surfaceFor(w,h){const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(w,h):typeof document!=='undefined'?document.createElement('canvas'):null;if(surface){surface.width=w;surface.height=h;}return surface;}
+ function limbMask(c,a,b,radius){c.lineCap='round';c.lineWidth=radius*2;c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke();}
+ function forearmMask(c,r){limbMask(c,r.elbow,r.hand,25);shape(c,r.blade,'#fff');c.lineJoin='round';c.lineWidth=12;c.stroke();}
+ function cleanFragments(c,w,h){
+  const bitmap=c.getImageData(0,0,w,h),data=bitmap.data,seen=new Uint8Array(w*h),queue=new Uint32Array(w*h);
+  for(let start=0;start<seen.length;start++)if(!seen[start]&&data[start*4+3]>8){
+   let head=0,tail=1;queue[0]=start;seen[start]=1;
+   while(head<tail){const p=queue[head++],x=p%w;
+    for(const n of [x?p-1:-1,x<w-1?p+1:-1,p-w,p+w])if(n>=0&&n<seen.length&&!seen[n]&&data[n*4+3]>8){seen[n]=1;queue[tail++]=n;}
+   }
+   if(tail<300)for(let i=0;i<tail;i++)data[queue[i]*4+3]=0;
+  }
+  c.putImageData(bitmap,0,0);return data;
+ }
+ function meshFor(index){
+  if(meshes[index])return meshes[index];
+  const pose=poses[index],r=rigs[index],step=28,columns=Math.ceil(pose[2]/step),rows=Math.ceil(pose[3]/step),points=[],triangles=[];
+  let image=hunterAtlas,sourceX=pose[0],sourceY=pose[1],pixels=null,upper=null,fore=null;
+  // Pre-light once. Culling transparent tiles keeps the one-character mesh cheap.
+  try{const surface=surfaceFor(pose[2],pose[3]);
+   if(surface){surface.width=pose[2];surface.height=pose[3];const c=surface.getContext('2d');c.filter='brightness(1.3)';c.drawImage(hunterAtlas,...pose.slice(0,4),0,0,pose[2],pose[3]);
+    // The supplied atlas has a few silhouettes crossing its nominal cell edges.
+    if(index===1||index===5)c.clearRect(0,0,45,pose[3]);if(index===6)c.clearRect(0,0,22,pose[3]);if(index>=4)c.clearRect(0,0,pose[2],6);
+    const extract=mask=>{const layer=surfaceFor(pose[2],pose[3]),lc=layer.getContext('2d');lc.fillStyle=lc.strokeStyle='#fff';mask(lc);lc.globalCompositeOperation='source-in';lc.drawImage(surface,0,0);try{cleanFragments(lc,pose[2],pose[3]);}catch{}return layer;};
+    fore=extract(lc=>forearmMask(lc,r));
+    upper=extract(lc=>{limbMask(lc,r.shoulder,r.elbow,32);lc.globalCompositeOperation='destination-out';forearmMask(lc,r);lc.globalCompositeOperation='source-over';});
+    c.filter='none';c.globalCompositeOperation='destination-out';c.fillStyle=c.strokeStyle='#fff';limbMask(c,r.shoulder,r.elbow,32);forearmMask(c,r);
+    c.globalCompositeOperation='destination-over';
+    const sx=r.shoulder[0],sy=r.shoulder[1];
+    c.save();const torso=[[sx-25,sy],[sx+15,sy+10],[r.hips[1][0]+10,r.hips[1][1]+10],[r.hips[0][0]-5,r.hips[0][1]+5],[sx-35,sy+80]];
+    c.beginPath();torso.forEach((p,i)=>i?c.lineTo(...p):c.moveTo(...p));c.closePath();c.clip();
+    c.drawImage(hunterAtlas,pose[0]+Math.min(r.hips[0][0],r.hips[1][0])+20,pose[1]+140,30,120,sx-38,sy,85,155);c.restore();
+    if(index===3){
+     c.save();
+     const cloth=c.createLinearGradient(230,190,410,390);cloth.addColorStop(0,'#19232b');cloth.addColorStop(.5,'#30333a');cloth.addColorStop(1,'#151f28');
+     shape(c,[[210,150],[280,194],[399,261],[433,384],[309,383],[210,309]],cloth);c.restore();
+    }
+    c.globalCompositeOperation='source-over';
+    image=surface;sourceX=sourceY=0;try{pixels=cleanFragments(c,pose[2],pose[3]);}catch{}}
+  }catch{}
+  for(let row=0;row<=rows;row++)for(let col=0;col<=columns;col++){const p=[Math.min(col*step,pose[2]),Math.min(row*step,pose[3])];points.push({p,w:weights(p,r)});}
+  for(let row=0;row<rows;row++)for(let col=0;col<columns;col++){
+   const i=row*(columns+1)+col,a=points[i].p,b=points[i+columns+2].p;let visible=!pixels;
+   if(pixels)for(let y=a[1];y<b[1]&&!visible;y++)for(let x=a[0];x<b[0];x++)if(pixels[(y*pose[2]+x)*4+3]>0){visible=true;break;}
+   if(visible)triangles.push([i,i+1,i+columns+2],[i,i+columns+2,i+columns+1]);
+  }
+  if(upper)points.forEach(v=>{v.w.arm=0;});
+  const faces=triangles.map(ids=>({ids,src:ids.map(i=>points[i].p)}));
+  return meshes[index]={points,triangles,faces,image,sourceX,sourceY,upper,fore};
+ }
+ function texturedTriangle(g,mesh,pose,src,dst){
+  const [p,q,r]=src,[a,b,c]=dst,ux=q[0]-p[0],uy=q[1]-p[1],vx=r[0]-p[0],vy=r[1]-p[1],det=ux*vy-uy*vx;
+  const A=((b[0]-a[0])*vy-(c[0]-a[0])*uy)/det,B=((b[1]-a[1])*vy-(c[1]-a[1])*uy)/det;
+  const C=((c[0]-a[0])*ux-(b[0]-a[0])*vx)/det,D=((c[1]-a[1])*ux-(b[1]-a[1])*vx)/det;
+  const mx=(a[0]+b[0]+c[0])/3,my=(a[1]+b[1]+c[1])/3;
+  g.save();g.beginPath();for(let i=0;i<3;i++){const v=dst[i],dx=v[0]-mx,dy=v[1]-my,len=Math.hypot(dx,dy)||1,x=v[0]+dx/len*.55,y=v[1]+dy/len*.55;i?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();g.clip();
+  g.transform(A,B,C,D,a[0]-A*p[0]-C*p[1],a[1]-B*p[0]-D*p[1]);
+  g.drawImage(mesh.image,mesh.sourceX,mesh.sourceY,pose[2],pose[3],0,0,pose[2],pose[3]);g.restore();
+ }
  function shape(g,points,fill,stroke){g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=1;g.stroke();}}
  function oval(g,x,y,rx,ry,color){g.beginPath();g.ellipse(x,y,rx,ry,0,0,tau);g.fillStyle=color;g.fill();}
  function light(g,x,y,r,color){const gradient=g.createRadialGradient(x,y,0,x,y,r);gradient.addColorStop(0,color);gradient.addColorStop(1,'transparent');g.fillStyle=gradient;g.fillRect(x-r,y-r,r*2,r*2);}
@@ -43,23 +175,31 @@ window.HUNTER_ART=(()=>{
   g.restore();
  }
  function drawHunterSprite(g,x,y,angle,color,scale,time,moving,weapon,motion){
-  const pose=poses[direction(angle)],factor=94/pose[6],stride=moving?Math.sin(time*13):0;
+  if(motion.attackPoseTime>0)angle=motion.attackPoseAngle;
+  const index=direction(angle),pose=poses[index],factor=94/pose[6],rig=rigs[index],mesh=meshFor(index),a=motionPose(time,moving,angle,weapon,motion);
   g.save();g.translate(x,y);g.scale(scale,scale);
   oval(g,0,13,22,8,'#020b18a3');light(g,0,-18,53,'#9fddd51a');
-  g.save();g.translate(0,12-Math.abs(stride)*1.7-Math.sin(time*2.1)*.5);
-  g.rotate(stride*.012);g.transform(1,0,Math.sin(time*(moving?7:2))*.009,1,0,0);
+  g.save();g.translate(0,12-a.bob);g.rotate(a.lean+(a.dash?Math.cos(a.heading)*.1:0));g.scale(factor,factor);g.translate(-pose[4],-pose[5]);
   g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
-  g.shadowColor=color+'88';g.shadowBlur=2.2;g.filter='brightness(1.3)';
-  g.drawImage(hunterAtlas,pose[0],pose[1],pose[2],pose[3],-pose[4]*factor,-pose[5]*factor,pose[2]*factor,pose[3]*factor);
+  const vertices=mesh.points.map(v=>deform(v.p,v.w,rig,a));
+  for(const face of mesh.faces)texturedTriangle(g,mesh,pose,face.src,face.ids.map(i=>vertices[i]));
+  if(mesh.upper){
+   const walk=Math.sin(a.phase+Math.PI)*.065*a.weight*(a.active||a.charge?0:1);
+   g.save();g.translate(...rig.shoulder);g.rotate(a.upper+walk);g.translate(-rig.shoulder[0],-rig.shoulder[1]);g.drawImage(mesh.upper,0,0);
+   g.translate(...rig.elbow);g.rotate(a.fore);g.translate(-rig.elbow[0],-rig.elbow[1]);g.drawImage(mesh.fore,0,0);g.restore();
+  }
+  if(weapon==='bow'){
+   // A drawn string and arrow follow the animated grip of the folding bowblade.
+   const hand=armPoint(rig.hand,rig.shoulder,rig.elbow,a.upper,a.fore,1);
+   g.save();g.translate(...hand);g.rotate(angle-a.lean);g.strokeStyle='#d7ecd6';g.lineWidth=3;
+   const pull=12+a.charge*28+(a.active?Math.sin(a.progress*Math.PI)*10:0);
+   g.beginPath();g.moveTo(47,-50);g.lineTo(8-pull,0);g.lineTo(47,50);g.stroke();
+   g.strokeStyle='#ead7a1';g.beginPath();g.moveTo(8-pull,0);g.lineTo(82-pull,0);g.lineTo(72-pull,-5);g.moveTo(82-pull,0);g.lineTo(72-pull,5);g.stroke();g.restore();
+  }
   g.restore();
   if(motion.charging>.15){
    light(g,Math.cos(angle)*22,-20+Math.sin(angle)*14,26,'#e4d69b55');
    g.strokeStyle='#f0dca1';g.lineWidth=1;g.beginPath();g.arc(0,-18,33,-Math.PI/2,-Math.PI/2+Math.min(1,motion.charging/.5)*tau);g.stroke();
-  }
-  if(motion.slash>0&&weapon==='blade'){
-   g.save();g.translate(0,-17);g.rotate(angle+(motion.slash/.3-.5)*1.2);
-   const gradient=g.createLinearGradient(10,0,70,0);gradient.addColorStop(0,'#cbd9dc22');gradient.addColorStop(1,'#e8ffe6dd');
-   shape(g,[[12,-3],[69,-12],[56,1],[14,4]],gradient,'#dfffe8aa');g.restore();
   }
   g.restore();
  }
@@ -131,5 +271,10 @@ window.HUNTER_ART=(()=>{
    }else if(region==='ruins'&&i%3===0){g.strokeStyle='#bdccd32c';g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+14,y+4);g.lineTo(x+20,y-2);g.stroke();}
   }
  }
- return {hunter,wolf,tree,atmosphere,ground,direction,spriteStatus:()=>({ready:!!(hunterAtlas?.complete&&hunterAtlas?.naturalWidth),frames:poses.length})};
+ if(hunterAtlas)hunterAtlas.onload=()=>{
+  let index=0;const schedule=fn=>typeof window.requestIdleCallback==='function'?window.requestIdleCallback(fn,{timeout:1000}):window.setTimeout?.(fn,20);
+  const warm=()=>{meshFor(index++);if(index<poses.length)schedule(warm);};schedule(warm);
+ };
+ return {hunter,wolf,tree,atmosphere,ground,direction,createMotion,advanceMotion,beginAttack,motionPose,
+  spriteStatus:()=>({ready:!!(hunterAtlas?.complete&&hunterAtlas?.naturalWidth),frames:poses.length,animation:'joint-weighted',triangles:meshes.map(m=>m?.triangles.length||0)})};
 })();

@@ -32,4 +32,14 @@
 .kit-button small{display:none}.kit-button{padding:10px!important}.kit-button b{font-size:11px!important}.kit-button kbd{min-width:23px;text-align:center}.boon-card{position:relative;transition:transform .2s,box-shadow .2s;animation:card-arrive .6s both}.boon-card:hover:not(:disabled){transform:translateY(-5px);box-shadow:0 10px 28px #0005}.boon-card:nth-child(2){animation-delay:.08s}.boon-card:nth-child(3){animation-delay:.16s}.boon-symbol{border:1px solid #bfcf9e55;border-radius:50%;width:55px;height:55px;display:grid;place-items:center!important;font:24px var(--serif)!important;color:#dddaa9!important;margin:5px auto 16px}.boon-card p{font-size:12px!important;line-height:1.6!important;min-height:0!important}.boon-card.selected{border-color:#dccb8f!important;box-shadow:inset 0 0 28px #e7d79a17}
 @keyframes rune-orbit{to{transform:rotate(360deg)}}@keyframes sigil-arrive{from{opacity:0;transform:scale(.4) rotate(-40deg)}to{opacity:1;transform:scale(1) rotate(0)}}@keyframes card-arrive{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}@keyframes weave-confirm{0%{box-shadow:0 0 50px #c0e5c080}100%{box-shadow:0 0 0 transparent}}@keyframes capture-breathe{to{box-shadow:0 0 22px #b2e4c455}}
 body.reduced-motion *,body.reduced-motion *:before,body.reduced-motion *:after{animation:none!important;transition:none!important}
+/* Keep capture guidance with the survival HUD, away from the hunter's view. */
+#arena #context-hint,#arena #capture-hud{left:16px;right:auto;bottom:188px;transform:none;width:280px;min-width:0;max-width:calc(100% - 32px);padding:9px 12px!important;text-align:left;border-radius:4px;background:#102721dc!important;box-shadow:0 4px 16px #04181344;pointer-events:none}
+#context-hint strong{font-size:11px;margin-bottom:4px;font-variant-numeric:tabular-nums}
+#context-hint>span{display:block;font-size:10px;line-height:1.7}
+#context-hint i{margin:0 5px}
+#arena #capture-hud{padding-left:43px!important}
+#capture-hud:before{left:10px;top:12px;width:24px;height:24px;font-size:12px}
+#capture-hud>span{font-size:11px;letter-spacing:1px}
+#capture-hud>div{margin:7px 0;height:4px}
+@media(max-width:700px){#arena #context-hint,#arena #capture-hud{left:12px;bottom:330px;width:250px;max-width:calc(100% - 24px)}}
 @media(max-width:800px){.ability-grid{grid-template-columns:repeat(4,1fr)}.weave-result{flex-wrap:wrap}.weave-result small{margin-left:0}.chapter-route{gap:5px}.chapter-route>span{min-width:50px}.ritual-choices{gap:6px!important}.visual-alternatives{gap:4px}}

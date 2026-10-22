@@ -1,0 +1,121 @@
+
+> shadow-hunter-demo@1.2.0 test
+> node tests/campaign-data.cjs && node tests/journey-data.cjs && node tests/save-data.cjs && node tests/release.cjs && node tests/visuals.cjs && node tests/smoke.cjs
+
+PASS reachable map, camp, caches and mission nodes: 月蚀森林
+PASS reachable map, camp, caches and mission nodes: 熔火裂谷
+PASS reachable map, camp, caches and mission nodes: 潮汐群岛
+PASS reachable map, camp, caches and mission nodes: 风蚀遗迹
+PASS reachable map, camp, caches and mission nodes: 永夜王庭
+Campaign: AND unlocks, repeat rewards, distinct loot, persistence, denial and five connected maps passed.
+Journey rules: all checks passed.
+PASS Legacy camps and current journey data roundtrip without changing resources
+PASS A living hunter below one HP can save; zero and invalid health cannot
+PASS Missing storage, corrupt JSON, incompatible data and inaccessible storage stay distinct
+PASS Unknown enemy references and variant/type mismatches cannot become a resumed entity
+PASS Scouts cannot load into an unattackable and uncapturable negative exposure state
+PASS Sparse collections and non-record stats are rejected before JSON can drop their fields
+PASS Failed serialization, oversize saves and storage quota errors preserve the last good camp
+Camp save rules: 7 groups passed.
+Release: settings validation, difficulty, journal, storage denial, scene music, mute, tab suspension and offline assets passed.
+Visuals: transparent eight-direction atlas, render paths, bounded event pool, paused animation expiry and reset passed.
+PASS Hunter gait tracks travel, settles against walls, and freezes with paused attacks
+PASS Intro, start, weapon attack and pause state
+PASS Shadow pressure exposes a living enemy; channel grants a shadow
+PASS Capture interruption, full-focus instant capture and harvesting
+PASS Combat build changes require focus; safe build changes are free
+PASS All eight hunting shapes produce distinct working actions
+PASS Dye rules: burn, bleed, guard, invulnerability, extra pressure, split and summons
+PASS Three-shadow evolution and corruption seal have meaningful consequences
+PASS Boss pressure gate, second phase, capture and victory restart
+PASS Death and return to camp reset UI; codex opened from pause resumes correctly
+PASS Guided tutorial requires movement, exposure, capture, equip and an actual skill hit
+PASS Tutorial pause, skip and restart do not trap the player
+PASS Skill detail and reward choices explain effects and real costs
+PASS All 24 slot descriptions exist; archer dye extends swarm duration
+PASS Other panels cannot replace reward or tutorial completion dialogs
+PASS Route offers objectives, altar rest, guarded capture and Boss
+PASS Chase failure restores entry resources and avoids retry farming
+PASS Lantern has real incoming damage, paused timers, four waves and success
+PASS Capture objective cannot be completed by guard kills or accidental harvesting
+PASS Free practice unlocks all shadows, waives costs, resets and cannot leak into a run
+PASS Mode switch is explicit and cancellation resumes the same run
+PASS Idle lantern defense fails naturally; chase exposure alone is insufficient
+PASS Expedition opens a persistent world with five biomes and variant packs
+PASS Camera follows the hunter centre at map edges and keeps pointer aiming in world space
+PASS River blocks fast movement; bridges and all landmark routes remain passable
+PASS Terrain changes movement and damage; skills and projectiles work beyond the old screen
+PASS New enemy variants have distinct telegraphs, hazards and armor
+PASS World map pauses, tracks locations and does not teleport; nearby safety governs swaps
+PASS World objectives preserve ambient enemies, retry resources and unlock the local Boss
+PASS Practice and tutorial return to the small arena without expedition state
+PASS First expedition creates a camp checkpoint; new runs and practice preserve it
+PASS Nearby scout teaches capture, resists harvesting and unlocks a single supply reward
+PASS Opening route returns safely to camp without attracting neighboring patrols
+PASS Remote discoveries require guards cleared; upgrade and max-level fallback differ
+PASS Camp roundtrip restores build, resources, rewards, enemy deaths and mission progress
+PASS Camp saving rejects dangerous contexts and resumes death from the last checkpoint
+PASS Storage failure, malformed and future saves fail safely without starting a broken run
+PASS A browser denying access to the storage object still allows normal play
+PASS Camp rest consumes a charge, saves the resulting state, and never advances world timers
+PASS Mission retry rolls back scouting and discoveries along with the run resources
+PASS Attack anticipation names each danger, locks targets and matches the actual lunge distance
+PASS Nightmare expiry remains saveable after the echo slot seals
+PASS Boss exposure expiry restores combat instead of leaving a negative capture timer
+PASS World mission retry resets all action cooldowns and transient inputs
+PASS Leaving a failed world mission returns to camp with earlier exploration intact
+PASS Only purple hazards bypass dodge invulnerability; orange and green hazards respect it
+PASS Swarm active-shadow levels increase summoned attack damage by the promised amount
+PASS Flasks are limited, cool down, cleanse corruption, and waste no charge at full resources
+PASS C and B keyboard shortcuts execute once per key press and Space suppresses button activation
+PASS Safe stationary recall opens camp after three seconds without healing or saving
+PASS Recall cancels on movement or danger and refuses an active mission
+PASS Mission blessings require one offered choice and repeated or foreign choices do not stack
+PASS Journey perks and flask stock survive camp loading and mission retries roll them back
+PASS Build presets require learned shadows, charge only changed slots, and preserve a sealed echo
+PASS Navigation leads across a reachable bridge before pointing at the tracked site
+PASS Blessings alter attacks, skills, damage taken, dodge cooldown, and corruption cost
+PASS Kill chains grant a third-kill bonus and damage breaks the chain without erasing its record
+PASS Arcane blessing increases burn, bleed, and friendly fire-trail damage by eighteen percent
+PASS Flask HUD shows the actual reduced healing at deep corruption
+PASS Browser modifier shortcuts do not cast skills or consume flasks
+PASS Opening a modal clears capture progress and held combat inputs before resuming
+PASS Esc closes a first-run discovery back into the same expedition
+PASS Boss pressure breaks cancel an active lunge before it can move or damage again
+PASS Giant dye uses the same Boss pressure gate at high and low health
+PASS A precise dodge applies the Boss pressure break instead of leaving negative pressure
+PASS In-flight arrows keep their original active level and dye after a loadout change
+PASS Existing summons keep the casting level and dye when the hunter changes equipment
+PASS Mirror replays retain the captured shape, level and dye after changing equipment
+PASS Non-combat dialogs preserve native Tab navigation and Space activation
+PASS Expired projectiles cannot hit, and their final partial frame preserves their actual range
+PASS Expired summons cannot bite while a positive final lifetime can still attack
+PASS Expired ground hazards cause no damage but a valid final partial frame still ticks
+PASS All initial world enemies spawn outside solid terrain and can leave their spawn
+PASS Dodging preserves a longer invulnerability effect already granted by a skill
+PASS Shield dye does not shorten the three-second shield from the active shield shape
+PASS A stored shield counter retains its casting level and dye after equipment changes
+PASS Burn and bleed consume only their actual remaining duration on the final frame
+PASS Projectile wall collision sweeps the traveled segment and includes projectile radius
+PASS Hazard drawing uses the same circular boundary as damage in every hazard type
+PASS View range changes visible radius continuously without changing combat state
+PASS Zoom interpolates smoothly and a stationary pointer remains aimed at its screen position
+PASS Every corner clips ground and map rectangles while preserving a centred hunter
+PASS Resize and movement preserve camera aspect ratio and hunter centre in the rendered frame
+PASS Zoomed ranged attacks still travel towards the on-screen aim point
+PASS Wheel zoom is scoped to live world play and preserves browser modifiers and panel scrolling
+PASS Slider, keyboard, buttons and reset agree without triggering movement or attacks
+PASS View preference survives new runs and camp loading independently of game progress
+PASS Bad or inaccessible view preferences do not break camera control or overwrite the camp
+PASS Settings pause real gameplay, apply difficulty, and return safely to intro or pause
+PASS Release journal excludes practice and does not count assimilation as a Boss victory
+PASS Art renders across every biome and journal panels do not change the camp checkpoint
+PASS Visual feedback follows real actions, refuses cooldown casts and resets safely
+PASS Acquisition and weaving show short icon cards while retaining optional full rules
+PASS All five campaigns finish through their actual mission handlers and AND-gated travel
+PASS Saved enemy drops and retried mission guards cannot duplicate inventory rewards
+PASS Inventory effects, camp persistence, atlas pause and locked travel work together
+PASS Campaign missing storage, new camp metadata and forged world ids fail safely
+PASS Portable single HTML boots from inline scripts with no external loader
+
+98 gameplay smoke scenarios passed.

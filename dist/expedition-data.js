@@ -16,6 +16,8 @@ window.HUNTER_EXPEDITION = (() => {
   function valid(s){
     if(!record(s)||s.version!==1||!num(s.savedAt,1,1e15)||!record(s.checkpoint)||!record(s.world))return false;
     const c=s.checkpoint,r=c.run,p=c.player,w=s.world;
+    if(w.worldId!==undefined&&!window.HUNTER_CAMPAIGN?.worlds.some(v=>v.id===w.worldId))return false;
+    if(w.visit!==undefined&&(typeof w.visit!=='string'||!/^[-a-z0-9]{1,80}$/.test(w.visit)))return false;
     if(!record(r)||!record(p)||!record(r.levels)||!record(r.xp)||!list(r.owned,ids,8)||!Array.isArray(r.slots)||r.slots.length!==3||!Array.from(r.slots).every(x=>r.owned.includes(x)))return false;
     if(!ids.every(id=>Number.isInteger(r.levels?.[id])&&num(r.levels[id],0,2)&&Number.isInteger(r.xp?.[id])&&num(r.xp[id],0,1e6)))return false;
     if(!['blade','bow'].includes(r.weapon)||typeof r.locked!=='boolean'||r.stored!==null&&!ids.includes(r.stored))return false;
