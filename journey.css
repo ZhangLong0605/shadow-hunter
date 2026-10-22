@@ -1,0 +1,197 @@
+/* Expedition supplies and progression share the forest's quiet moonlit palette. */
+.field-kit {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  bottom: 125px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 320px;
+  max-width: calc(100% - 40px);
+}
+
+.kit-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 8px 10px;
+  border: 1px solid #81a68a66;
+  background: #0e2421ed;
+  color: #d4e7c8;
+  text-align: left;
+  box-shadow: 0 4px 14px #03151038;
+  transition: background .15s, border-color .15s;
+}
+
+.kit-button:hover:not(:disabled) {
+  border-color: #b6dba4;
+  background: #203e30f2;
+}
+
+.kit-button:disabled {
+  opacity: .58;
+  border-color: #64766c66;
+  background: #132321ed;
+}
+
+.kit-button kbd {
+  flex: 0 0 23px;
+  padding: 4px 5px;
+  text-align: center;
+  color: #d9edcd;
+  border-color: #8fac8477;
+  background: #36503d66;
+}
+
+.kit-button > span { min-width: 0; }
+.kit-button b { display: block; font-size: 11px; font-weight: 500; line-height: 1.5; }
+.kit-button small { display: block; margin-top: 3px; color: #9cb49d; font-size: 9px; line-height: 1.5; }
+
+.risk-meter,
+.recall-progress {
+  grid-column: 1 / -1;
+  padding: 6px 9px;
+  border: 1px solid #7b9a8060;
+  background: #102420ed;
+  color: #b5cfb2;
+  font-size: 10px;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.risk-meter:empty { display: none; }
+.risk-meter.is-danger { color: #f1c1a5; border-color: #cf967e99; background: #352b25ed; }
+.risk-meter b { font-weight: 500; color: #d4e6bf; }
+.risk-meter.is-danger b { color: #ffdab8; }
+.recall-progress { color: #e2edc3; border-color: #c1d89c99; background: #254031f5; }
+.recall-progress strong { font-weight: 500; }
+
+.journey-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding: 12px 18px;
+  border: 1px solid #45624d66;
+  border-top: 0;
+  background: linear-gradient(110deg, #1c3026, #12221f);
+}
+
+.journey-route {
+  flex: 1 1 220px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.journey-route small { color: #b0c88c; font-size: 9px; letter-spacing: .7px; }
+.journey-route b { color: #dbe8c8; font-size: 12px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+.journey-route > span { grid-column: 1 / -1; color: #96b39b; font-size: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+.journey-perks { display: flex; flex: 0 1 auto; flex-wrap: wrap; align-items: center; gap: 5px; max-width: 45%; }
+.journey-perks:empty { display: none; }
+.journey-perks > span { padding: 4px 7px; border: 1px solid #88a97566; background: #304a3066; color: #c9dcb2; font-size: 9px; line-height: 1.5; }
+.journey-chain { margin-left: auto; color: #d7c999; font-size: 10px; line-height: 1.8; font-variant-numeric: tabular-nums; }
+.journey-chain:empty { display: none; }
+.journey-chain b { font-size: 14px; font-weight: 500; color: #f0e4ba; }
+
+.boon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0 12px;
+}
+
+.boon-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 18px 15px;
+  text-align: left;
+  border: 1px solid #8aab7966;
+  background: linear-gradient(145deg, #294632d9, #132923f2);
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+
+.boon-card:hover:not(:disabled) {
+  border-color: #c9dfa2;
+  background: linear-gradient(145deg, #3a5638, #1c3529);
+  box-shadow: inset 0 0 24px #b4d39c0d;
+}
+
+.boon-card .boon-symbol { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 3px; color: #d7e7ae; font-size: 29px; line-height: 1; }
+.boon-card > small { color: #9fba94; font-size: 9px; letter-spacing: 1px; line-height: 1.6; }
+.boon-card > strong { color: #e3edcd; font: 500 19px/1.5 var(--serif); letter-spacing: 1px; }
+.modal .boon-card > p { margin: 0; color: #b4cbb1; font-size: 11px; line-height: 1.85; }
+.boon-card.selected:disabled { opacity: 1; border-color: #d5e8a6; background: #365039; }
+/* Reward descriptions must remain readable above short-window scroll edges. */
+.modal[data-kind="worldComplete"] .modal-actions { position: static; }
+.modal[data-kind="worldComplete"] .boon-card { padding: 12px; gap: 5px; }
+.modal[data-kind="worldComplete"] .boon-symbol { width: 30px; height: 30px; font-size: 24px; }
+.modal[data-kind="worldComplete"] .journey-result { margin: 10px 0; padding: 8px 12px; }
+
+.build-presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 18px; }
+.build-presets > button { flex: 1 1 145px; min-width: 0; padding: 11px 12px; border: 1px solid #7c9b7266; background: #1c352b; text-align: left; transition: background .15s, border-color .15s; }
+.build-presets > button:hover:not(:disabled),
+.build-presets > button.selected,
+.build-presets > button[aria-pressed="true"] { border-color: #bed59c; background: #345037; }
+.build-presets b { display: block; font-size: 12px; font-weight: 500; color: #d8e7c1; line-height: 1.5; }
+.build-presets small { display: block; margin-top: 6px; font-size: 10px; color: #a8c09f; line-height: 1.7; }
+
+.journey-result { margin: 16px 0; padding: 14px 16px; border: 1px solid #a9c18866; background: #29432d80; color: #cedfbb; font-size: 12px; line-height: 1.9; }
+.journey-result > b,
+.journey-result > strong { display: block; font-size: 14px; font-weight: 500; color: #e1ebc8; }
+.journey-result > span,
+.journey-result > small { display: block; color: #b3c9a5; font-size: 11px; }
+.modal .journey-result p { margin: 6px 0 0; font-size: 11px; color: #b3c9a5; }
+
+@media (max-width: 850px) {
+  .field-kit { left: 15px; width: 300px; max-width: calc(100% - 30px); }
+  .kit-button { padding: 7px 8px; gap: 6px; }
+  .journey-status { padding: 11px 13px; gap: 8px 12px; }
+  .journey-perks { max-width: 100%; flex: 1 1 100%; }
+  .journey-chain { margin-left: 0; }
+}
+
+@media (max-width: 550px) {
+  /* The mobile vitality row sits above the full-width skill panel. */
+  .field-kit { left: 14px; bottom: 225px; width: 310px; max-width: calc(100% - 28px); gap: 5px; }
+  .kit-button { min-height: 44px; }
+  .kit-button b { font-size: 10px; }
+  .kit-button small { font-size: 8px; }
+  .risk-meter, .recall-progress { font-size: 9px; padding: 5px 8px; }
+  .journey-route { flex-basis: 100%; }
+  .journey-route b { font-size: 11px; }
+  .journey-perks > span { font-size: 8px; }
+  .boon-grid { grid-template-columns: 1fr; gap: 8px; margin-top: 14px; }
+  .boon-card { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 4px 12px; padding: 13px; }
+  .boon-card .boon-symbol { grid-row: 1 / 4; width: 36px; height: 40px; align-self: center; margin: 0; }
+  .boon-card > small, .boon-card > strong, .modal .boon-card > p { grid-column: 2; }
+  .boon-card > strong { font-size: 17px; }
+  .modal .boon-card > p { font-size: 10px; }
+  .build-presets { gap: 6px; }
+  .build-presets > button { flex-basis: 100%; padding: 10px 12px; }
+  .build-presets small { margin-top: 3px; }
+  .journey-result { padding: 12px; }
+}
+
+@media (max-height: 700px) and (min-width: 851px) {
+  .field-kit { gap: 4px; }
+  .kit-button { padding-top: 6px; padding-bottom: 6px; min-height: 42px; }
+  .risk-meter, .recall-progress { padding-top: 4px; padding-bottom: 4px; }
+  .boon-grid { margin-top: 14px; }
+  .boon-card { padding: 13px 12px; gap: 5px; }
+  .boon-card .boon-symbol { width: 32px; height: 32px; font-size: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kit-button, .boon-card, .build-presets > button { transition: none; }
+}

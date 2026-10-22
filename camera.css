@@ -1,0 +1,21 @@
+/* Camera controls stay in screen space, independent of world magnification. */
+.view-controls { border-top: 1px solid #78956b44; margin-top: 8px; padding-top: 8px; }
+.view-heading, .view-slider, .view-footer { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.view-heading { font-size: 10px; color: #c0d1b3; }
+.view-heading output { color: #e3edc1; font: 12px Georgia, serif; font-variant-numeric: tabular-nums; }
+.world-hud .view-controls button { width: 25px; min-width: 25px; min-height: 25px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid #78956b55; border-radius: 3px; background: #274332; color: #d2e3bb; font-size: 16px; }
+.world-hud .view-controls button:hover { background: #3a5940; }
+.world-hud .view-controls button:disabled { opacity: .35; cursor: default; }
+.view-slider { margin: 6px 0; }
+.view-slider input { width: 100%; min-width: 0; margin: 0; height: 23px; accent-color: #c3dda1; cursor: pointer; }
+.view-slider input:focus-visible { outline: 2px solid #d0e9ab; outline-offset: 2px; border-radius: 2px; }
+.world-hud .view-footer small { margin: 0; font-size: 9px; text-align: left; line-height: 1.5; }
+.world-hud .view-footer button { min-width: 30px; width: auto; min-height: 23px; font-size: 9px; padding: 2px 4px; background: transparent; }
+@media (max-width: 700px) {
+  .view-controls { margin-top: 6px; padding-top: 6px; }
+  .view-heading { font-size: 9px; }
+  .world-hud .view-controls .view-slider button { width: 22px; min-width: 22px; min-height: 24px; }
+  .view-slider { gap: 3px; }
+  .view-footer { gap: 3px; }
+  .world-hud .view-footer small { font-size: 8px; }
+}

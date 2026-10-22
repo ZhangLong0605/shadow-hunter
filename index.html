@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1216">
+  <meta name="description" content="影子猎手：五境远征。夺取敌人的能力，编织三影技能，穿越五境，迎接黎明。离线单人动作探索游戏。">
+  <title>影子猎手 — 五境远征</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='16' fill='%238be4cb'/%3E%3Ccircle cx='27' cy='14' r='15' fill='%230c171c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="onboarding.css">
+  <link rel="stylesheet" href="hunt-modes.css">
+  <link rel="stylesheet" href="world.css">
+  <link rel="stylesheet" href="expedition.css">
+  <link rel="stylesheet" href="journey.css">
+  <link rel="stylesheet" href="polish.css">
+  <link rel="stylesheet" href="camera.css">
+  <link rel="stylesheet" href="release.css">
+  <link rel="stylesheet" href="experience.css">
+  <link rel="stylesheet" href="campaign.css">
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="./" aria-label="影子猎手首页"><span class="brand-mark">◒</span><span>影子猎手<small>SHADOW HUNTER</small></span></a>
+    <nav aria-label="主导航"><button class="nav-button active" id="hunt-tab">狩猎</button><button class="nav-button hidden" id="world-map-nav">区域地图 <kbd>M</kbd></button><button class="nav-button" id="practice-button">试炼场</button><button class="nav-button" id="codex-button">影子图鉴 <span>08</span></button><button class="nav-button" id="guide-button">猎人手册</button></nav>
+    <div class="header-end"><span class="demo-tag"><i></i>五境远征 <b>1.2</b></span><button id="settings-button" class="icon-button" title="声音、画面与难度" aria-label="游戏设置">⚙</button><button id="sound-button" class="icon-button" title="静音" aria-label="静音全部声音">♫</button><button id="pause-button" class="icon-button" title="暂停 · Esc" aria-label="暂停">Ⅱ</button></div>
+  </header>
+  <main id="app-shell">
+    <div class="page-heading"><div><span class="eyebrow">THE LONG DREAM / FIVE WORLDS</span><h1>五境远征 <span>一切梦魇，皆有其影。</span></h1></div><div class="run-meta"><span><i class="live-dot"></i><span id="phase-label">等待入梦</span></span><span class="divider"></span><span id="timer">00:00</span><span class="run-number">RUN <b id="run-count">01</b></span></div></div>
+    <div class="game-layout">
+      <section class="game-column" aria-label="狩猎场">
+        <div class="arena" id="arena">
+          <canvas id="game" tabindex="0" aria-label="五境远征游戏画面。WASD 移动，鼠标左键攻击，空格闪避，Q 影技，长按 E 夺影。"></canvas>
+          <canvas id="feedback-canvas" aria-hidden="true"></canvas>
+          <div class="scene-top"><div class="location"><span class="small-rune">⌖</span><div><span id="room-name">遗忘林地</span><small id="objective">穿过月光，追寻你的第一枚影子</small></div></div><div class="room-tag" id="room-tag">猎场 <span>01 / 05</span></div></div>
+          <div id="world-hud" class="world-hud hidden">
+            <button id="world-map-button" aria-label="打开世界地图"><canvas id="world-minimap" aria-label="当前位置与任务地点小地图"></canvas><span id="world-progress"></span></button><small id="world-terrain">M 全图 · F 互动</small>
+            <button id="atlas-nav" class="atlas-nav">N · 五境星图 ↗</button><div class="view-controls" aria-label="视野设置">
+              <div class="view-heading"><label for="view-range">视野范围</label><output id="view-value" for="view-range">100%</output></div>
+              <div class="view-slider"><button id="view-near" aria-label="拉近视角" title="拉近 · 看清近处">−</button><input id="view-range" type="range" min="50" max="200" step="1" value="100" aria-describedby="view-help"><button id="view-far" aria-label="拉远视角" title="拉远 · 看得更远">+</button></div>
+              <div class="view-footer"><small id="view-help">滚轮调节 · 越大越远</small><button id="view-reset" title="恢复默认视野 · 0">复位</button></div>
+            </div>
+          </div><button id="world-interact" class="world-interact hidden"></button>
+          <div id="journey-hint" class="journey-hint hidden"><b id="journey-title"></b><span id="journey-description"></span></div>
+          <div id="mission-hud" class="mission-hud hidden" role="status"></div>
+          <div id="practice-toolbar" class="practice-toolbar hidden" aria-label="试炼设置"><span>自由试炼 · 不受伤 / 无梦蚀</span><button id="practice-dummy">木桩</button><button id="practice-mobs">敌群</button><button id="practice-refresh">重置状态</button><button id="practice-exit">返回营地</button></div>
+          <div id="compact-build" class="compact-build hidden"><div class="compact-title"><span><kbd>Q</kbd> <b id="compact-name"></b></span><button id="compact-detail">技能详解 ↗</button></div><div id="compact-slots" class="compact-slots"></div><div class="compact-foot"><span id="compact-cost"></span><button id="compact-edit"><kbd>TAB</kbd> 更换影子</button></div></div>
+          <div id="capture-flight" class="capture-flight" aria-hidden="true"></div>
+          <div id="achievement-toast" class="release-toast hidden" role="status"></div>
+          <div id="field-kit" class="field-kit hidden" aria-label="随身补给与回营">
+            <button id="flask-button" class="kit-button" title="C · 恢复生命并净化梦蚀"><kbd>C</kbd><span><b id="flask-count">月露 2 / 2</b><small id="flask-hint">恢复 35 · 净化 12</small></span></button>
+            <button id="recall-button" class="kit-button" title="B · 脱战后静止引导 3 秒回营"><kbd>B</kbd><span><b id="recall-label">安全回营</b><small>静止 3 秒 · 脱战可用</small></span></button>
+            <div id="field-risk" class="risk-meter"></div><div id="recall-progress" class="recall-progress hidden" role="status"></div>
+          </div>
+          <div class="boss-hud hidden" id="boss-hud"><div><span id="boss-name">饥饿月狼</span><small id="boss-phase">月蚀的守门者</small></div><div class="boss-track"><i id="boss-bar"></i></div></div>
+          <div id="intro" class="intro"><div class="intro-kicker"><span></span> SHADOW HUNTER / 五境远征</div><h2>影子猎手<span>五境远征</span></h2><p class="intro-story">五个破碎的世界，五条未竟的归路。<br>沿星图前行，把黎明带回长梦。</p><p class="intro-explainer"><b>夺影 · 编织 · 狩猎</b><br>夺取敌人的能力，组合三个影子，<br>用你自己的招式，解锁五个世界，收集各境遗物。</p><button id="continue-run" class="camp-resume hidden"><span>继续营地存档<small id="resume-summary"></small></span><b>↗</b></button><p id="save-note" class="save-note"></p><div class="intro-start"><button class="primary" id="start-button">开始旅程 · 含教学 <span>↗</span></button><button id="skip-intro" class="text-button">直接进入森林 →</button></div><button id="practice-intro" class="practice-entry">月下试炼场 <span>全部影子开放 · 自由组合 ↗</span></button><button id="atlas-button" class="atlas-entry">五境星图 <span>世界解锁 · 随机战利品 · 行囊 ↗</span></button><div class="title-links"><button id="intro-settings">游戏设置</button><button id="records-button">猎人纪事</button><button id="credits-button">制作与鸣谢</button></div><div class="intro-note" id="audio-note">首次点击后启用背景音乐 · 右上角可静音</div></div>
+          <section class="tutorial-card hidden" id="tutorial-card" aria-label="当前教学任务"><div class="tutorial-top"><span id="tutorial-step">新手教学 1 / 6</span><button id="skip-tutorial">跳过教学 →</button></div><div id="tutorial-progress" class="tutorial-progress"></div><h2 id="tutorial-title"></h2><div class="tutorial-do"><kbd id="tutorial-key"></kbd><strong id="tutorial-action"></strong></div><p id="tutorial-text"></p><small id="tutorial-note"></small></section><div class="context-hint hidden" id="context-hint" role="status"></div><div class="toast hidden" id="toast" role="status"></div>
+          <div class="capture-hud hidden" id="capture-hud"><span>正在剥离影子…</span><div><i id="capture-bar"></i></div><small>持续按住 E · 受伤将中断</small></div>
+          <div class="player-hud"><div class="hunter-portrait">⟡</div><div class="vitals"><div><strong>追迹者</strong><span id="hp-text">100 / 100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="focus-row"><span>专注</span><div class="focus-track"><i id="focus-bar"></i></div><small id="focus-text">0 / 100</small></div></div><div class="kill-count"><small>已猎杀</small><strong id="kills">00</strong></div></div>
+          <div class="arena-stamp">月蚀之下 · 勿失其形</div>
+          <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div id="modal-card" class="modal-card"></div></div>
+        </div>
+        <div class="combat-bar"><div class="weapon-info"><span class="weapon-glyph">⤢</span><div><small>初始武器 <kbd>R</kbd> 切换</small><strong id="weapon-name">折叠弓刃 · 刃形</strong></div></div><div class="combat-actions"><button id="attack-button" title="鼠标左键攻击，长按可蓄力"><kbd>左键</kbd><span>攻击 / 蓄力</span></button><button id="dash-button"><kbd>SPACE</kbd><span id="dash-label">闪避</span></button><button id="skill-button"><kbd>Q</kbd><span id="skill-label">影子技能</span></button><button id="capture-button" title="靠近白色暴露的敌人，长按 E 夺影"><kbd>E</kbd><span>长按夺影</span></button></div></div>
+        <div id="journey-status" class="journey-status hidden"><div class="journey-route"><small id="journey-stage"></small><b id="journey-target"></b><span id="journey-direction"></span></div><div id="journey-perks" class="journey-perks"></div><div id="journey-chain" class="journey-chain"></div></div>
+        <div class="journey"><div class="journey-title"><span>梦境深度</span><small id="depth-label">01 / 05</small></div><div class="route" id="route"></div><span class="journey-end">月狼之巢 <span>☾</span></span></div>
+      </section>
+      <aside class="build-panel"><div class="panel-title"><h2>你的 Q 技能</h2><button id="build-button">更换影子 <span>⇄</span></button></div><p class="panel-subtitle">三枚影子 → 一个技能，按 Q 一起释放。<br>已赠送狼、火焰、镜魔三枚初始影子。</p><div id="shadow-slots" class="shadow-slots"></div><div class="synergy"><div class="synergy-top"><span>按 Q 会发生什么？</span><span id="resonance-status">已激活</span></div><h3 id="build-name">烈焰追猎</h3><div id="build-description"></div><button id="skill-detail-button" class="detail-button">技能详解 · 效果 / 代价 / 用法 ↗</button><div class="tags" id="build-tags"></div></div><div class="corruption"><div><h3><span>◈</span> 梦蚀</h3><strong><span id="corruption-text">0</span><small> / 100</small></strong></div><div class="corruption-track"><i id="corruption-bar"></i><span></span><span></span></div><p id="corruption-description">借用黑暗的力量，也会被黑暗注视。</p></div><div class="tip"><span>✦</span><p id="tip-text">影子 = 敌人的能力。长按 <kbd>E</kbd> 学会，装备后才改变 Q。左键普攻仍是原来的武器攻击。</p></div></aside>
+    </div>
+    <footer><span><i></i> 每一次狩猎，都留下不同的影子。</span><div><span><kbd>W A S D</kbd> 移动</span><span><kbd>TAB</kbd> 构筑</span><span><kbd>ESC</kbd> 暂停</span><button id="fullscreen-button">全屏体验 ⛶</button></div></footer>
+  </main>
+  <div class="small-screen-notice">建议使用电脑横屏游玩，以获得完整的键鼠战斗体验。</div>
+  <script src="release-data.js"></script>
+  <script src="audio.js"></script>
+  <script src="art.js"></script>
+  <script src="feedback.js"></script>
+  <script src="guide-data.js"></script>
+  <script src="world-data.js"></script>
+  <script src="expedition-data.js"></script>
+  <script src="journey-data.js"></script>
+  <script src="campaign-data.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

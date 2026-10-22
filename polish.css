@@ -1,0 +1,342 @@
+/* Moonlit surfaces, readable overlays, and layouts that respect short windows. */
+:root {
+  --bg: #0b1217;
+  --panel: #132125;
+  --line: #32463f;
+  --text: #e2eae2;
+  --muted: #a3b7ab;
+}
+
+body { background: radial-gradient(ellipse at 38% 0, #21352d66, transparent 65%), var(--bg); }
+.header { background: #0d171bf2; border-bottom-color: #3a514344; }
+.brand-mark { text-shadow: 0 0 22px #a4e4c91c; }
+.nav-button { color: #a4b6ad; white-space: nowrap; }
+.nav-button.active:after { box-shadow: 0 -3px 14px #a4e4c933; }
+.nav-button:hover, footer button:hover { color: #d7efce; }
+.page-heading { margin-bottom: 14px; }
+.eyebrow { color: #a0b3a1; }
+h1 span { color: #9caf9f; }
+button, a, summary { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 2px solid #d0e9ab;
+  outline-offset: 3px;
+}
+kbd { color: #dae8d7; border-color: #9bb49555; background: #243c31; }
+
+.arena {
+  border-color: #6f8c7166;
+  border-radius: 5px 5px 0 0;
+  box-shadow: 0 18px 46px #020b103d, 0 0 0 1px #adc99a08;
+}
+.arena:has(#intro:not(.hidden)) {
+  min-height: 480px;
+  height: clamp(480px, calc(100dvh - 232px), 680px);
+  max-height: none;
+  aspect-ratio: auto;
+}
+.game-column:has(#intro:not(.hidden)) > .journey { display: none; }
+.scene-top { inset: 18px 22px auto; }
+.location small { color: #c0d0b7; }
+.room-tag { background: #10201ee8; border-color: #889c6a66; }
+
+/* The saved-game and fresh-start choices fit beside each other. Overflow remains
+   scrollable at browser zoom levels where the content needs extra vertical room. */
+#intro {
+  top: 68px;
+  bottom: 24px;
+  left: 6%;
+  width: 540px;
+  max-width: 87%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 12px 7px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #789b78 #152a26;
+  filter: none;
+  text-shadow: 0 2px 12px #03120e;
+}
+#intro:before { display: none; }
+#intro h2, #intro:has(.camp-resume:not(.hidden)) h2 {
+  font-size: clamp(30px, 2.7vw, 43px);
+  line-height: 1.32;
+  letter-spacing: 2px;
+  margin: 14px 0;
+  text-wrap: balance;
+}
+#intro h2 span { white-space: nowrap; color: #c6ebbf; }
+#intro .intro-kicker { color: #c1d1b0; font-size: 10px; letter-spacing: 2px; }
+#intro .intro-explainer {
+  font-size: 13px;
+  line-height: 1.8;
+  letter-spacing: .3px;
+  color: #c2d3bd;
+  margin: 10px 0 16px;
+}
+.intro-start { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+#intro .intro-start .primary { margin: 0; min-width: 202px; }
+#intro .text-button { padding: 10px 0; color: #c5d7bb; line-height: 1.7; }
+#intro .practice-entry {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 12px 0 3px;
+  margin-top: 14px;
+  color: #dfebcd;
+}
+#intro .practice-entry span { display: inline; margin: 0; color: #aec3a6; }
+#intro .intro-note { color: #a9bea4; line-height: 1.6; }
+#intro .save-note:empty { display: none; }
+#intro:has(.camp-resume:not(.hidden)) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: "kicker kicker" "title title" "explain explain" "continue start" "save start" "practice practice" "note note";
+  align-content: start;
+  gap: 7px 16px;
+}
+#intro:has(.camp-resume:not(.hidden)) .intro-kicker { grid-area: kicker; margin: 0; }
+#intro:has(.camp-resume:not(.hidden)) h2 { grid-area: title; margin: 4px 0; }
+#intro:has(.camp-resume:not(.hidden)) .intro-explainer { grid-area: explain; margin: 0 0 7px; }
+#intro .camp-resume { grid-area: continue; margin: 0; padding: 10px 12px; min-width: 0; font-size: 12px; }
+#intro .camp-resume small { line-height: 1.6; color: #bacdb0; }
+#intro .save-note { grid-area: save; margin: 0 !important; letter-spacing: 0; }
+#intro:has(.camp-resume:not(.hidden)) .intro-start {
+  grid-area: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: start;
+  gap: 2px;
+}
+#intro:has(.camp-resume:not(.hidden)) .intro-start .primary { min-width: 0; gap: 12px; padding: 13px 14px; letter-spacing: 1px; }
+#intro:has(.camp-resume:not(.hidden)) .text-button { font-size: 10px; text-align: left; }
+#intro:has(.camp-resume:not(.hidden)) .practice-entry { grid-area: practice; margin-top: 3px; padding-top: 10px; }
+#intro:has(.camp-resume:not(.hidden)) .intro-note { grid-area: note; margin: 0; }
+
+.primary {
+  border-radius: 3px;
+  background: linear-gradient(140deg, #d6eac4, #a9d5b3);
+  color: #142a23;
+  border-color: #e0edc8;
+  box-shadow: inset 0 1px #ffffff38, 0 5px 18px #04160e38;
+  text-shadow: none;
+}
+.primary:hover { transform: none; background: #e0f0cf; }
+.secondary, .camp-resume, .build-option, .choice, .boon-card, .build-presets > button,
+.reward-buttons button, .world-map-choices button, .codex-detail { border-radius: 3px; }
+.secondary { color: #d1e2c7; border-color: #718b6b88; background: #20392de0; }
+.combat-bar { background: linear-gradient(110deg, #172923, #132222); border-color: #415d4966; padding: 13px 18px; }
+.combat-actions button { color: #b1c6b2; }
+.weapon-info small { color: #a1b6a2; }
+
+.build-panel {
+  border-color: #627c5d55;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #1b2d27, #111f22 70%);
+  box-shadow: 0 12px 30px #020c101f;
+  scrollbar-width: thin;
+  scrollbar-color: #658365 #152521;
+}
+.panel-subtitle { color: #afc1af; }
+.panel-title button { color: #c3dbba; font-size: 10px; }
+.shadow-slot { border-radius: 3px; }
+.slot-copy p { color: #c1cfba; }
+.slot-copy em, .slot-level { color: #97b399; }
+.skill-sequence > span, .tip p { color: #bbceb6; }
+.corruption p { color: #b1c2b0; }
+.tags span { color: #b8cfac; }
+.synergy h3 { color: #e1ebc9; }
+footer { padding: 16px 0; color: #92aa97; }
+footer kbd { color: #acbea9; }
+
+/* A single scroll container keeps descriptions and their actions together.
+   Sticky actions used to cover cards, and covered the camp status below them. */
+.modal, .is-world .modal {
+  padding: 18px;
+  overflow: hidden;
+  background: #071613e8;
+  backdrop-filter: none;
+}
+.modal .modal-card, .in-combat .modal .modal-card, .is-world .modal .modal-card,
+.is-world .modal[data-kind="worldmap"] .modal-card {
+  max-height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #7f9c70 #142820;
+  border: 1px solid #738f655c;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #1b3026, #10221f 75%);
+  box-shadow: 0 16px 45px #010a0b5c;
+}
+.modal h2 { color: #e5edcf; font-size: 26px; letter-spacing: 1.5px; }
+.modal p { color: #bdcfb8; }
+.modal .fine-print { color: #a6bfa8; }
+.modal .modal-actions {
+  position: static;
+  margin-top: 20px;
+  padding: 16px 0 0;
+  border-top: 1px solid #6e8b5e55;
+  background: none;
+}
+.modal-actions button { line-height: 1.7; min-height: 43px; }
+.modal-actions .primary { padding: 11px 17px; letter-spacing: 1px; }
+.modal .explain-box { color: #c7d9bd; background: #2c49344f; }
+.codex-detail summary small, .build-option small { color: #bacdb2; }
+.world-map-layout .world-overview { position: static; }
+
+/* Left: survival. Right: the current skill. Keep the centre open for combat. */
+.in-combat .player-hud {
+  left: 16px;
+  bottom: 14px;
+  padding: 10px 12px;
+  gap: 10px;
+  border: 1px solid #75987766;
+  border-radius: 4px;
+  background: #10241fec;
+  box-shadow: 0 6px 18px #04140f33;
+}
+.hunter-portrait { width: 34px; height: 42px; font-size: 27px; background: #244132; }
+.vitals { width: 170px; }
+.vitals > div:first-child { font-size: 11px; }
+.health-track { height: 8px; border-color: #9ab28a66; }
+.health-track i { background: linear-gradient(90deg, #7ca976, #d2e6a8); }
+.focus-row > span, .focus-row small { color: #b9cab8; font-size: 9px; }
+.focus-track { height: 5px; }
+.kill-count { padding-left: 12px; margin-left: 2px; }
+.kill-count small { color: #b2c5aa; }
+.kill-count strong { margin-top: 3px; font-size: 20px; }
+.field-kit { left: 16px; bottom: 99px; width: 306px; gap: 5px; }
+.kit-button { min-height: 43px; padding: 7px 9px; border-radius: 3px; background: #10271fed; }
+.kit-button small { color: #b3c7aa; }
+.risk-meter, .recall-progress { border-radius: 3px; padding: 5px 9px; }
+.compact-build, .is-world .compact-build {
+  right: 16px;
+  bottom: 14px;
+  width: min(420px, 46%);
+  padding: 11px 12px;
+  border-color: #7c9a6c77;
+  border-radius: 4px;
+  background: #10251fee;
+  box-shadow: 0 6px 18px #04140f33;
+}
+.compact-title b { color: #e0ebc4; }
+.compact-title button, .compact-foot button { color: #c7d9b6; }
+.compact-slots button { border-radius: 2px; padding: 5px; background: #29412d66; }
+.compact-slots small { color: #b4c6a8; font-size: 9px; }
+.compact-slots b { color: #e0e9c8; }
+.compact-foot { color: #bbcfb0; }
+.world-hud { top: 14px; right: 16px; border-radius: 4px; border-color: #93a66d66; background: #11251fea; }
+.world-hud button, .world-hud canvas { width: 156px; }
+.world-hud canvas { height: 104px; }
+.world-hud small { color: #c0d1b3; }
+.is-world .scene-top { right: 200px; }
+.journey-hint, .mission-hud { border-radius: 3px; }
+.journey-hint span { color: #c1d4b9; }
+.in-combat .context-hint, .is-world .context-hint { bottom: 196px; }
+.in-combat .capture-hud { bottom: 200px; }
+.tutorial-card { border-radius: 4px; background: #112720f5; }
+.tutorial-card p { color: #c1d5ba; }
+.tutorial-card > small { color: #abc6a7; }
+.journey-status { background: #16291f; border-color: #415d4966; }
+.journey-route > span { color: #b4cbaa; }
+
+@media (min-width: 851px) {
+  .game-layout:has(#intro:not(.hidden)) .build-panel {
+    max-height: calc(100dvh - 172px);
+    overflow-y: auto;
+    padding: 18px 16px;
+  }
+  .game-layout:has(#intro:not(.hidden)) .shadow-slot { min-height: 76px; padding: 12px 10px; }
+}
+
+@media (max-height: 760px) and (min-width: 701px) {
+  main { padding-top: 16px; }
+  .arena:has(#intro:not(.hidden)) { min-height: 460px; height: max(460px, calc(100dvh - 220px)); }
+  #intro { top: 59px; bottom: 16px; }
+  #intro h2, #intro:has(.camp-resume:not(.hidden)) h2 { font-size: 31px; margin: 4px 0; }
+  #intro .intro-explainer { font-size: 12px; line-height: 1.65; }
+  #intro:has(.camp-resume:not(.hidden)) { gap: 6px 14px; }
+  #intro:has(.camp-resume:not(.hidden)) .intro-explainer { margin-bottom: 5px; }
+  #intro:has(.camp-resume:not(.hidden)) .intro-note { display: none; }
+  #intro .intro-kicker { font-size: 9px; }
+  .modal .modal-card, .in-combat .modal .modal-card, .is-world .modal .modal-card { padding: 18px 20px; }
+  .modal h2 { font-size: 23px; }
+  .modal p { margin: 9px 0 14px; }
+}
+
+@media (max-width: 1050px) and (min-width: 701px) {
+  .header { gap: 18px; }
+  .header nav { margin-left: 6px; gap: 17px; }
+  .nav-button { font-size: 11px; letter-spacing: .5px; }
+  #intro { left: 5%; width: 500px; max-width: 91%; }
+  #intro .intro-start .primary { min-width: 0; }
+  #intro .camp-resume { font-size: 11px; }
+  .compact-build, .is-world .compact-build { width: 44%; }
+  .compact-slots .shadow-icon { display: none; }
+  .field-kit { width: 286px; }
+  .in-combat .combat-actions { gap: 18px; }
+}
+
+@media (max-width: 700px) {
+  .header { height: auto; min-height: 68px; padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .header nav { order: 3; width: 100%; margin: 0; gap: 8px; justify-content: space-between; }
+  .header .nav-button { font-size: 10px; padding: 8px 0; letter-spacing: 0; }
+  .header-end { margin-left: auto; }
+  .header .demo-tag { display: none; }
+  main, .in-combat { padding-left: 12px; padding-right: 12px; }
+  .page-heading { gap: 10px; }
+  .run-meta { gap: 8px; font-size: 10px; }
+  .run-number, .page-heading .divider { display: none; }
+  .arena:has(#intro:not(.hidden)) { min-height: 565px; height: 565px; }
+  #intro { top: 70px; bottom: 18px; left: 6%; width: 88%; max-width: 88%; }
+  #intro h2, #intro:has(.camp-resume:not(.hidden)) h2 { font-size: 30px; letter-spacing: 1px; }
+  #intro:has(.camp-resume:not(.hidden)) { display: block; }
+  #intro:has(.camp-resume:not(.hidden)) .intro-explainer { margin: 10px 0; font-size: 12px; }
+  #intro:has(.camp-resume:not(.hidden)) .intro-kicker { display: flex; }
+  #intro .camp-resume { margin: 9px 0; }
+  #intro:has(.camp-resume:not(.hidden)) .intro-start { display: flex; flex-direction: row; align-items: center; gap: 3px 12px; margin-top: 9px; }
+  #intro .intro-note { display: none; }
+  #intro .practice-entry { margin-top: 9px; }
+  .scene-top { inset: 15px 13px auto; }
+  .room-tag { display: none; }
+  .in-combat .arena { min-height: 650px; height: 650px; }
+  .in-combat .player-hud { left: 12px; bottom: 141px; padding: 9px 10px; }
+  .player-hud .kill-count { display: none; }
+  .field-kit { left: 12px; bottom: 225px; width: 306px; max-width: calc(100% - 24px); }
+  .compact-build, .is-world .compact-build { right: 12px; bottom: 12px; width: calc(100% - 24px); }
+  .compact-slots .shadow-icon { display: none; }
+  .compact-title b { font-size: 11px; }
+  .compact-foot { font-size: 9px; }
+  .world-hud { top: 12px; right: 10px; padding: 5px; }
+  .world-hud button, .world-hud canvas { width: 106px; }
+  .world-hud canvas { height: 71px; }
+  .world-hud small, .world-hud span { font-size: 8px; }
+  .is-world .scene-top { left: 13px; right: 139px; }
+  .is-world .location small { font-size: 10px; }
+  .in-combat .context-hint, .is-world .context-hint { bottom: 332px; min-width: 0; width: 88%; }
+  .in-combat .capture-hud { bottom: 337px; }
+  .is-world .boss-hud { top: 153px; }
+  .journey-hint { top: 135px; left: 13px; max-width: 230px; }
+  .modal, .is-world .modal { padding: 10px; }
+  .modal .modal-card, .in-combat .modal .modal-card, .is-world .modal .modal-card,
+  .is-world .modal[data-kind="worldmap"] .modal-card { padding: 16px 13px; }
+  .modal h2 { font-size: 22px; }
+  .modal .modal-actions { gap: 8px; }
+  .modal-actions button { max-width: 100%; }
+  .modal .primary { min-width: 0; }
+  .boon-grid, .choice-grid { grid-template-columns: 1fr; }
+  .camp-summary { gap: 6px; }
+  .camp-summary div { padding: 12px 8px; }
+  .world-map-layout .world-overview svg { height: 240px; }
+  .build-panel { padding: 16px; }
+  .in-combat .combat-bar { flex-wrap: wrap; padding: 12px; gap: 12px; }
+  .in-combat .combat-actions { width: 100%; justify-content: space-between; gap: 8px; }
+  .in-combat .combat-actions button { flex-direction: column; font-size: 9px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .health-track i, .corruption-track i, .primary, .kit-button, .boon-card, .choice { transition: none; }
+}
