@@ -7,7 +7,7 @@ const noop=()=>{};
 const context2d=new Proxy({}, {get:(o,k)=>k in o?o[k]:k==='createRadialGradient'||k==='createLinearGradient'?()=>({addColorStop:noop}):noop,set:(o,k,v)=>(o[k]=v,true)});
 const elements=new Map();
 class Element {
-  constructor(){this.style={};this.dataset={};this.listeners={};this.children=[];this.clientWidth=1000;this.clientHeight=650;const classes=new Set();this.classList={add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k),toggle:(k,v)=>v?classes.add(k):classes.delete(k)};}
+  constructor(){this.style={setProperty(k,v){this[k]=v;}};this.dataset={};this.listeners={};this.children=[];this.clientWidth=1000;this.clientHeight=650;const classes=new Set();this.classList={add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k),toggle:(k,v)=>v?classes.add(k):classes.delete(k)};}
   set innerHTML(html){this.html=html;this.children=[];for(const m of html.matchAll(/<button\b([^>]*)>/g)){const e=new Element();e.disabled=m[1].includes('disabled');for(const a of m[1].matchAll(/([\w-]+)="([^"]*)"/g)){if(a[1]==='id')elements.set(a[2],e);if(a[1].startsWith('data-'))e.dataset[a[1].slice(5)]=a[2];}this.children.push(e);}}
   get innerHTML(){return this.html||'';}
   querySelectorAll(s){if(s==='button')return this.children;const key=s.match(/data-([\w-]+)/)?.[1];return this.children.filter(c=>key in c.dataset);}
@@ -22,15 +22,15 @@ const document={getElementById:el,createElement:()=>new Element(),addEventListen
 const storage=new Map();let storageFail=false;
 const localStorage={getItem:k=>{if(storageFail)throw Error('Storage blocked');return storage.get(k)||null;},setItem:(k,v)=>{if(storageFail)throw Error('Storage blocked');storage.set(k,v);}};
 const sandbox={window,document,localStorage,requestAnimationFrame:noop,console,Math};
-for(const name of ['release-data.js','art.js','feedback.js'])vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist',name),'utf8'),sandbox);
+for(const name of ['release-data.js','art.js','feedback.js','scene-fx.js','combat-cues.js'])vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist',name),'utf8'),sandbox);
 const code=fs.readFileSync(require('node:path').join(__dirname,'../dist/game.js'),'utf8');
-const hook=`window.testGame={get state(){return state},get player(){return player},get enemies(){return enemies},get projectiles(){return projectiles},get minions(){return minions},get effects(){return effects},get keys(){return keys},get mouse(){return mouse},reset,start,update,enterRoom,damageEnemy,hitPlayer,expose,gainKill,skill,dash,basicAttack,updateCapture,openBuild,openCodex,openGuide,pause,closeModal,showRoute,evolution,combo,applyDye,beginTutorial,finishTutorial,updateTutorial,setTutorialStep,openSkillDetails,startPractice,practiceTargets,refreshPractice,updateObjective,retryObjective,requestPractice,draw,enterWorld,updateCamera,get camera(){return {...camera}},pointOnScreen,mousePosition,moveEntity,worldPositionFree,worldMoveSpeed,worldTravelEnd,spawnWorldEnemy,updateWorldEnemy,performEnemyAttack,interactWorld,startWorldMission,completeWorldMission,openWorldMap,updateWorld,useFlask,startRecall,updateJourney,chooseBoon,navigationTarget,applyPreset,leaveWorldMission,stunBoss,pressureBreak,updateEnemy,shoot,spawnMinion,showModal,projectileBlocked,drawHazard,get hazards(){return hazards}};\n`;
+const hook=`window.testGame={get state(){return state},get player(){return player},get enemies(){return enemies},get projectiles(){return projectiles},get minions(){return minions},get effects(){return effects},get keys(){return keys},get mouse(){return mouse},reset,start,update,enterRoom,damageEnemy,hitPlayer,expose,gainKill,skill,dash,basicAttack,updateCapture,openBuild,openCodex,openGuide,pause,closeModal,showRoute,combo,normalizeSkills,showReward,equipSkill,beginTutorial,finishTutorial,updateTutorial,setTutorialStep,openSkillDetails,startPractice,practiceTargets,refreshPractice,updateObjective,retryObjective,requestPractice,draw,enterWorld,updateCamera,get camera(){return {...camera}},pointOnScreen,mousePosition,moveEntity,worldPositionFree,worldMoveSpeed,worldTravelEnd,spawnWorldEnemy,updateWorldEnemy,performEnemyAttack,interactWorld,startWorldMission,completeWorldMission,openWorldMap,updateWorld,useFlask,startRecall,updateJourney,chooseBoon,navigationTarget,leaveWorldMission,stunBoss,pressureBreak,updateEnemy,shoot,spawnMinion,showModal,projectileBlocked,drawHazard,get hazards(){return hazards}};\n`;
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/guide-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/world-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/expedition-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/journey-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/campaign-data.js'),'utf8'),sandbox);
-const expeditionHook='window.expeditionTest={saveCamp,resumeCamp,canSaveCamp,claimDiscovery,discoveryBlocked,openCamp,telegraphInfo,attackCue,updateJourneyHint,allWorldSites};window.cameraTest={setViewRange,readViewRange,cameraWorldRect,worldMapSvg,changeViewByWheel,VIEW_RANGE,get range(){return viewRange}};';
+const expeditionHook='window.expeditionTest={saveCamp,resumeCamp,canSaveCamp,claimDiscovery,discoveryBlocked,openCamp,telegraphInfo,attackCue,updateJourneyHint,allWorldSites,expeditionReward,closeSettlement,saveSettlement};window.cameraTest={setViewRange,readViewRange,cameraWorldRect,worldMapSvg,changeViewByWheel,VIEW_RANGE,get range(){return viewRange}};';
 const releaseHook='window.releaseTest={openSettings,openRecords,openCredits,updateRelease,updateReleaseSettings,releaseSettings,endRun};';
 const campaignHook='window.campaignTest={openAtlas,closeAtlas,travelWorld,openInventory,useCampaignItem,campaignWorld,journeyMods,setupCampaignObjective,interactCampaignNode,completeCampaignWorld,get map(){return WORLD}};';
 vm.runInNewContext(code.replace('makeGround();reset();requestAnimationFrame(frame);',hook+expeditionHook+releaseHook+campaignHook+'makeGround();reset();'),sandbox);
@@ -56,13 +56,25 @@ test('Hunter gait tracks travel, settles against walls, and freezes with paused 
 });
 test('Intro, start, weapon attack and pause state',()=>{assert.equal(g.state.phase,'intro');start();assert.equal(g.enemies.length,4);const e=g.enemies[0];g.player.x=e.x-60;g.player.y=e.y;g.mouse.x=e.x;g.mouse.y=e.y;const hp=e.hp;g.basicAttack();assert.ok(e.hp<hp);const time=g.state.time;g.pause();tick(1);assert.equal(g.state.time,time);g.closeModal();assert.equal(g.state.phase,'playing');});
 test('Shadow pressure exposes a living enemy; channel grants a shadow',()=>{start();const e=g.enemies.find(e=>e.type==='archer');g.damageEnemy(e,5,100);assert.ok(e.hp>0&&e.exposed>0);g.player.x=e.x;g.player.y=e.y;g.keys.KeyE=true;for(let i=0;i<55;i++)g.updateCapture(.02);assert.equal(g.state.phase,'pickup');assert.ok(g.state.owned.has('archer'));assert.equal(g.state.captures,1);choice('equip',0).onclick();assert.equal(g.state.slots[0],'archer');assert.equal(g.state.phase,'playing');});
-test('Capture interruption, full-focus instant capture and harvesting',()=>{start();let e=g.enemies[0];g.expose(e);g.player.x=e.x;g.player.y=e.y;g.keys.KeyE=true;g.updateCapture(.4);assert.ok(g.state.capture>0);g.player.invincible=0;g.hitPlayer(10);assert.equal(g.state.capture,0);g.player.focus=100;g.updateCapture(.05);assert.equal(g.state.phase,'pickup');assert.equal(g.player.focus,0);el('sacrifice').onclick();assert.equal(g.player.hp,100);e=g.enemies[1];g.expose(e);g.damageEnemy(e,1,1,'basic');assert.ok(e.dead);assert.equal(g.state.kills,2);});
-test('Combat build changes require focus; safe build changes are free',()=>{start();g.openBuild(0);assert.ok(choice('shadow','fire').disabled);g.closeModal();g.player.focus=50;g.openBuild(0);choice('shadow','fire').onclick();assert.equal(g.player.focus,25);assert.equal(g.state.slots[0],'fire');g.closeModal();for(const e of g.enemies)g.gainKill(e);const savedFocus=g.player.focus;g.openBuild(0);choice('shadow','wolf').onclick();assert.equal(g.player.focus,savedFocus);assert.equal(g.state.slots[0],'wolf');});
-test('All eight hunting shapes produce distinct working actions',()=>{for(const id of ['wolf','fire','shield','giant','ghost','archer','mirror','swarm']){start();g.state.slots=[id,'fire','mirror'];const oldX=g.player.x;g.skill();assert.ok(g.state.skillCd>0);assert.equal(g.state.corruption,8);assert.ok(g.effects.length+g.projectiles.length+g.minions.length>0);if(id==='swarm')assert.equal(g.minions.length,6);if(id==='archer')assert.equal(g.projectiles.length,3);if(id==='mirror')assert.equal(g.projectiles.length,8);if(id==='shield')assert.ok(g.player.shield>0);if(id==='wolf')assert.notEqual(g.player.x,oldX);tick(.6);}});
-test('Dye rules: burn, bleed, guard, invulnerability, extra pressure, split and summons',()=>{start();let e=g.enemies[0];g.state.slots[1]='fire';g.applyDye(e);assert.ok(e.burn>0);g.state.slots[1]='wolf';g.applyDye(e);assert.ok(e.bleed>0);g.state.slots[1]='giant';e.pressure=10;g.applyDye(e);assert.ok(e.exposed>0);for(const id of ['shield','ghost','mirror','swarm']){start();g.state.slots[1]=id;if(id==='swarm'){g.applyDye(g.enemies[0]);assert.ok(g.minions.length>0);}else{g.skill();if(id==='shield')assert.ok(g.player.shield>0);if(id==='ghost')assert.ok(g.player.invincible>=1.4);if(id==='mirror')assert.equal(g.projectiles.length,2);}}});
-test('Three-shadow evolution and corruption seal have meaningful consequences',()=>{start();g.state.slots=['wolf','wolf','wolf'];assert.equal(g.evolution(),'月蚀狼王');g.state.corruption=96;g.skill();assert.equal(g.state.nightmare,9);for(const e of g.enemies)e.cd=999;tick(9.6);assert.ok(g.state.locked);assert.equal(g.state.corruption,25);assert.equal(g.evolution(),null);g.state.corruption=96;g.state.skillCd=0;g.skill();assert.equal(g.state.phase,'end');assert.match(el('modal-card').innerHTML,/你，成为了长梦/);});
+test('Capture interruption, full-focus instant capture and harvesting',()=>{start();let e=g.enemies[0];g.expose(e);g.player.x=e.x;g.player.y=e.y;g.keys.KeyE=true;g.updateCapture(.4);assert.ok(g.state.capture>0);g.player.invincible=0;g.hitPlayer(10);assert.equal(g.state.capture,0);g.player.focus=100;g.updateCapture(.05);assert.equal(g.state.phase,'pickup');assert.equal(g.player.focus,0);choice('equip',0).onclick();assert.equal(g.player.hp,100);e=g.enemies[1];g.expose(e);g.damageEnemy(e,1,1,'basic');assert.ok(e.dead);assert.equal(g.state.kills,2);});
+test('Switching is free, preserves cooldown, and only known skills can be equipped',()=>{
+start();g.player.focus=0;g.state.skillCd=3;g.openBuild();assert.equal(el('modal-card').querySelectorAll('[data-shadow]').length,4);assert.ok(choice('shadow','shield').disabled);assert.equal(g.equipSkill('shield'),false);choice('shadow','fire').onclick();assert.equal(g.player.focus,0);assert.equal(g.state.skillCd,3);assert.deepEqual([...g.state.slots],['fire']);assert.equal(g.equipSkill('fire'),false);el('build-close').onclick();g.skill();assert.equal(g.state.skillCd,3);assert.equal(g.equipSkill('wolf'),false);
+});
+
+test('Four skills have distinct single actions without hidden echoes or modifiers',()=>{
+for(const id of ['wolf','fire','shield','archer']){g.startPractice();g.state.slots=[id];const e=g.enemies[0];Object.assign(e,{x:g.player.x+120,y:g.player.y,hp:1000,pressure:1000});g.mouse.x=e.x;g.mouse.y=e.y;const x=g.player.x;g.skill();assert.equal(g.state.skillCd,4.8);assert.equal(g.minions.length,0);assert.ok(!g.effects.some(e=>e.kind==='delayed'));if(id==='archer')assert.equal(g.projectiles.length,3);else assert.equal(g.projectiles.length,0);if(id==='fire')assert.equal(e.burn,4);else assert.equal(e.burn,0);if(id==='wolf')assert.notEqual(g.player.x,x);else assert.equal(g.player.x,x);if(id==='shield')assert.equal(g.player.shield,3);else assert.equal(g.player.shield,0);}
+});
+
+test('All eight enemy rewards map into four skills; capture heals once and can keep equipment',()=>{
+const mapping={wolf:'wolf',ghost:'wolf',fire:'fire',swarm:'fire',shield:'shield',giant:'shield',archer:'archer',mirror:'archer'};for(const [enemy,id] of Object.entries(mapping)){start();g.player.hp=50;g.state.corruption=30;g.state.skillCd=2;g.showReward(enemy);assert.ok(g.state.owned.has(id));assert.equal(g.player.hp,75);assert.equal(g.state.corruption,20);assert.ok(g.state.owned.size<=4);const equip=choice('equip',0);equip.onclick();assert.deepEqual([...g.state.slots],[id]);assert.equal(g.state.skillCd,2);equip.onclick();assert.equal(g.player.hp,75);}start();g.showReward('mirror');el('keep-skill').onclick();assert.deepEqual([...g.state.slots],['wolf']);assert.ok(g.state.owned.has('archer'));
+});
+
+test('Nightmare risk remains but no skill is sealed after the first awakening',()=>{
+start();g.state.corruption=96;g.skill();assert.equal(g.state.nightmare,9);for(const e of g.enemies)e.cd=999;tick(9.6);assert.ok(g.state.locked);assert.equal(g.state.corruption,25);g.openBuild();assert.equal(g.equipSkill('fire'),true);el('build-close').onclick();assert.equal(g.combo().name,'火焰');g.state.corruption=96;g.state.skillCd=0;g.skill();assert.equal(g.state.phase,'end');assert.match(el('modal-card').innerHTML,/你，成为了长梦/);
+});
+
 test('Boss pressure gate, second phase, capture and victory restart',()=>{start();g.enterRoom(4,'boss');const b=g.enemies[0];g.damageEnemy(b,5,300);assert.equal(b.exposed,0);b.hp=500;g.update(.02);assert.equal(b.phase,2);assert.ok(g.enemies.length===3);g.damageEnemy(b,400,300);assert.ok(b.exposed>0);g.player.x=b.x;g.player.y=b.y;g.keys.KeyE=true;g.player.focus=100;g.updateCapture(.05);assert.equal(g.state.phase,'pickup');choice('equip',0).onclick();assert.equal(g.state.phase,'end');assert.ok(g.state.bossWon);el('end-restart').onclick();assert.equal(g.state.phase,'worldIntro');el('world-begin').onclick();assert.equal(g.state.phase,'playing');assert.equal(g.state.room,0);assert.equal(g.state.kills,0);assert.equal(g.player.hp,100);});
-test('Death and return to camp reset UI; codex opened from pause resumes correctly',()=>{start();g.player.invincible=0;g.hitPlayer(150);assert.equal(g.state.phase,'end');el('end-home').onclick();assert.equal(g.state.phase,'intro');assert.equal(el('room-name').textContent,'遗忘林地');start();g.pause();g.openCodex();el('codex-close').onclick();assert.equal(g.state.phase,'playing');});
+test('Death and return to camp reset UI; codex opened from pause resumes correctly',()=>{start();g.player.invincible=0;g.hitPlayer(150);assert.equal(g.state.phase,'end');el('end-home').onclick();assert.equal(g.state.phase,'intro');assert.equal(el('room-name').textContent,'遗忘林地');start();g.pause();g.openCodex();el('build-close').onclick();assert.equal(g.state.phase,'playing');});
 test('Guided tutorial requires movement, exposure, capture, equip and an actual skill hit',()=>{
  g.beginTutorial();assert.equal(g.state.tutorial.step,0);assert.equal(g.enemies.length,1);
  const e=g.enemies[0];const hp=g.player.hp;tick(3);assert.equal(g.player.hp,hp);g.skill();assert.equal(g.state.skillCd,0);
@@ -71,14 +83,20 @@ test('Guided tutorial requires movement, exposure, capture, equip and an actual 
  tick(10);assert.equal(e.dead,false);g.damageEnemy(e,999,999,'basic');assert.equal(e.dead,false);
  g.player.x=e.x-65;g.player.y=e.y;g.keys.KeyE=true;g.updateCapture(.4);g.keys.KeyE=false;g.updateCapture(.1);assert.equal(g.state.capture,0);
  g.keys.KeyE=true;for(let i=0;i<55;i++)g.updateCapture(.02);assert.equal(g.state.phase,'pickup');assert.equal(g.state.tutorial.step,3);
- assert.ok(choice('equip',1).disabled);assert.match(el('modal-card').innerHTML,/你的 Q 将从突进变成射箭/);
+ assert.equal(choice('equip',1),undefined);assert.match(el('modal-card').innerHTML,/装备影箭/);
  choice('equip',0).onclick();assert.equal(g.state.slots[0],'archer');assert.equal(g.state.tutorial.step,4);
  g.mouse.x=g.enemies[0].x;g.mouse.y=g.enemies[0].y;g.skill();tick(2.2);assert.equal(g.state.phase,'lessonComplete');assert.equal(g.state.tutorial.step,5);
  el('tutorial-finish').onclick();assert.equal(g.state.tutorial,null);assert.equal(g.state.phase,'worldIntro');el('world-begin').onclick();assert.equal(g.state.phase,'playing');assert.equal(g.state.room,0);assert.equal(g.state.corruption,0);assert.equal(g.state.time,0);assert.equal(g.state.kills,0);assert.equal(g.player.hp,100);assert.equal(g.state.slots[0],'archer');assert.ok(g.state.owned.has('archer'));
 });
 test('Tutorial pause, skip and restart do not trap the player',()=>{g.beginTutorial();g.pause();tick(1);assert.equal(g.state.tutorial.step,0);g.closeModal();assert.equal(g.state.phase,'playing');g.finishTutorial();assert.equal(g.state.tutorial,null);assert.equal(g.state.phase,'worldIntro');assert.ok(g.enemies.length>=30);g.reset();assert.ok(el('tutorial-card').classList.contains('hidden'));});
-test('Skill detail and reward choices explain effects and real costs',()=>{start();g.openSkillDetails();assert.equal(g.state.phase,'skillinfo');assert.match(el('modal-card').innerHTML,/三个槽位不是三个按键/);assert.match(el('modal-card').innerHTML,/0.55 秒/);el('skill-info-close').onclick();assert.equal(g.state.phase,'playing');g.state.corruption=80;const e=g.enemies[0];g.expose(e);g.player.x=e.x;g.player.y=e.y;g.player.focus=100;g.keys.KeyE=true;g.updateCapture(.05);assert.match(el('modal-card').innerHTML,/恢复 12.5 生命/);assert.match(el('modal-card').innerHTML,/现在：/);assert.match(el('modal-card').innerHTML,/换成：/);});
-test('All 24 slot descriptions exist; archer dye extends swarm duration',()=>{for(const data of Object.values(window.HUNTER_GUIDE.shadows))for(const role of ['hunt','dye','echo'])assert.ok(data[role].length>12);start();g.state.slots=['swarm','archer','wolf'];g.skill();assert.equal(g.minions.length,6);assert.ok(g.minions.every(m=>m.life>9));});
+test('Skill details show a short use and expandable numbers; healing respects high corruption',()=>{
+start();g.openSkillDetails();assert.equal(g.state.phase,'skillinfo');assert.match(el('modal-card').innerHTML,/4.8 秒冷却/);assert.match(el('modal-card').innerHTML,/详细数值/);assert.doesNotMatch(el('modal-card').innerHTML,/槽位|回响|附魔/);el('skill-info-close').onclick();g.player.hp=50;g.state.corruption=80;g.showReward('wolf');assert.equal(g.player.hp,62.5);assert.equal(g.state.corruption,70);assert.equal(el('modal-card').querySelectorAll('button').length,1);
+});
+
+test('Skill catalog has four concise entries and old families migrate without losing mastery',()=>{
+const guide=window.HUNTER_GUIDE;assert.equal(Object.keys(guide.skills).length,4);for(const info of Object.values(guide.skills)){assert.ok(info.summary.length<15);assert.ok(info.detail.length>20);}start();g.state.slots=['giant','ghost','mirror'];g.state.owned=new Set(['giant','ghost','mirror']);g.state.stored='swarm';g.state.levels.giant=2;g.state.xp.giant=18;g.state.levels.shield=1;g.normalizeSkills();assert.deepEqual([...g.state.slots],['shield']);assert.equal(g.state.owned.size,4);assert.equal(g.state.levels.shield,2);assert.equal(g.state.xp.shield,18);assert.equal(g.state.levels.giant,0);assert.equal(g.state.stored,null);g.normalizeSkills();assert.equal(g.state.levels.shield,2);g.openBuild();assert.equal(el('modal-card').querySelectorAll('[data-shadow]').length,4);
+});
+
 test('Other panels cannot replace reward or tutorial completion dialogs',()=>{
  start();g.state.phase='lessonComplete';g.openGuide();g.openCodex();g.openBuild();assert.equal(g.state.phase,'lessonComplete');
  g.state.phase='pickup';g.openGuide();g.openCodex();g.openBuild();assert.equal(g.state.phase,'pickup');
@@ -111,15 +129,15 @@ test('Capture objective cannot be completed by guard kills or accidental harvest
  start();g.enterRoom(3,'capture');el('mission-start').onclick();const o=g.state.objective,e=g.enemies.find(e=>e.id===o.targetId);
  for(const guard of g.enemies.filter(t=>t!==e))g.gainKill(guard);tick(2);assert.equal(g.state.phase,'playing');
  g.expose(e);g.damageEnemy(e,999,999,'basic');assert.ok(!e.dead);tick(7.3);assert.ok(!e.dead);assert.equal(e.exposed,0);assert.ok(e.pressure>0);
- g.expose(e);g.player.x=e.x;g.player.y=e.y;g.player.focus=100;g.keys.KeyE=true;g.updateCapture(.05);assert.equal(g.state.phase,'pickup');assert.ok(g.state.owned.has('ghost'));assert.ok(o.captured);
- choice('equip',1).onclick();tick(.1);assert.equal(g.state.phase,'map');assert.equal(g.state.slots[1],'ghost');g.draw();
+ g.expose(e);g.player.x=e.x;g.player.y=e.y;g.player.focus=100;g.keys.KeyE=true;g.updateCapture(.05);assert.equal(g.state.phase,'pickup');assert.ok(g.state.owned.has('wolf'));assert.ok(o.captured);
+ choice('equip',0).onclick();tick(.1);assert.equal(g.state.phase,'map');assert.deepEqual([...g.state.slots],['wolf']);g.draw();
 });
 test('Free practice unlocks all shadows, waives costs, resets and cannot leak into a run',()=>{
- g.startPractice();assert.equal(g.state.mode,'practice');assert.equal(g.state.owned.size,8);g.player.focus=0;g.player.invincible=0;g.hitPlayer(999,true);assert.equal(g.player.hp,100);
- g.openBuild(0);assert.ok(!choice('shadow','giant').disabled);choice('shadow','giant').onclick();assert.equal(g.player.focus,0);el('build-close').onclick();g.skill();assert.equal(g.state.corruption,0);assert.ok(g.state.skillCd>0);g.refreshPractice();assert.equal(g.state.skillCd,0);
+ g.startPractice();assert.equal(g.state.mode,'practice');assert.equal(g.state.owned.size,4);g.player.focus=0;g.player.invincible=0;g.hitPlayer(999,true);assert.equal(g.player.hp,100);
+ g.openBuild(0);assert.ok(!choice('shadow','shield').disabled);choice('shadow','shield').onclick();assert.equal(g.player.focus,0);el('build-close').onclick();g.skill();assert.equal(g.state.corruption,0);assert.ok(g.state.skillCd>0);g.refreshPractice();assert.equal(g.state.skillCd,0);
  g.practiceTargets('mobs');assert.equal(g.enemies.length,4);tick(2);assert.equal(g.player.hp,100);g.player.invincible=0;g.player.shield=2;g.hitPlayer(10);assert.equal(g.player.shield,0);assert.equal(g.player.hp,100);for(const e of g.enemies)g.gainKill(e);tick(1);assert.equal(g.state.phase,'playing');assert.equal(g.enemies.filter(e=>!e.dead).length,4);
  g.practiceTargets('dummy');g.draw();assert.equal(g.enemies.length,1);const pos=g.enemies[0].x;tick(2);assert.equal(g.enemies[0].x,pos);
- g.reset();g.start();assert.equal(g.state.phase,'worldIntro');assert.equal(g.state.mode,'hunt');assert.equal(g.state.owned.size,3);assert.equal(g.state.slots[0],'wolf');assert.equal(g.state.kills,0);
+ g.reset();g.start();assert.equal(g.state.phase,'worldIntro');assert.equal(g.state.mode,'hunt');assert.equal(g.state.owned.size,2);assert.equal(g.state.slots[0],'wolf');assert.equal(g.state.kills,0);
 });
 test('Mode switch is explicit and cancellation resumes the same run',()=>{
  start();g.requestPractice();assert.equal(g.state.phase,'modeChoice');el('cancel-practice').onclick();assert.equal(g.state.phase,'playing');assert.equal(g.enemies.length,4);
@@ -151,16 +169,16 @@ test('River blocks fast movement; bridges and all landmark routes remain passabl
 test('Terrain changes movement and damage; skills and projectiles work beyond the old screen',()=>{
  expedition();g.player.x=1770;g.player.y=1510;assert.equal(g.worldMoveSpeed(),145);g.player.x=1600;g.player.y=1250;assert.equal(g.worldMoveSpeed(),224);
  g.player.x=1620;g.player.y=880;g.player.invincible=0;g.state.world.terrainTick=0;g.updateWorld(.02);assert.equal(g.player.hp,94);
- g.player.x=2100;g.player.y=1700;g.updateCamera(0,true);g.mousePosition({clientX:900,clientY:390});g.state.slots=['archer','fire','mirror'];g.skill();tick(.12);assert.ok(g.projectiles.some(p=>p.x>1200));assert.ok(g.player.x>1200);g.draw();
+ g.player.x=2100;g.player.y=1700;g.updateCamera(0,true);g.mousePosition({clientX:900,clientY:390});g.state.slots=['archer'];g.skill();tick(.12);assert.ok(g.projectiles.some(p=>p.x>1200));assert.ok(g.player.x>1200);g.draw();
 });
 test('New enemy variants have distinct telegraphs, hazards and armor',()=>{
  expedition();g.player.x=1900;g.player.y=1050;g.player.invincible=0;const e=g.spawnWorldEnemy('cinder',1900,800);e.cd=0;g.updateWorldEnemy(e,.02);assert.equal(e.attack,'meteor');const lockedX=e.target.x;g.player.x+=200;g.performEnemyAttack(e);assert.equal(g.hazards.at(-1).x,lockedX);assert.equal(g.player.hp,100);
  const stalker=g.spawnWorldEnemy('stalker',g.player.x-120,g.player.y);stalker.cd=0;g.updateWorldEnemy(stalker,.02);assert.equal(stalker.attack,'venom');g.performEnemyAttack(stalker);assert.ok(g.hazards.at(-1).poison);assert.equal(g.worldMoveSpeed(),145);
  const shield=g.spawnWorldEnemy('sentinel',3100,1500);shield.facing=0;shield.telegraph=0;g.player.x=3200;g.player.y=1500;const hp=shield.hp;g.damageEnemy(shield,20,0);const front=hp-shield.hp;g.player.x=3000;const hp2=shield.hp;g.damageEnemy(shield,20,0);assert.ok(hp2-shield.hp>front*2);g.draw();
 });
-test('World map pauses, tracks locations and does not teleport; nearby safety governs swaps',()=>{
+test('World map pauses, tracks locations and does not teleport; skills can be swapped anywhere',()=>{
  expedition();const x=g.player.x,y=g.player.y;g.openWorldMap();const time=g.state.time;tick(2);assert.equal(g.state.time,time);choice('track','capture').onclick();assert.equal(g.state.world.track,'capture');assert.equal(g.player.x,x);assert.equal(g.player.y,y);assert.equal(g.state.phase,'playing');
- g.player.focus=0;g.openBuild();assert.ok(!choice('shadow','fire').disabled);el('build-close').onclick();const e=g.enemies[0];g.player.x=e.x-60;g.player.y=e.y;g.openBuild();assert.ok(choice('shadow','fire').disabled);el('build-close').onclick();
+ g.player.focus=0;g.openBuild();assert.ok(!choice('shadow','fire').disabled);el('build-close').onclick();const e=g.enemies[0];g.player.x=e.x-60;g.player.y=e.y;g.openBuild();assert.ok(!choice('shadow','fire').disabled);el('build-close').onclick();
 });
 test('World objectives preserve ambient enemies, retry resources and unlock the local Boss',()=>{
  expedition();const sites=window.HUNTER_WORLD.sites;const boss=sites.find(s=>s.id==='boss');g.player.x=boss.x;g.player.y=boss.y;g.interactWorld();assert.equal(g.state.objective,null);
@@ -197,7 +215,7 @@ test('Remote discoveries require guards cleared; upgrade and max-level fallback 
 test('Camp roundtrip restores build, resources, rewards, enemy deaths and mission progress',()=>{
  expedition();const scout=g.enemies.find(e=>e.scout);g.gainKill(scout,true);g.state.owned.add('archer');g.state.slots[0]='archer';g.state.world.claimed.add('trail-cache');g.state.world.completed.add('chase');g.state.world.visited.add('marsh');g.state.world.seen.add('stalker');g.state.world.track='defend';g.state.world.restCharges=0;g.state.stored='ghost';g.state.time=123;g.state.corruption=37;g.player.hp=63;g.player.focus=42;
  assert.equal(x.saveCamp(),true);const saved=storage.get(ex.key);g.state.world.completed.add('defend');g.state.world.claimed.add('ash-cache');g.state.slots[0]='wolf';g.player.hp=12;
- g.reset();assert.ok(!el('continue-run').classList.contains('hidden'));assert.equal(x.resumeCamp(),true);assert.equal(g.state.phase,'playing');assert.equal(g.player.hp,63);assert.equal(g.player.focus,42);assert.equal(g.player.x,520);assert.equal(g.state.slots[0],'archer');assert.equal(g.state.corruption,37);assert.equal(g.state.stored,'ghost');assert.equal(g.state.world.completed.size,1);assert.equal(g.state.world.claimed.size,1);assert.equal(g.state.world.restCharges,0);assert.equal(g.state.world.track,'defend');assert.ok(g.enemies.find(e=>e.scout).dead);assert.equal(g.enemies.length,31);assert.equal(g.projectiles.length,0);assert.equal(storage.get(ex.key),saved);
+ g.reset();assert.ok(!el('continue-run').classList.contains('hidden'));assert.equal(x.resumeCamp(),true);assert.equal(g.state.phase,'playing');assert.equal(g.player.hp,63);assert.equal(g.player.focus,42);assert.equal(g.player.x,520);assert.equal(g.state.slots[0],'archer');assert.equal(g.state.corruption,37);assert.equal(g.state.stored,null);assert.equal(g.state.world.completed.size,1);assert.equal(g.state.world.claimed.size,1);assert.equal(g.state.world.restCharges,0);assert.equal(g.state.world.track,'defend');assert.ok(g.enemies.find(e=>e.scout).dead);assert.equal(g.enemies.length,31);assert.equal(g.projectiles.length,0);assert.equal(storage.get(ex.key),saved);
  g.interactWorld();assert.equal(g.state.phase,'camp');assert.ok(el('camp-rest').disabled);assert.equal(x.saveCamp(),true);el('camp-leave').onclick();g.player.x=650;g.player.y=1530;assert.equal(x.claimDiscovery(ex.discoveries[0]),false);g.draw();
 });
 test('Camp saving rejects dangerous contexts and resumes death from the last checkpoint',()=>{
@@ -224,8 +242,8 @@ test('Attack anticipation names each danger, locks targets and matches the actua
  expedition();const e=g.enemies[0];e.target={x:100,y:200};e.telegraph=1;e.attack='meteor';x.attackCue(e);assert.equal(e.windup,1);assert.equal(x.telegraphInfo(e).x,100);assert.equal(x.telegraphInfo(e).radius,88);assert.match(x.telegraphInfo(e).label,/离开橙圈/);g.player.x=400;assert.equal(x.telegraphInfo(e).x,100);
  for(const attack of ['lunge','shot','slam','lantern','venom','shieldBash','curse']){e.attack=attack;const info=x.telegraphInfo(e);assert.ok(info.label.length>4);if(attack==='lunge')assert.equal(info.length,.36*650);g.draw();}e.boss=true;e.attack='lunge';assert.equal(x.telegraphInfo(e).length,.58*650);e.telegraph=0;x.attackCue(e);assert.equal(e.cueActive,false);
 });
-test('Nightmare expiry remains saveable after the echo slot seals',()=>{
- expedition();g.state.owned.add('giant');g.state.slots=['giant','fire','mirror'];g.state.corruption=96;g.skill();assert.equal(g.state.nightmare,9);tick(9.6);
+test('Nightmare history remains saveable with a single active skill',()=>{
+ expedition();g.state.owned.add('shield');g.state.slots=['shield'];g.state.corruption=96;g.skill();assert.equal(g.state.nightmare,9);tick(9.6);
  assert.equal(g.state.nightmare,0);assert.ok(g.state.locked);assert.equal(x.canSaveCamp(),true);assert.equal(x.saveCamp(),true);g.reset();assert.equal(x.resumeCamp(),true);assert.ok(g.state.locked);assert.equal(g.state.nightmare,0);
 });
 test('Boss exposure expiry restores combat instead of leaving a negative capture timer',()=>{
@@ -249,10 +267,10 @@ test('Only purple hazards bypass dodge invulnerability; orange and green hazards
  for(const purple of [false,true]){expedition();g.player.x=1000;g.player.y=1800;g.player.invincible=.25;g.player.dash=.18;g.player.dx=0;g.player.dy=0;g.hazards.push({x:g.player.x,y:g.player.y,r:72,life:4,tick:0,friendly:false,color:purple?'#a36cca':'#84c8a3',poison:!purple,purple,damage:5});g.update(.02);assert.equal(g.player.hp,purple?95:100);}
  expedition();g.player.invincible=.25;g.hazards.push({x:g.player.x,y:g.player.y,r:88,life:2.6,tick:0,friendly:false,color:'#edac6f',damage:7});g.update(.02);assert.equal(g.player.hp,100);
 });
-test('Swarm active-shadow levels increase summoned attack damage by the promised amount',()=>{
- const damages=[];for(const level of [0,2]){start();g.state.slots=['swarm','archer','wolf'];g.state.levels.swarm=level;const enemy=g.enemies[0];enemy.hp=enemy.maxHp=1000;enemy.pressure=enemy.maxPressure=1000;enemy.cd=999;for(const other of g.enemies)if(other!==enemy)other.dead=true;g.skill();for(const minion of g.minions){minion.x=enemy.x;minion.y=enemy.y;}const hp=enemy.hp;g.update(.001);damages.push(hp-enemy.hp);}
- assert.ok(damages[0]>0);assert.ok(Math.abs(damages[1]/damages[0]-1.44)<1e-8);
+test('Skill levels increase direct arrow damage by 22 percent each',()=>{
+const damages=[];for(const level of [0,2]){const enemy=castTarget('archer');g.state.levels.archer=level;g.skill();for(const p of g.projectiles){p.x=enemy.x;p.y=enemy.y;p.vx=p.vy=0;}g.update(.001);damages.push(1000-enemy.hp);}assert.ok(Math.abs(damages[1]/damages[0]-1.44)<1e-8);
 });
+
 test('Flasks are limited, cool down, cleanse corruption, and waste no charge at full resources',()=>{
  expedition();const j=g.state.journey;assert.equal(j.flasks,2);g.useFlask();assert.equal(j.flasks,2);assert.equal(j.flaskCd,0);
  g.player.hp=40;g.state.corruption=40;g.useFlask();assert.equal(g.player.hp,75);assert.equal(g.state.corruption,28);assert.equal(j.flasks,1);assert.equal(j.flaskCd,8);g.useFlask();assert.equal(j.flasks,1);assert.equal(g.player.hp,75);
@@ -264,14 +282,99 @@ test('C and B keyboard shortcuts execute once per key press and Space suppresses
  const button={tagName:'BUTTON',closest:selector=>selector.includes('button')?button:null};const space=keyEvent('keydown','Space',{target:button});assert.equal(space.defaultPrevented,true);assert.ok(g.state.dashCd>0);keyEvent('keyup','Space');
  g.player.dash=0;g.player.x=350;g.player.y=2010;keyEvent('keydown','KeyB');assert.ok(g.state.journey.recall>0);keyEvent('keyup','KeyB');
 });
-test('Safe stationary recall opens camp after three seconds without healing or saving',()=>{
- expedition();const saved=storage.get(ex.key);g.player.x=350;g.player.y=2010;g.player.hp=54;g.state.corruption=37;g.startRecall();assert.ok(g.state.journey.recall>0);tick(2.8);assert.equal(g.state.phase,'playing');assert.equal(g.player.x,350);tick(.4);
- assert.equal(g.state.phase,'camp');assert.equal(g.player.x,520);assert.equal(g.player.y,2010);assert.equal(g.player.hp,54);assert.equal(g.state.corruption,37);assert.equal(g.state.journey.recall,0);assert.equal(storage.get(ex.key),saved);
+test('Stationary recall takes three seconds even at camp, then saves and opens settlement',()=>{
+ for(const originX of [350,520]){
+  expedition();g.player.x=originX;g.player.hp=54;g.state.corruption=37;
+  assert.equal(g.startRecall(),true);assert.equal(g.state.journey.recall,3);tick(2.8);
+  assert.equal(g.state.phase,'playing');assert.equal(g.player.x,originX);g.draw();tick(.22);
+  assert.equal(g.state.phase,'settlement');assert.equal(g.player.x,520);assert.equal(g.player.y,2010);
+  assert.equal(g.player.hp,54);assert.equal(g.state.corruption,37);assert.equal(g.state.journey.recall,0);
+  assert.ok(g.state.settlement.campSaved);assert.ok(g.state.settlement.profileSaved);assert.ok(ex.valid(JSON.parse(storage.get(ex.key))));
+  assert.ok(Math.abs(g.state.settlement.elapsed-3)<.03);assert.equal(JSON.parse(storage.get(ex.key)).checkpoint.player.hp,54);
+  const elapsed=g.state.settlement.elapsed;tick(5);assert.equal(g.state.settlement.elapsed,elapsed);g.draw();
+ }
 });
-test('Recall cancels on movement or danger and refuses an active mission',()=>{
- expedition();g.player.x=350;g.player.y=2010;g.startRecall();assert.ok(g.state.journey.recall>0);keyEvent('keydown','KeyD');tick(.1);keyEvent('keyup','KeyD');assert.equal(g.state.journey.recall,0);tick(3.2);assert.equal(g.state.phase,'playing');
- g.startRecall();assert.ok(g.state.journey.recall>0);const enemy=g.enemies[0];enemy.x=g.player.x+70;enemy.y=g.player.y;tick(.02);assert.equal(g.state.journey.recall,0);g.startRecall();assert.equal(g.state.journey.recall,0);
- expedition();const site=window.HUNTER_WORLD.sites.find(s=>s.id==='chase');g.player.x=site.x;g.player.y=site.y;g.interactWorld();el('mission-start').onclick();g.startRecall();assert.equal(g.state.journey.recall,0);
+test('Recall protects against live enemies, purple hazards and nightmare until arrival',()=>{
+ expedition();g.player.x=1770;g.player.y=1510;g.player.hp=61;g.player.invincible=0;
+ const enemy=g.enemies[0];enemy.x=g.player.x+60;enemy.y=g.player.y;enemy.cd=0;
+ g.hazards.push({x:g.player.x,y:g.player.y,r:100,life:10,tick:0,purple:true,damage:999});
+ assert.equal(g.startRecall(),true);g.hitPlayer(999,true);assert.equal(g.player.hp,61);tick(.4);
+ assert.ok(g.state.journey.recall>0);assert.equal(g.player.hp,61);g.state.nightmare=8;tick(2.7);
+ assert.equal(g.state.phase,'settlement');assert.equal(g.player.hp,61);assert.equal(g.state.nightmare,0);
+ assert.equal(g.hazards.length,0);assert.equal(g.projectiles.length,0);assert.equal(g.minions.length,0);
+ assert.ok(g.enemies.every(e=>e.dead||!e.telegraph&&!e.dash));assert.ok(g.state.settlement.campSaved);
+});
+test('Movement, attacks, skills, dodge, capture, flasks and panels each interrupt recall',()=>{
+ const actions=[
+  ()=>{keyEvent('keydown','KeyD');tick(.02);keyEvent('keyup','KeyD');},
+  ()=>g.basicAttack(),()=>g.skill(),()=>g.dash(),
+  ()=>{g.keys.KeyE=true;tick(.02);g.keys.KeyE=false;},
+  ()=>{g.player.hp=50;g.useFlask();},()=>g.openWorldMap(),()=>g.pause()
+ ];
+ for(const action of actions){expedition();g.player.x=350;assert.equal(g.startRecall(),true);action();assert.equal(g.state.journey.recall,0);assert.notEqual(g.state.phase,'settlement');}
+ expedition();g.player.x=350;keyEvent('keydown','KeyB');tick(.3);const remaining=g.state.journey.recall;
+ keyEvent('keydown','KeyB',{repeat:true});assert.equal(g.state.journey.recall,remaining);keyEvent('keyup','KeyB');keyEvent('keydown','KeyB');assert.equal(g.state.journey.recall,0);keyEvent('keyup','KeyB');
+ g.startPractice();assert.equal(g.startRecall(),false);g.beginTutorial();assert.equal(g.startRecall(),false);g.reset();assert.equal(g.startRecall(),false);
+});
+test('Recall abandons an active mission while preserving earned rewards and cleaning inputs',()=>{
+ expedition();const site=window.campaignTest.map.sites.find(s=>s.kind==='defend');g.player.x=site.x;g.player.y=site.y;
+ g.interactWorld();el('mission-start').onclick();const enemy=g.enemies.find(e=>e.mission);g.gainKill(enemy,true);
+ g.showReward('archer');el('keep-skill').onclick();g.state.journey.perks.push('keen');
+ const reward=x.expeditionReward('recall-test:mission','mission'),inventory=JSON.stringify(g.state.campaign.inventory),kills=g.state.kills;
+ g.state.objective.remaining=.01;g.state.objective.lantern.hp=1;
+ assert.ok(reward);assert.equal(g.startRecall(),true);g.keys.KeyB=true;tick(3.1);
+ assert.equal(g.state.phase,'settlement');assert.equal(g.state.objective,null);assert.equal(g.state.world.missionCheckpoint,null);
+ assert.equal(g.state.kills,kills);assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);assert.ok(g.state.owned.has('archer'));assert.ok(g.state.journey.perks.includes('keen'));
+ assert.ok(g.enemies.every(e=>!e.mission));assert.equal(g.state.world.completed.has(site.id),false);assert.ok(g.state.settlement.abandoned);
+ assert.ok(g.state.settlement.skills.includes('archer'));assert.ok(g.state.settlement.perks.includes('keen'));assert.ok(g.state.settlement.items[reward]>0);
+ assert.equal(Object.keys(g.keys).length,0);assert.equal(g.mouse.down,false);assert.equal(g.player.charging,0);assert.equal(g.state.capture,0);
+ const save=JSON.parse(storage.get(ex.key));assert.ok(save.checkpoint.run.owned.includes('archer'));assert.ok(save.checkpoint.run.journey.perks.includes('keen'));
+});
+test('A Boss defeated during recall keeps the channel and settles its unlock and guaranteed relic once',()=>{
+ expedition();const campaign=window.HUNTER_CAMPAIGN;g.state.world.completed=new Set(['chase','defend','capture']);
+ const site=window.campaignTest.map.sites.find(s=>s.kind==='boss');g.player.x=site.x;g.player.y=site.y;g.interactWorld();
+ const boss=g.enemies.find(e=>e.boss);assert.ok(boss);boss.hp=.01;boss.burn=.1;g.updateEnemy(boss,.02);
+ assert.ok(boss.hp<=0&&boss.exposed>0);boss.exposed=.06;g.state.hitStop=0;const before={...g.state.campaign.inventory};assert.equal(g.startRecall(),true);tick(.1);
+ assert.ok(boss.dead);assert.equal(g.state.phase,'playing');assert.ok(g.state.journey.recall>0);assert.ok(g.state.campaign.cleared.includes('forest'));assert.ok(campaign.unlocked(g.state.campaign,'forge'));
+ tick(2.8);assert.equal(g.state.phase,'playing');tick(.12);assert.equal(g.state.phase,'settlement');
+ const report=g.state.settlement,inventory=JSON.stringify(g.state.campaign.inventory);assert.ok(Math.abs(report.elapsed-3)<.03);assert.equal(report.kills,1);assert.equal(report.items.fang,1);assert.ok(report.campSaved);
+ for(const [id,count] of Object.entries(g.state.campaign.inventory))assert.equal(report.items[id]||0,count-(before[id]||0));
+ assert.match(el('modal-card').innerHTML,/月狼牙坠/);el('settlement-close').onclick();assert.equal(g.state.phase,'intro');assert.ok(x.resumeCamp());
+ assert.ok(g.state.campaign.cleared.includes('forest'));assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);g.updateWorld(.02);assert.equal(g.state.phase,'playing');
+ g.startRecall();tick(3.1);assert.equal(g.state.phase,'settlement');assert.equal(Object.keys(g.state.settlement.items).length,0);assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);
+});
+test('Settlement measures active adventure time and acquired loot without counting duplicates',()=>{
+ expedition();tick(1);g.pause();const active=g.state.adventure.elapsed;tick(5);assert.equal(g.state.adventure.elapsed,active);g.closeModal();
+ const id=x.expeditionReward('recall-test:loot','mission');assert.ok(id);const gained=g.state.adventure.items[id];
+ assert.equal(x.expeditionReward('recall-test:loot','mission'),null);assert.equal(g.state.adventure.items[id],gained);
+ const enemy=g.enemies.find(e=>!e.scout);g.gainKill(enemy,true);const kills=g.state.adventure.kills;g.gainKill(enemy,true);assert.equal(g.state.adventure.kills,kills);
+ g.state.owned.add('archer');g.state.journey.perks.push('keen');g.state.world.claimed.add('trail-cache');g.state.world.completed.add('chase');
+ g.startRecall();tick(3.1);const summary=g.state.settlement;
+ assert.ok(Math.abs(summary.elapsed-4)<.03);assert.equal(summary.kills,1);assert.equal(summary.captures,1);assert.equal(summary.completed,1);
+ assert.deepEqual([...summary.skills],['archer']);assert.deepEqual([...summary.perks],['keen']);assert.deepEqual([...summary.discoveries],['trail-cache']);assert.ok(summary.items[id]>=gained);
+ assert.match(el('modal-card').innerHTML,new RegExp(window.HUNTER_CAMPAIGN.items[id].name));assert.match(el('modal-card').innerHTML,/settlement-close/);
+ el('settlement-close').onclick();assert.equal(g.state.phase,'intro');const inventory=JSON.stringify(g.state.campaign.inventory);assert.ok(x.resumeCamp());
+ assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);assert.ok(g.state.owned.has('archer'));assert.equal(g.state.adventure.elapsed,0);assert.equal(g.state.adventure.kills,0);assert.equal(Object.keys(g.state.adventure.items).length,0);
+ g.startRecall();tick(3.1);assert.deepEqual([...g.state.settlement.skills],[]);assert.deepEqual([...g.state.settlement.perks],[]);assert.deepEqual([...g.state.settlement.discoveries],[]);assert.equal(g.state.settlement.completed,0);
+});
+test('Mission retries retain adventure duration and actual loot without duplicating guard rewards',()=>{
+ expedition();const site=window.campaignTest.map.sites.find(s=>s.kind==='defend');g.player.x=site.x;g.player.y=site.y;g.interactWorld();el('mission-start').onclick();
+ tick(.5);g.gainKill(g.enemies.find(e=>e.mission));const item=x.expeditionReward('recall-test:retry','mission');
+ const elapsed=g.state.adventure.elapsed,items=JSON.stringify(g.state.adventure.items),inventory=JSON.stringify(g.state.campaign.inventory);
+ g.state.objective.lantern.hp=0;g.updateObjective(.02);el('mission-retry').onclick();
+ assert.equal(g.state.adventure.elapsed,elapsed);assert.equal(JSON.stringify(g.state.adventure.items),items);assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);
+ tick(3);assert.equal(g.state.adventure.elapsed,elapsed);el('mission-start').onclick();assert.equal(x.expeditionReward('recall-test:retry','mission'),null);
+ assert.equal(JSON.stringify(g.state.adventure.items),items);g.startRecall();tick(3.1);assert.ok(g.state.settlement.elapsed>=elapsed+3-.03);assert.ok(g.state.settlement.items[item]>0);
+});
+test('Every world returns to its own initial camp and settlement close controls preserve progress',()=>{
+ const controls=['settlement-close','settlement-x','Escape'];
+ for(const [index,world] of window.HUNTER_CAMPAIGN.worlds.entries()){
+  g.reset();g.enterWorld(world.id);el('world-begin').onclick();const camp=window.campaignTest.map.sites.find(s=>s.kind==='camp');
+  g.player.x=350;g.player.y=2010;keyEvent('keydown','KeyB');keyEvent('keyup','KeyB');tick(3.1);
+  assert.equal(g.state.phase,'settlement');assert.equal(g.state.world.id,world.id);assert.equal(g.player.x,camp.x);assert.equal(g.player.y,camp.y);
+  const control=controls[index%controls.length];if(control==='Escape'){keyEvent('keydown','Escape');keyEvent('keyup','Escape');}else el(control).onclick();
+  assert.equal(g.state.phase,'intro');assert.ok(!el('continue-run').classList.contains('hidden'));assert.ok(x.resumeCamp());assert.equal(g.state.world.id,world.id);assert.equal(g.player.x,camp.x);assert.equal(g.player.y,camp.y);
+ }
 });
 test('Mission blessings require one offered choice and repeated or foreign choices do not stack',()=>{
  expedition();const site=window.HUNTER_WORLD.sites.find(s=>s.id==='chase');g.player.x=site.x;g.player.y=site.y;g.interactWorld();el('mission-start').onclick();g.gainKill(g.enemies.find(e=>e.id===g.state.objective.targetId));g.updateObjective(.02);
@@ -282,13 +385,10 @@ test('Journey perks and flask stock survive camp loading and mission retries rol
  expedition();g.state.journey.perks=['ward','renewal'];g.state.journey.flasks=1;g.state.journey.bestStreak=5;assert.equal(x.saveCamp(),true);g.reset();assert.equal(x.resumeCamp(),true);assert.deepEqual([...g.state.journey.perks],['ward','renewal']);assert.equal(g.state.journey.flasks,1);assert.equal(g.state.journey.bestStreak,5);
  const site=window.HUNTER_WORLD.sites.find(s=>s.id==='defend');g.player.x=site.x;g.player.y=site.y;g.interactWorld();el('mission-start').onclick();g.state.journey.perks.push('keen');g.state.journey.flasks=0;g.state.journey.bestStreak=20;g.state.objective.lantern.hp=0;g.updateObjective(.02);el('mission-retry').onclick();assert.deepEqual([...g.state.journey.perks],['ward','renewal']);assert.equal(g.state.journey.flasks,1);assert.equal(g.state.journey.bestStreak,5);
 });
-test('Build presets require learned shadows, charge only changed slots, and preserve a sealed echo',()=>{
- expedition();g.player.focus=0;const original=[...g.state.slots];g.openBuild();assert.ok(choice('preset',1).disabled);assert.equal(g.applyPreset(1),false);assert.deepEqual([...g.state.slots],original);
- g.state.owned.add('archer');g.openBuild();assert.equal(choice('preset',1).disabled,false);assert.equal(g.applyPreset(1),true);assert.deepEqual([...g.state.slots],['archer','mirror','fire']);assert.equal(g.player.focus,0);el('build-close').onclick();
- const enemy=g.enemies[0];g.player.x=enemy.x-60;g.player.y=enemy.y;g.player.focus=74;g.openBuild();assert.ok(choice('preset',0).disabled);assert.equal(g.applyPreset(0),false);assert.equal(g.player.focus,74);assert.deepEqual([...g.state.slots],['archer','mirror','fire']);
- g.player.focus=75;g.openBuild();assert.equal(choice('preset',0).disabled,false);assert.equal(g.applyPreset(0),true);assert.equal(g.player.focus,0);assert.deepEqual([...g.state.slots],original);assert.equal(g.applyPreset(0),false);
- g.state.locked=true;g.player.focus=50;assert.equal(g.applyPreset(1),true);assert.deepEqual([...g.state.slots],['archer','mirror','mirror']);assert.equal(g.player.focus,0);el('build-close').onclick();assert.equal(g.applyPreset(0),false);
+test('Old camp equipment migrates all families and new one-skill camps roundtrip',()=>{
+expedition();assert.equal(x.saveCamp(),true);const raw=JSON.parse(storage.get(ex.key)),run=raw.checkpoint.run;run.slots=['ghost','swarm','giant'];run.owned=['ghost','swarm','giant','mirror'];run.stored='shield';run.levels.ghost=2;run.xp.ghost=18;run.levels.giant=1;run.xp.giant=7;run.locked=true;storage.set(ex.key,JSON.stringify(raw));g.reset();assert.equal(x.resumeCamp(),true);assert.deepEqual([...g.state.slots],['wolf']);assert.equal(g.state.owned.size,4);assert.equal(g.state.levels.wolf,2);assert.equal(g.state.levels.shield,1);assert.equal(g.state.stored,null);assert.equal(x.saveCamp(),true);assert.equal(JSON.parse(storage.get(ex.key)).checkpoint.run.slots.length,1);g.reset();assert.equal(x.resumeCamp(),true);assert.equal(g.state.levels.wolf,2);assert.deepEqual([...g.state.slots],['wolf']);
 });
+
 test('Navigation leads across a reachable bridge before pointing at the tracked site',()=>{
  expedition();const target=window.HUNTER_WORLD.sites.find(s=>s.id==='capture');g.state.world.track=target.id;let waypoint=g.navigationTarget();assert.ok(waypoint.bridge);assert.equal(waypoint.y,1650);assert.ok(waypoint.x<1220);assert.ok(g.worldPositionFree(waypoint.x,waypoint.y,g.player.r));
  g.player.x=1150;g.player.y=1650;waypoint=g.navigationTarget();assert.ok(waypoint.bridge);assert.ok(waypoint.x>1390);assert.equal(waypoint.y,1650);
@@ -335,34 +435,31 @@ test('Boss pressure breaks cancel an active lunge before it can move or damage a
  assert.equal(boss.dash,0);assert.equal(boss.telegraph,0);assert.equal(boss.exposed,0);assert.equal(boss.pressure,boss.maxPressure);const position={x:boss.x,y:boss.y};
  g.update(.02);assert.equal(g.player.hp,100);assert.ok(Math.hypot(boss.x-position.x,boss.y-position.y)<2);
 });
-test('Giant dye uses the same Boss pressure gate at high and low health',()=>{
- for(const lowHealth of [false,true]){start();g.enterRoom(4,'boss');const boss=g.enemies[0];g.state.slots[1]='giant';boss.pressure=10;boss.telegraph=1;boss.dash=.3;if(lowHealth)boss.hp=100;
-  g.applyDye(boss);assert.equal(boss.telegraph,0);assert.equal(boss.dash,0);if(lowHealth)assert.ok(boss.exposed>0);else{assert.equal(boss.exposed,0);assert.equal(boss.pressure,boss.maxPressure);}
- }
+test('Shield pressure applies the Boss gate at high and low health',()=>{
+ for(const lowHealth of [false,true]){start();g.enterRoom(4,'boss');const boss=g.enemies[0];g.state.slots=['shield'];g.player.x=boss.x+60;g.player.y=boss.y;boss.pressure=10;boss.telegraph=1;boss.dash=.3;if(lowHealth)boss.hp=100;g.skill();assert.equal(boss.telegraph,0);assert.equal(boss.dash,0);if(lowHealth)assert.ok(boss.exposed>0);else{assert.equal(boss.exposed,0);assert.equal(boss.pressure,boss.maxPressure);}}
 });
 test('A precise dodge applies the Boss pressure break instead of leaving negative pressure',()=>{
  for(const lowHealth of [false,true]){start();g.enterRoom(4,'boss');const boss=g.enemies[0];boss.pressure=10;boss.telegraph=1;boss.attack='slam';boss.target={x:g.player.x,y:g.player.y};if(lowHealth)boss.hp=100;
   g.dash();assert.equal(boss.telegraph,0);if(lowHealth)assert.ok(boss.exposed>0);else{assert.equal(boss.exposed,0);assert.equal(boss.pressure,boss.maxPressure);}
  }
 });
-function changeCastLoadout(){g.openBuild(0);choice('shadow','giant').onclick();el('build-close').onclick();g.openBuild(1);choice('shadow','wolf').onclick();el('build-close').onclick();}
+function changeCastLoadout(){g.openBuild();choice('shadow','shield').onclick();el('build-close').onclick();}
 function castTarget(active,echo='wolf'){
- g.startPractice();g.state.slots=[active,'fire',echo];g.state.levels[active]=0;g.state.levels.giant=2;
+ g.startPractice();g.state.slots=[active];g.state.levels[active]=0;g.state.levels.shield=active==='shield'?0:2;
  const enemy=g.enemies[0];Object.assign(enemy,{x:780,y:410,hp:1000,maxHp:1000,pressure:1000,maxPressure:1000,cd:999});g.mouse.x=enemy.x;g.mouse.y=enemy.y;return enemy;
 }
-test('In-flight arrows keep their original active level and dye after a loadout change',()=>{
- const results=[];for(const changed of [false,true]){const enemy=castTarget('archer');g.skill();if(changed)changeCastLoadout();tick(.6);results.push({damage:1000-enemy.hp,burn:enemy.burn,bleed:enemy.bleed});}
- assert.ok(results[0].damage>0);assert.ok(Math.abs(results[0].damage-results[1].damage)<1e-8);assert.ok(results[1].burn>0);assert.equal(results[1].bleed,0);
+test('In-flight arrows keep their casting level after switching skills',()=>{
+const results=[];for(const changed of [false,true]){const enemy=castTarget('archer');g.skill();if(changed)changeCastLoadout();tick(.6);results.push(1000-enemy.hp);assert.equal(enemy.burn,0);assert.equal(enemy.bleed,0);}assert.ok(results[0]>0);assert.ok(Math.abs(results[0]-results[1])<1e-8);
 });
-test('Existing summons keep the casting level and dye when the hunter changes equipment',()=>{
- const results=[];for(const changed of [false,true]){const enemy=castTarget('swarm');g.skill();for(const minion of g.minions){minion.x=enemy.x;minion.y=enemy.y;}if(changed)changeCastLoadout();g.update(.001);results.push({damage:1000-enemy.hp,burn:enemy.burn,bleed:enemy.bleed});}
- assert.ok(Math.abs(results[0].damage-48)<1e-8);assert.ok(Math.abs(results[0].damage-results[1].damage)<1e-8);assert.ok(results[1].burn>0);assert.equal(results[1].bleed,0);
+
+test('Existing fire burns retain the cast when switching skills',()=>{
+const results=[];for(const changed of [false,true]){const enemy=castTarget('fire');enemy.x=g.player.x+120;enemy.y=g.player.y;g.mouse.x=enemy.x;g.mouse.y=enemy.y;g.skill();if(changed)changeCastLoadout();tick(.6);results.push(1000-enemy.hp);assert.ok(enemy.burn>0);assert.equal(enemy.burnCast.active,'fire');}assert.ok(Math.abs(results[0]-results[1])<1e-8);
 });
-test('Mirror replays retain the captured shape, level and dye after changing equipment',()=>{
- const enemy=castTarget('archer','mirror');g.skill();g.projectiles.splice(0);changeCastLoadout();tick(.56);assert.equal(g.projectiles.length,3);
- for(const projectile of g.projectiles){projectile.x=enemy.x;projectile.y=enemy.y;projectile.vx=0;projectile.vy=0;}
- const hp=enemy.hp;g.update(.001);assert.ok(Math.abs((hp-enemy.hp)-48*.58*3)<1e-8);assert.ok(enemy.burn>0);assert.equal(enemy.bleed,0);
+
+test('Learning mirror gives arrows without delayed replay',()=>{
+g.startPractice();g.showReward('mirror');choice('equip',0).onclick();g.skill();assert.equal(g.projectiles.length,3);g.projectiles.splice(0);tick(.6);assert.equal(g.projectiles.length,0);
 });
+
 test('Non-combat dialogs preserve native Tab navigation and Space activation',()=>{
  for(const phase of ['guide','codex','skillinfo','paused','pickup','briefing','worldComplete','discovery','camp','missionFailed']){
   start();g.showModal(phase,'<button id="test-modal-action">Continue</button>');
@@ -380,7 +477,7 @@ test('Expired projectiles cannot hit, and their final partial frame preserves th
  }
 });
 test('Expired summons cannot bite while a positive final lifetime can still attack',()=>{
- for(const life of [0,.005]){const enemy=castTarget('swarm');g.spawnMinion(enemy.x,enemy.y,'#ffffff',life);g.update(.02);assert.equal(enemy.hp,life>0?992:1000);assert.equal(g.minions.length,0);}
+ for(const life of [0,.005]){const enemy=castTarget('archer');g.spawnMinion(enemy.x,enemy.y,'#ffffff',life);g.update(.02);assert.equal(enemy.hp,life>0?992:1000);assert.equal(g.minions.length,0);}
 });
 test('Expired ground hazards cause no damage but a valid final partial frame still ticks',()=>{
  for(const life of [0,.005]){start();for(const enemy of g.enemies)enemy.dead=true;g.player.invincible=0;g.hazards.push({x:g.player.x,y:g.player.y,r:40,life,tick:0,friendly:false,color:'#ffffff',damage:7});g.update(.02);assert.equal(g.player.hp,life>0?93:100);assert.equal(g.hazards.length,0);}
@@ -390,17 +487,18 @@ test('All initial world enemies spawn outside solid terrain and can leave their 
  const wolf=g.enemies.find(enemy=>enemy.type==='wolf'&&enemy.home.x>=800&&enemy.home.x<900&&enemy.home.y===1020);assert.ok(wolf);const before={x:wolf.x,y:wolf.y};
  for(const enemy of g.enemies)if(enemy!==wolf)enemy.dead=true;g.player.x=wolf.x-250;g.player.y=wolf.y;g.player.invincible=100;tick(1);assert.ok(Math.hypot(wolf.x-before.x,wolf.y-before.y)>20);
 });
-test('Dodging preserves a longer invulnerability effect already granted by a skill',()=>{
- castTarget('archer');g.state.slots[1]='ghost';g.skill();assert.equal(g.player.invincible,1.4);g.dash();assert.equal(g.player.invincible,1.4);assert.ok(g.player.dash>0);
+test('Dodging preserves the invulnerability already granted by a dash skill',()=>{
+castTarget('wolf');g.skill();assert.equal(g.player.invincible,.45);g.dash();assert.equal(g.player.invincible,.45);assert.ok(g.player.dash>0);
 });
-test('Shield dye does not shorten the three-second shield from the active shield shape',()=>{
- castTarget('shield');g.state.slots[1]='shield';g.skill();assert.equal(g.player.shield,3);g.update(.02);assert.ok(Math.abs(g.player.shield-2.98)<1e-8);
+
+test('Shield remains active for three seconds and only counters once',()=>{
+castTarget('shield');g.skill();assert.equal(g.player.shield,3);g.update(.02);assert.ok(Math.abs(g.player.shield-2.98)<1e-8);g.player.invincible=0;g.hitPlayer(10);assert.equal(g.player.shield,0);assert.equal(g.player.hp,100);
 });
-test('A stored shield counter retains its casting level and dye after equipment changes',()=>{
- const enemy=castTarget('shield');enemy.x=g.player.x+90;enemy.y=g.player.y;g.skill();enemy.hp=1000;enemy.burn=0;enemy.bleed=0;
- changeCastLoadout();assert.equal(g.state.slots[1],'wolf');g.player.invincible=0;g.hitPlayer(10);assert.equal(g.player.shield,0);assert.ok(Math.abs((1000-enemy.hp)-40)<1e-8);assert.equal(g.player.hp,100);
- assert.equal(enemy.burn,3);assert.equal(enemy.bleed,0);assert.equal(enemy.burnCast.active,'shield');assert.equal(enemy.burnCast.dye,'fire');assert.equal(g.player.shieldCast,null);
+
+test('A shield counter retains its casting level after changing skills',()=>{
+const enemy=castTarget('shield');enemy.x=g.player.x+90;enemy.y=g.player.y;g.skill();enemy.hp=1000;g.state.levels.fire=2;g.openBuild();choice('shadow','fire').onclick();el('build-close').onclick();g.player.invincible=0;g.hitPlayer(10);assert.equal(g.player.shield,0);assert.ok(Math.abs((1000-enemy.hp)-40)<1e-8);assert.equal(g.player.hp,100);assert.equal(enemy.burn,0);assert.equal(g.player.shieldCast,null);
 });
+
 test('Burn and bleed consume only their actual remaining duration on the final frame',()=>{
  const enemy=castTarget('archer');enemy.burn=.005;enemy.bleed=.004;g.update(.02);assert.ok(Math.abs((1000-enemy.hp)-(9*.005+7*.004))<1e-8);assert.equal(enemy.burn,0);assert.equal(enemy.bleed,0);
 });
@@ -494,10 +592,10 @@ test('Visual feedback follows real actions, refuses cooldown casts and resets sa
  g.dash();assert.ok(fx.snapshot().some(e=>e.kind==='dash'));g.reset();assert.equal(fx.snapshot().length,0);
  start();g.player.invincible=0;g.hitPlayer(1);assert.ok(fx.snapshot().some(e=>e.kind==='hit'));
 });
-test('Acquisition and weaving show short icon cards while retaining optional full rules',()=>{
+test('Acquisition has two choices and the picker has four icon cards with optional rules',()=>{
  start();const enemy=g.enemies.find(e=>e.type==='archer');g.expose(enemy);g.player.x=enemy.x;g.player.y=enemy.y;g.player.focus=100;g.keys.KeyE=true;g.updateCapture(.05);
- const html=el('modal-card').innerHTML;assert.match(html,/acquisition-sigil/);assert.equal(el('modal-card').querySelectorAll('[data-equip]').length,3);assert.match(html,/<details class="visual-details">/);
- choice('equip',0).onclick();assert.ok(window.HUNTER_FEEDBACK.snapshot().some(e=>e.kind==='equip'));g.openBuild();assert.match(el('modal-card').innerHTML,/ability-grid/);assert.match(el('modal-card').innerHTML,/推荐组合/);
+ const html=el('modal-card').innerHTML;assert.match(html,/skill-icon/);assert.equal(el('modal-card').querySelectorAll('[data-equip]').length,1);assert.equal(el('modal-card').querySelectorAll('button').length,2);
+ choice('equip',0).onclick();assert.ok(window.HUNTER_FEEDBACK.snapshot().some(e=>e.kind==='equip'));g.openBuild();assert.match(el('modal-card').innerHTML,/skill-grid/);assert.match(el('modal-card').innerHTML,/成长与施法规则/);assert.doesNotMatch(el('modal-card').innerHTML,/推荐组合|附魔|回响/);
 });
 test('All five campaigns finish through their actual mission handlers and AND-gated travel',()=>{
  const c=window.HUNTER_CAMPAIGN,x=window.campaignTest;g.reset();x.openAtlas('forge');assert.ok(el('atlas-travel').disabled);assert.equal(x.travelWorld('forge'),false);x.closeAtlas();
@@ -543,16 +641,38 @@ test('Campaign missing storage, new camp metadata and forged world ids fail safe
  expedition();const ex=window.HUNTER_EXPEDITION,save=JSON.parse(storage.get(ex.key));assert.equal(save.world.worldId,'forest');assert.ok(save.world.visit);save.world.worldId='missing';assert.ok(!ex.valid(save));save.world.worldId='forge';save.world.visit='<script>';assert.ok(!ex.valid(save));
  storageFail=true;const x=window.campaignTest;g.state.campaign.inventory.fang=1;window.expeditionTest.openCamp();x.openInventory('camp');assert.ok(x.useCampaignItem('fang'));assert.equal(x.journeyMods().attack,1.1);g.reset();assert.equal(g.state.campaign.equipped,'fang');storageFail=false;
 });
+test('The fire cast that awakens nightmare still emits its visual when cooldown resets',()=>{
+ start();g.state.slots=['fire'];g.state.corruption=92;const fx=window.HUNTER_FEEDBACK;fx.clear();g.skill();
+ assert.ok(g.state.nightmare>0);assert.equal(g.state.skillCd,0);assert.equal(fx.snapshot().filter(e=>e.kind==='cast').length,1);
+ g.draw();
+});
+test('Settlement reports blocked storage and can retry durable saving without awarding loot again',()=>{
+ expedition();const initial=storage.get(ex.key),item=x.expeditionReward('recall-test:save-retry','mission');g.state.owned.add('archer');
+ const inventory=JSON.stringify(g.state.campaign.inventory);storageFail=true;g.startRecall();tick(3.1);
+ assert.equal(g.state.phase,'settlement');assert.equal(g.state.settlement.campSaved,false);assert.equal(g.state.settlement.profileSaved,false);assert.match(el('modal-card').innerHTML,/暂存/);
+ assert.equal(storage.get(ex.key),initial);storageFail=false;x.saveSettlement();
+ assert.equal(g.state.settlement.campSaved,true);assert.equal(g.state.settlement.profileSaved,true);assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);assert.ok(g.state.settlement.items[item]>0);
+ assert.notEqual(storage.get(ex.key),initial);x.closeSettlement();assert.equal(g.state.phase,'intro');assert.ok(x.resumeCamp());assert.ok(g.state.owned.has('archer'));assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);
+});
+test('Closing a failed settlement keeps a resumable in-page camp newer than persistent storage',()=>{
+ expedition();const initial=storage.get(ex.key);g.showReward('archer');el('keep-skill').onclick();g.state.journey.perks.push('keen');
+ const item=x.expeditionReward('recall-test:memory','mission'),inventory=JSON.stringify(g.state.campaign.inventory);storageFail=true;g.startRecall();tick(3.1);
+ assert.equal(g.state.phase,'settlement');assert.equal(g.state.settlement.campSaved,false);assert.ok(g.state.settlement.items[item]>0);el('settlement-x').onclick();
+ assert.equal(g.state.phase,'intro');assert.ok(!el('continue-run').classList.contains('hidden'));assert.match(el('save-note').textContent,/本页|暂存/);assert.equal(storage.get(ex.key),initial);
+ storageFail=false;assert.ok(x.resumeCamp());assert.ok(g.state.owned.has('archer'));assert.ok(g.state.journey.perks.includes('keen'));assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);assert.equal(g.player.x,520);assert.equal(g.player.y,2010);
+ assert.equal(g.state.adventure.elapsed,0);assert.equal(Object.keys(g.state.adventure.items).length,0);assert.ok(x.saveCamp());
+});
 if(fs.existsSync(require('node:path').join(__dirname,'../release/影子猎手-直接玩.html'))){
  test('Portable single HTML boots from inline scripts with no external loader',()=>{
   const portableWindow={devicePixelRatio:1,addEventListener:noop};
   const portable={window:portableWindow,document,localStorage,requestAnimationFrame:noop,console,Math,setInterval:noop};
   const html=fs.readFileSync(require('node:path').join(__dirname,'../release/影子猎手-直接玩.html'),'utf8');
-  const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];assert.equal(scripts.length,10);
+  const sourceHtml=fs.readFileSync(require('node:path').join(__dirname,'../dist/index.html'),'utf8');
+  const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];assert.equal(scripts.length,[...sourceHtml.matchAll(/<script src=/g)].length);
   for(const script of scripts)vm.runInNewContext(script[1],portable);
   assert.equal(portableWindow.shadowHunter.snapshot().phase,'intro');el('skip-intro').onclick();assert.equal(portableWindow.shadowHunter.snapshot().phase,'worldIntro');el('world-begin').onclick();
   assert.equal(portableWindow.shadowHunter.snapshot().phase,'playing');assert.ok(portableWindow.shadowHunter.snapshot().enemies.length>=30);assert.ok(portableWindow.HUNTER_AUDIO);assert.ok(portableWindow.HUNTER_ART);assert.ok(html.includes('data:image/png;base64,'));
-  assert.doesNotMatch(html,/<script[^>]+src=/);assert.doesNotMatch(html,/<link rel="stylesheet"/);
+  assert.ok(portableWindow.HUNTER_SCENE);assert.doesNotMatch(html,/<script[^>]+src=/);assert.doesNotMatch(html,/<link rel="stylesheet"/);
  });
 }
 console.log(`\n${passed} gameplay smoke scenarios passed.`);

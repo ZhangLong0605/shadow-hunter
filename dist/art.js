@@ -220,8 +220,9 @@ window.HUNTER_ART=(()=>{
   if(e.boss){for(const [x,y] of [[-16,-20],[-5,-24],[5,-27]])shape(g,[[x-3,y+3],[x-2,y-20],[x+6,y-29],[x+5,y+4]],'#aaa0c0','#e7d2ff77');}
   g.restore();
  }
- function tree(g,p,time,player){
-  const {x,y,size:s}=p,kind=p.tone>.47?0:1,fade=Math.abs(player.x-x)<s&&player.y<y+20&&player.y>y-s*2.5;
+ function tree(g,p,time,player,enemies=[]){
+  const {x,y,size:s}=p,kind=p.tone>.47?0:1,behind=a=>Math.abs(a.x-x)<s+(a.r||15)&&a.y<y+20&&a.y>y-s*2.5;
+  const fade=behind(player)||enemies.some(e=>!e.dead&&(e.aggro||e.exposed||e.telegraph>0||e.dash>0||e.hp<e.maxHp)&&behind(e));
   g.save();g.translate(x,y);if(fade)g.globalAlpha=.27;
   oval(g,16,13,s*.85,s*.29,'#020f1c65');
   shape(g,[[-9,8],[-4,-s*1.5],[4,-s*1.5],[11,8],[3,14]],'#384d40','#93a77c44');

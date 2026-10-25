@@ -2,7 +2,7 @@
 window.HUNTER_CAMPAIGN = (() => {
  'use strict';
  const worlds=[
-  {id:'forest',number:1,name:'月蚀森林',subtitle:'第一盏灯，第一条归路',level:1,requires:[],color:'#bad4a0',symbol:'♧',pos:[100,220],theme:'forest',description:'沿月光小径追猎镜魔、守住梦灯、夺取幽灵。三枚印记将唤醒月狼。',feature:'双桥河道 · 三影入门',enemies:['wolf','archer','mirror'],boss:'饥饿月狼',bossType:'wolf',bossMove:'lunge',loot:['leaf','dew','seed','fang']},
+  {id:'forest',number:1,name:'月蚀森林',subtitle:'第一盏灯，第一条归路',level:1,requires:[],color:'#bad4a0',symbol:'♧',pos:[100,220],theme:'forest',description:'沿月光小径追猎镜魔、守住梦灯、夺取幽灵。三枚印记将唤醒月狼。',feature:'双桥河道 · 夺影入门',enemies:['wolf','archer','mirror'],boss:'饥饿月狼',bossType:'wolf',bossMove:'lunge',loot:['leaf','dew','seed','fang']},
   {id:'forge',number:2,name:'熔火裂谷',subtitle:'在灰烬中，重新点燃炉心',level:3,requires:['forest'],color:'#efa777',symbol:'♨',pos:[310,100],theme:'ash',description:'猎杀熔炉守卫，保卫余火，穿过熔岩带关闭三座散热阀。小心祭司锁定的落火。',feature:'余烬地形 · 阀门探索',enemies:['cinder','fire','giant'],boss:'熔心巨像',bossType:'giant',bossMove:'meteor',loot:['coal','ember','ore','heart']},
   {id:'tide',number:3,name:'潮汐群岛',subtitle:'循着潮声，找回失落航标',level:3,requires:['forest'],color:'#8ddbd4',symbol:'≈',pos:[310,340],theme:'marsh',description:'走过浅滩连接的岛屿，点亮三座航标，捕获潮灵，清除潜伏的水泽梦魇。',feature:'浅滩减速 · 航标寻路',enemies:['stalker','ghost','swarm'],boss:'深潮幽魂',bossType:'ghost',bossMove:'venom',loot:['shell','pearl','kelp','tideglass']},
   {id:'ruins',number:4,name:'风蚀遗迹',subtitle:'当两条归路，在旧城交汇',level:5,requires:['forge','tide'],color:'#dec898',symbol:'◇',pos:[535,220],theme:'ruins',description:'按「日 → 月 → 星」复原古代机关，截住镜魔信使，从侧后方击破遗迹卫士。',feature:'顺序机关 · 重甲侧击',enemies:['sentinel','archer','mirror'],boss:'砂冠守卫',bossType:'shield',bossMove:'shieldBash',loot:['sand','rune','alloy','compass']},

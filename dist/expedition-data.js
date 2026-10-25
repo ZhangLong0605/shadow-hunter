@@ -18,7 +18,7 @@ window.HUNTER_EXPEDITION = (() => {
     const c=s.checkpoint,r=c.run,p=c.player,w=s.world;
     if(w.worldId!==undefined&&!window.HUNTER_CAMPAIGN?.worlds.some(v=>v.id===w.worldId))return false;
     if(w.visit!==undefined&&(typeof w.visit!=='string'||!/^[-a-z0-9]{1,80}$/.test(w.visit)))return false;
-    if(!record(r)||!record(p)||!record(r.levels)||!record(r.xp)||!list(r.owned,ids,8)||!Array.isArray(r.slots)||r.slots.length!==3||!Array.from(r.slots).every(x=>r.owned.includes(x)))return false;
+    if(!record(r)||!record(p)||!record(r.levels)||!record(r.xp)||!list(r.owned,ids,8)||!Array.isArray(r.slots)||![1,3].includes(r.slots.length)||!Array.from(r.slots).every(x=>r.owned.includes(x)))return false;
     if(!ids.every(id=>Number.isInteger(r.levels?.[id])&&num(r.levels[id],0,2)&&Number.isInteger(r.xp?.[id])&&num(r.xp[id],0,1e6)))return false;
     if(!['blade','bow'].includes(r.weapon)||typeof r.locked!=='boolean'||r.stored!==null&&!ids.includes(r.stored))return false;
     if(!['time','kills','captures','hits'].every(k=>num(r[k],0,1e9))||!num(r.corruption,0,100)||!num(r.nightmare,0,9))return false;

@@ -1,11 +1,11 @@
 {
   "name": "shadow-hunter-demo",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "private": true,
-  "description": "影子猎手：五境远征，五个独立世界、分支解锁与随机战利品",
+  "description": "影子猎手：五境远征，四种易上手技能、五个独立世界与随机战利品",
   "scripts": {
     "start": "node server.cjs",
-    "check": "node --check dist/game.js && node --check dist/journey-data.js && node --check dist/expedition-data.js && node --check dist/world-data.js && node --check dist/guide-data.js && node --check dist/audio.js && node --check dist/art.js && node --check dist/release-data.js && node --check dist/feedback.js && node --check dist/campaign-data.js",
-    "test": "node tests/campaign-data.cjs && node tests/journey-data.cjs && node tests/save-data.cjs && node tests/release.cjs && node tests/visuals.cjs && node tests/smoke.cjs"
+    "check": "node --check dist/game.js && node --check dist/journey-data.js && node --check dist/expedition-data.js && node --check dist/world-data.js && node --check dist/guide-data.js && node --check dist/audio.js && node --check dist/art.js && node --check dist/release-data.js && node --check dist/feedback.js && node --check dist/campaign-data.js && node --check dist/scene-fx.js && node --check dist/combat-cues.js",
+    "test": "node tests/campaign-data.cjs && node tests/journey-data.cjs && node tests/save-data.cjs && node tests/release.cjs && node tests/visuals.cjs && node tests/combat-clarity.cjs && node tests/smoke.cjs"
   }
 }
