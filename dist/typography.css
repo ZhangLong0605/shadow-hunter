@@ -1,0 +1,59 @@
+/* One locally bundled type family across menus, exploration and dialogs. */
+@font-face {
+ font-family:'Shadow Interface';
+ src:url('assets/shadow-ui.ttf') format('truetype');
+ font-style:normal;
+ font-weight:400;
+ font-display:swap;
+}
+:root {
+ --interface-font:'Shadow Interface','PingFang SC','Microsoft YaHei',sans-serif;
+ --serif:var(--interface-font);
+}
+body { font-family:var(--interface-font);font-weight:400; }
+body :is(button,input,select,textarea,h1,h2,h3,h4,h5,p,small,strong,b,label,summary,kbd,output,th,td),
+body :is(.eyebrow,.intro-kicker,.intro-note,.modal-eyebrow,.brand small,.run-meta,.location,.room-tag,.title-links,.nav-button,.demo-tag,.fine-print,.tags,.tip,.toast) {
+ font-family:var(--interface-font);
+}
+/* Regular outlines avoid synthetic bold filling the narrow counters. */
+body :is(h1,h2,h3,h4,h5,strong,b) { font-weight:400; }
+#intro .intro-kicker,#intro:has(.camp-resume:not(.hidden)) .intro-kicker,
+#intro .intro-explainer,#intro .intro-note,
+.brand>span:last-child,.brand small { font-family:var(--interface-font); }
+#intro .intro-explainer { font-size:15px;line-height:1.85;letter-spacing:.6px; }
+#intro:has(.camp-resume:not(.hidden)) .intro-explainer { font-size:15px; }
+#intro .intro-start .primary,#intro .camp-resume { font-family:var(--interface-font);font-size:18px;letter-spacing:1px; }
+#intro:has(.camp-resume:not(.hidden)) .intro-start .primary { font-size:14px; }
+#intro .text-button { font-size:13px; }
+#intro .practice-entry,#intro .atlas-entry { font-size:16px;letter-spacing:1px; }
+#intro .practice-entry span,#intro .atlas-entry span { font-size:12px;letter-spacing:.5px; }
+#intro .title-links button,#intro .intro-save-help summary { font-size:12px; }
+#intro .intro-note { font-size:11px; }
+#intro .camp-resume small { font-size:12px;line-height:1.7; }
+#intro .save-note { font-size:13px; }
+.nav-button { font-size:15px;letter-spacing:1.5px; }
+.modal :is(p,li) { line-height:1.85; }
+kbd { letter-spacing:.5px; }
+/* UI symbols keep a broad glyph fallback rather than becoming missing boxes. */
+body :is(.brand-mark,.icon-button,.weapon-glyph,.small-rune,.hunter-portrait,.shadow-icon) {
+ font-family:system-ui,'Apple Symbols',sans-serif;
+}
+@media(max-width:550px) {
+ .nav-button { font-size:12px; }
+ #intro .intro-explainer,#intro:has(.camp-resume:not(.hidden)) .intro-explainer { font-size:14px; }
+ #intro .intro-start .primary { font-size:16px; }
+}
+
+/* Override legacy component font shorthands, including page and dialog headings. */
+body :where(*) { font-family:var(--interface-font) !important; }
+body :is(.brand-mark,.icon-button,.weapon-glyph,.small-rune,.hunter-portrait,.shadow-icon,.ending-emblem,.atlas-world-icon,.campaign-intro-sigil) {
+ font-family:system-ui,'Apple Symbols',sans-serif !important;
+}
+
+/* Compact header wordmark. */
+.header .brand>span:last-child { font-size:23px;letter-spacing:2.5px; }
+.header .brand small { font-size:8px;letter-spacing:2.6px;margin-top:6px; }
+@media(max-width:550px) {
+ .header .brand>span:last-child { font-size:18px;letter-spacing:2px; }
+}
+.header .brand>span:last-child { position:relative;top:5px; }

@@ -8,7 +8,7 @@ let html=fs.readFileSync(path.join(dist,'index.html'),'utf8');
 html=html.replace(/<link rel="stylesheet" href="([^"]+)">/g,(_,name)=>{
  let css=fs.readFileSync(path.join(dist,name),'utf8');
  css=css.replace(/url\(['"]?(assets\/[^'"\)]+)['"]?\)/g,(_,asset)=>{
-  const bytes=fs.readFileSync(path.join(dist,asset)),mime=asset.endsWith('.png')?'image/png':'image/jpeg';return `url("data:${mime};base64,${bytes.toString('base64')}")`;
+  const bytes=fs.readFileSync(path.join(dist,asset)),mime=asset.endsWith('.woff2')?'font/woff2':asset.endsWith('.woff')?'font/woff':asset.endsWith('.ttf')?'font/ttf':asset.endsWith('.png')?'image/png':'image/jpeg';return `url("data:${mime};base64,${bytes.toString('base64')}")`;
  });
  return `<style>/* ${name} */\n${css}\n</style>`;
 });
