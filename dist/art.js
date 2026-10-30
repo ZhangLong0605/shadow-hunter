@@ -4,6 +4,12 @@ window.HUNTER_ART=(()=>{
  const tau=Math.PI*2;
  const hunterAtlas=typeof window.Image==='function'?new window.Image():null;
  if(hunterAtlas)hunterAtlas.src='assets/hunter-directions.png';
+ const characterSprites={};
+ const characterSources={sun:'assets/character-sun.png',bull:'assets/character-bull.png',orange:'assets/character-orange.png',round:'assets/character-round.png',basket:'assets/character-basket.png'};
+ for(const [id,source] of Object.entries(characterSources)){
+  const image=typeof window.Image==='function'?new window.Image():null;
+  if(image)image.src=source;characterSprites[id]=image;
+ }
  // Each pose pivots around its boots, rather than the centre of its flowing cape.
  const poses=[
   [0,0,488,444,273,443,425],[444,0,443,444,229,443,425],
@@ -147,7 +153,34 @@ window.HUNTER_ART=(()=>{
  function shape(g,points,fill,stroke){g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=1;g.stroke();}}
  function oval(g,x,y,rx,ry,color){g.beginPath();g.ellipse(x,y,rx,ry,0,0,tau);g.fillStyle=color;g.fill();}
  function light(g,x,y,r,color){const gradient=g.createRadialGradient(x,y,0,x,y,r);gradient.addColorStop(0,color);gradient.addColorStop(1,'transparent');g.fillStyle=gradient;g.fillRect(x-r,y-r,r*2,r*2);}
+ function drawCompanion(g,x,y,angle,scale,time,moving,weapon,motion){
+  const sprite=characterSprites[motion.appearance];
+  const pose=motionPose(time,moving,angle,weapon,motion);
+  const bob=pose.bob||0,attack=motion.attackPoseTime>0?Math.sin(pose.progress*Math.PI):0;
+  const direction=motion.appearance==='basket'?(Math.cos(angle)>=0?1:-1):(Math.cos(angle)>=0?-1:1);
+  g.save();g.translate(x,y);g.scale(scale,scale);
+  oval(g,0,16,20,7,'#020b18a3');
+  g.save();g.translate(0,17-bob);g.rotate(pose.lean+(attack||0)*.13*direction);
+  g.scale(direction*(1+(pose.dash||0)*.05),1-(pose.dash||0)*.04);
+  if(sprite?.complete&&sprite.naturalWidth){
+   const h=88,w=h*sprite.naturalWidth/sprite.naturalHeight;
+   g.imageSmoothingEnabled=motion.appearance!=='basket';g.drawImage(sprite,-w/2,-h,w,h);
+  }else{
+   oval(g,0,-30,21,29,'#ffd329');oval(g,-7,-35,11,17,'#fff09b');
+   oval(g,-9,-60,14,16,'#ffd329');oval(g,-15,-79,5,15,'#ffd329');oval(g,1,-79,5,15,'#ffd329');
+   oval(g,-20,-62,6,5,'#763c1e');oval(g,-9,-65,2,3,'#462419');
+  }
+  g.restore();
+  // The held weapon follows aim and the existing timed attack pose.
+  g.save();g.translate(Math.cos(angle)*18,-19+Math.sin(angle)*10);g.rotate(angle);
+  g.strokeStyle='#d9f9e9';g.lineWidth=2;
+  g.beginPath();
+  if(weapon==='bow'){g.arc(3,0,17,-1.1,1.1);g.moveTo(11,-15);g.lineTo(11,15);}
+  else{g.moveTo(0,0);g.lineTo(23+(attack||0)*9,-4);g.lineTo(17,-7);}
+  g.stroke();g.restore();g.restore();
+ }
  function hunter(g,x,y,angle,color,scale,enemy,time,moving,weapon,motion={}){
+  if(!enemy&&Object.hasOwn(characterSources,motion.appearance)){drawCompanion(g,x,y,angle,scale,time,moving,weapon,motion);return;}
   if(!enemy&&hunterAtlas?.complete&&hunterAtlas.naturalWidth){drawHunterSprite(g,x,y,angle,color,scale,time,moving,weapon,motion);return;}
   g.save();g.translate(x,y);g.scale(scale,scale);
   const stride=moving?Math.sin(time*13)*4:Math.sin(time*2)*.7,sway=Math.sin(time*3+x)*2;

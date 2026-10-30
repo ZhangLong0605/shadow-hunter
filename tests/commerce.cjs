@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const sandbox={window:{}};for(const name of ['world-data.js','expedition-data.js','campaign-data.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../dist',name),'utf8'),sandbox);
+const c=sandbox.window.HUNTER_CAMPAIGN,p=c.empty();
+assert.ok(c.valid(p));assert.equal(c.garage(p).coins,0);
+assert.equal(c.reward(p,'forest','test-kill','monster',()=>.99).coins,5);assert.equal(c.garage(p).coins,5);c.reward(p,'forest','test-kill','monster',()=>0);assert.equal(c.garage(p).coins,5);
+const old=JSON.parse(JSON.stringify(p));delete old.transport;assert.ok(c.valid(old));assert.equal(c.garage(old).coins,0);
+c.garage(p).coins=59;assert.equal(c.buy(p,'moonbike').ok,false);assert.equal(c.garage(p).coins,59);
+c.garage(p).coins=60;assert.ok(c.buy(p,'moonbike').ok);assert.equal(c.garage(p).coins,0);assert.equal(c.garage(p).selected,'moonbike');assert.equal(c.buy(p,'moonbike').ok,false);
+c.garage(p).coins=100;assert.ok(c.buy(p,'fang').ok);assert.equal(p.inventory.fang,1);assert.equal(c.garage(p).coins,50);assert.equal(p.equipped,null);
+const before=JSON.stringify(p);assert.equal(c.buy(p,'forged').ok,false);assert.equal(JSON.stringify(p),before);
+c.reward(p,'fake','bad','monster',()=>0);assert.equal(JSON.stringify(p),before);
+const store=new Map(),storage={getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)};assert.ok(c.save(storage,p));const loaded=c.read(storage);assert.equal(c.garage(loaded).selected,'moonbike');assert.equal(c.garage(loaded).coins,50);
+for(const transport of [{coins:-1,owned:[],selected:null},{coins:0,owned:['fake'],selected:null},{coins:0,owned:[],selected:'moonbike'}])assert.equal(c.valid({...p,transport}),false);
+console.log('Commerce: coin deduplication, legacy migration, prices, ownership, insufficient funds, forged goods, validation and persistence passed.');

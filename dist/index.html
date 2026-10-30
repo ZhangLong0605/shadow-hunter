@@ -4,7 +4,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b1216">
   <meta name="description" content="影子猎手：五境远征。夺取敌人的能力，选择四种技能，穿越五境，迎接黎明。离线单人动作探索游戏。">
-  <title>影子猎手 — 五境远征</title>
+  <title>影子猎手 — 五境远征 · 成就修复 R2</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='16' fill='%238be4cb'/%3E%3Ccircle cx='27' cy='14' r='15' fill='%230c171c'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="onboarding.css">
@@ -22,11 +22,13 @@
   <link rel="stylesheet" href="visuals.css">
   <link rel="stylesheet" href="title.css">
   <link rel="stylesheet" href="typography.css">
+  <link rel="stylesheet" href="professions.css">
+  <link rel="stylesheet" href="dialogue.css">
 </head>
 <body>
   <header class="header">
     <a class="brand" href="./" aria-label="影子猎手首页"><span class="brand-mark">◒</span><span>影子猎手<small>SHADOW HUNTER</small></span></a>
-    <nav aria-label="主导航"><button class="nav-button active" id="hunt-tab">狩猎</button><button class="nav-button hidden" id="world-map-nav">区域地图 <kbd>M</kbd></button><button class="nav-button" id="practice-button">试炼场</button><button class="nav-button" id="codex-button">技能图鉴</button><button class="nav-button" id="guide-button">猎人手册</button></nav>
+    <nav aria-label="主导航"><button class="nav-button active" id="hunt-tab">狩猎</button><button class="nav-button hidden" id="world-map-nav">区域地图 <kbd>M</kbd></button><button class="nav-button" id="practice-button">试炼场</button><button class="nav-button" id="codex-button">技能图鉴</button><button class="nav-button" id="achievements-nav">成就</button><button class="nav-button" id="guide-button">猎人手册</button></nav>
     <div class="header-end"><span class="demo-tag"><i></i>五境远征 <b>1.4</b></span><button id="settings-button" class="icon-button" title="声音、画面与难度" aria-label="游戏设置">⚙</button><button id="sound-button" class="icon-button" title="静音" aria-label="静音全部声音">♫</button><button id="pause-button" class="icon-button" title="暂停 · Esc" aria-label="暂停">Ⅱ</button></div>
   </header>
   <main id="app-shell">
@@ -38,7 +40,7 @@
           <canvas id="feedback-canvas" aria-hidden="true"></canvas>
           <div class="scene-top"><div class="location"><span class="small-rune">⌖</span><div><span id="room-name">遗忘林地</span><small id="objective">穿过月光，追寻你的第一枚影子</small></div></div><div class="room-tag" id="room-tag">猎场 <span>01 / 05</span></div></div>
           <div id="world-hud" class="world-hud hidden">
-            <button id="world-map-button" aria-label="打开世界地图"><canvas id="world-minimap" aria-label="当前位置与任务地点小地图"></canvas><span id="world-progress"></span></button><small id="world-terrain">M 全图 · F 互动</small>
+            <button id="world-map-button" aria-label="打开世界地图"><canvas id="world-minimap" aria-label="当前位置与任务地点小地图"></canvas><span id="world-progress"></span></button><div class="minimap-legend"><i>◉ 你</i><i>◆ 任务</i><i>▪ 宝箱</i><i>¤ 商店</i><i>● 敌人</i></div><small id="world-terrain">M 全图 · F 互动</small>
             <button id="atlas-nav" class="atlas-nav">N · 五境星图 ↗</button><div class="view-controls" aria-label="视野设置">
               <div class="view-heading"><label for="view-range">视野范围</label><output id="view-value" for="view-range">100%</output></div>
               <div class="view-slider"><button id="view-near" aria-label="拉近视角" title="拉近 · 看清近处">−</button><input id="view-range" type="range" min="50" max="200" step="1" value="100" aria-describedby="view-help"><button id="view-far" aria-label="拉远视角" title="拉远 · 看得更远">+</button></div>
@@ -50,7 +52,9 @@
           <div id="practice-toolbar" class="practice-toolbar hidden" aria-label="试炼设置"><span>自由试炼 · 不受伤 / 无梦蚀</span><button id="practice-dummy">木桩</button><button id="practice-mobs">敌群</button><button id="practice-refresh">重置状态</button><button id="practice-exit">返回营地</button></div>
           <div id="compact-build" class="compact-build hidden"><div class="compact-title"><span><kbd>Q</kbd> <b id="compact-name"></b></span><button id="compact-detail">用法 ↗</button></div><div id="compact-slots" class="compact-slots"></div><div class="compact-foot"><span id="compact-cost"></span><button id="compact-edit"><kbd>TAB</kbd> 更换技能</button></div></div>
           <div id="capture-flight" class="capture-flight" aria-hidden="true"></div>
-          <div id="achievement-toast" class="release-toast hidden" role="status"></div>
+          <div id="level-up" class="level-up hidden" role="status" aria-live="polite"></div>
+          <div id="kill-rewards" class="kill-rewards" role="status" aria-live="polite" aria-label="斩杀奖励"></div>
+
           <div id="field-kit" class="field-kit hidden" aria-label="随身补给与回营">
             <button id="flask-button" class="kit-button" title="C · 恢复生命并净化梦蚀"><kbd>C</kbd><span><b id="flask-count">月露 2 / 2</b><small id="flask-hint">恢复 35 · 净化 12</small></span></button>
             <button id="recall-button" class="kit-button" title="B · 随时静止 3 秒回城，自动保存并结算"><kbd>B</kbd><span><b id="recall-label">传送回城</b><small>静止 3 秒 · 自动结算</small></span></button>
@@ -60,7 +64,7 @@
           <div id="intro" class="intro">
             <div class="intro-kicker"><span></span> THE LONG DREAM · 五境远征</div>
             <h2 class="art-title" aria-label="影子猎手"><span aria-hidden="true">影</span><span aria-hidden="true">子</span><span aria-hidden="true">猎</span><span aria-hidden="true">手</span></h2>
-            <p class="intro-explainer">夺取梦魇的能力，穿越五个破碎世界。<br>沿着月光，寻找长梦的出口。</p>
+            <p class="intro-explainer">伙伴消失的那一夜，只剩一盏灯还亮着。<br>穿越五境，带他们一起回家。</p>
             <div class="intro-actions">
               <button id="continue-run" class="camp-resume hidden"><span>继续旅程<small id="resume-summary"></small></span><b>↗</b></button>
               <div class="intro-start"><button class="primary" id="start-button">开始旅程 <span>↗</span></button><button id="skip-intro" class="text-button">跳过教学 →</button></div>
@@ -69,24 +73,27 @@
               <button id="practice-intro" class="practice-entry">试炼场 <span>自由练习 ↗</span></button>
               <button id="atlas-button" class="atlas-entry">五境星图 <span>世界与行囊 ↗</span></button>
             </div>
-            <div class="title-links"><button id="intro-settings">设置</button><button id="records-button">猎人纪事</button><button id="credits-button">制作与鸣谢</button><details class="intro-save-help"><summary>存档说明</summary><p id="save-note" class="save-note"></p></details></div>
+            <div class="title-links"><button id="intro-settings">设置</button><button id="story-button">故事序章</button><button id="achievements-button">成就</button><button id="records-button">猎人纪事</button><button id="credits-button">制作与鸣谢</button><details class="intro-save-help"><summary>存档说明</summary><p id="save-note" class="save-note"></p></details></div>
             <div class="intro-note" id="audio-note">首次点击后启用背景音乐 · 右上角可静音</div>
           </div>
           <section class="tutorial-card hidden" id="tutorial-card" aria-label="当前教学任务"><div class="tutorial-top"><span id="tutorial-step">新手教学 1 / 6</span><button id="skip-tutorial">跳过教学 →</button></div><div id="tutorial-progress" class="tutorial-progress"></div><h2 id="tutorial-title"></h2><div class="tutorial-do"><kbd id="tutorial-key"></kbd><strong id="tutorial-action"></strong></div><p id="tutorial-text"></p><small id="tutorial-note"></small></section><div class="context-hint hidden" id="context-hint" role="status"></div><div class="toast hidden" id="toast" role="status"></div>
           <div class="capture-hud hidden" id="capture-hud"><span>正在剥离影子…</span><div><i id="capture-bar"></i></div><small>持续按住 E · 受伤将中断</small></div>
-          <div class="player-hud"><div class="hunter-portrait">⟡</div><div class="vitals"><div><strong>追迹者</strong><span id="hp-text">100 / 100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="focus-row"><span>专注</span><div class="focus-track"><i id="focus-bar"></i></div><small id="focus-text">0 / 100</small></div></div><div class="kill-count"><small>已猎杀</small><strong id="kills">00</strong></div></div>
+          <div class="player-hud"><div id="hud-portrait" class="hunter-portrait" role="img" aria-label="影子猎手">⟡</div><div class="vitals"><div><strong id="hud-character-name">影子猎手</strong><span id="hp-text">100 / 100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="focus-row"><span>专注</span><div class="focus-track"><i id="focus-bar"></i></div><small id="focus-text">0 / 100</small></div></div><div class="kill-count"><small>已猎杀</small><strong id="kills">00</strong></div></div>
           <div class="arena-stamp">月蚀之下 · 勿失其形</div>
           <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div id="modal-card" class="modal-card"></div></div>
         </div>
-        <div class="combat-bar"><div class="weapon-info"><span class="weapon-glyph">⤢</span><div><small>初始武器 <kbd>R</kbd> 切换</small><strong id="weapon-name">折叠弓刃 · 刃形</strong></div></div><div class="combat-actions"><button id="attack-button" title="鼠标左键攻击，长按可蓄力"><kbd>左键</kbd><span>攻击 / 蓄力</span></button><button id="dash-button"><kbd>SPACE</kbd><span id="dash-label">闪避</span></button><button id="skill-button"><kbd>Q</kbd><span id="skill-label">影子技能</span></button><button id="capture-button" title="靠近白色暴露的敌人，长按 E 夺影"><kbd>E</kbd><span>长按夺影</span></button></div></div>
+        <div class="combat-bar"><div class="weapon-info"><span class="weapon-glyph">⤢</span><div><small>初始武器 <kbd>R</kbd> 切换</small><strong id="weapon-name">折叠弓刃 · 刃形</strong></div></div><div class="combat-actions"><button id="attack-button" title="鼠标左键攻击，长按可蓄力"><kbd>左键</kbd><span>攻击 / 蓄力</span></button><button id="dash-button"><kbd>SPACE</kbd><span id="dash-label">闪避</span></button><button id="skill-button"><kbd>Q</kbd><span id="skill-label">影子技能</span></button><button id="basketball-button" class="hidden"><kbd>V</kbd><span>穿梦三分</span></button><button id="capture-button" title="靠近白色暴露的敌人，长按 E 夺影"><kbd>E</kbd><span>长按夺影</span></button></div></div>
         <div id="journey-status" class="journey-status hidden"><div class="journey-route"><small id="journey-stage"></small><b id="journey-target"></b><span id="journey-direction"></span></div><div id="journey-perks" class="journey-perks"></div><div id="journey-chain" class="journey-chain"></div></div>
         <div class="journey"><div class="journey-title"><span>梦境深度</span><small id="depth-label">01 / 05</small></div><div class="route" id="route"></div><span class="journey-end">月狼之巢 <span>☾</span></span></div>
       </section>
       <aside class="build-panel"><div class="panel-title"><h2>你的 Q 技能</h2><button id="build-button">更换技能 <span>⇄</span></button></div><p class="panel-subtitle">突进、火焰、护盾、影箭。<br>选择一个，按 Q 释放。</p><div id="shadow-slots" class="shadow-slots"></div><div class="synergy"><div class="synergy-top"><span>按 Q 会发生什么？</span><span id="resonance-status">已激活</span></div><h3 id="build-name">突进</h3><div id="build-description"></div><button id="skill-detail-button" class="detail-button">用法与数值 ↗</button><div class="tags" id="build-tags"></div></div><div class="corruption"><div><h3><span>◈</span> 梦蚀</h3><strong><span id="corruption-text">0</span><small> / 100</small></strong></div><div class="corruption-track"><i id="corruption-bar"></i><span></span><span></span></div><p id="corruption-description">借用黑暗的力量，也会被黑暗注视。</p></div><div class="tip"><span>✦</span><p id="tip-text">长按 <kbd>E</kbd> 夺影学技能，<kbd>Tab</kbd> 免费更换。</p></div></aside>
+      <aside id="quick-inventory" class="quick-inventory hidden" aria-label="随身装备与道具"><header><span>FIELD SATCHEL</span><h2>随身行囊</h2><p>悬停图标查看功能</p></header><div id="quick-inventory-content"></div><div class="quick-inventory-help">在营地或星图行囊中使用补给、佩戴护符。触屏可点击图标查看。</div></aside>
     </div>
     <footer><span><i></i> 每一次狩猎，都留下不同的影子。</span><div><span><kbd>W A S D</kbd> 移动</span><span><kbd>TAB</kbd> 技能</span><span><kbd>ESC</kbd> 暂停</span><button id="fullscreen-button">全屏体验 ⛶</button></div></footer>
   </main>
   <div class="small-screen-notice">建议使用电脑横屏游玩，以获得完整的键鼠战斗体验。</div>
+  <div id="item-tooltip" class="item-tooltip hidden" role="tooltip"></div>
+  <div id="achievement-toast" class="release-toast hidden" role="status"></div>
   <script src="release-data.js"></script>
   <script src="audio.js"></script>
   <script src="art.js"></script>

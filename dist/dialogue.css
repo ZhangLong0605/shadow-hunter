@@ -1,0 +1,74 @@
+/* Visual-novel presentation layered over the frozen encounter. */
+.modal[data-kind="encounter"] { padding:0;background:linear-gradient(180deg,#06121b40,#06121b80 50%,#06121bf5);align-items:stretch; }
+.modal[data-kind="encounter"] .modal-card { width:100%;max-width:none;max-height:none;height:100%;padding:0;overflow:hidden; }
+.vn-scene { position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-height:440px;padding:28px 5%;isolation:isolate; }
+.vn-heading { position:absolute;top:24px;left:5%;right:5%;display:flex;justify-content:space-between;align-items:center;gap:16px;z-index:3; }
+.vn-heading>span { color:#b0cec8;font-size:12px;letter-spacing:2px; }
+.vn-heading button { padding:9px 14px;border:1px solid #93c0b64d;border-radius:3px;background:#0b1c21bb;font-size:12px; }
+.vn-actors { position:absolute;inset:58px 5% 95px;display:flex;align-items:flex-end;justify-content:space-between;z-index:-1;pointer-events:none; }
+.vn-actor { width:40%;height:100%;max-height:410px;display:flex;align-items:flex-end;justify-content:center;opacity:.45;filter:brightness(.65) saturate(.6);transition:filter .25s,opacity .25s; }
+.vn-actor.speaking { opacity:1;filter:brightness(1) saturate(1) drop-shadow(0 0 22px #94e5cf26); }
+.vn-actor img { width:100%;height:100%;object-fit:contain;object-position:center bottom; }
+.vn-enemy img { object-fit:contain;transform:scale(1.15); }
+.vn-original { width:270px;max-width:100%;height:100%;max-height:360px;background:url('assets/hunter-directions.png') 0 0 / 400% 200% no-repeat; }
+.vn-enemy-symbol { align-self:center;width:170px;height:170px;display:grid;place-items:center;border:1px solid #adc9c33b;transform:rotate(7deg);background:radial-gradient(#668fb244,transparent); }
+.vn-enemy-symbol .shadow-icon { width:110px;height:110px; }
+.vn-enemy-symbol svg { width:100%;height:100%; }
+.vn-box { width:100%;border:1px solid #a1d2c660;border-top:2px solid #a7e0ce;background:linear-gradient(110deg,#0e232af5,#0b1923f5);box-shadow:0 10px 45px #0006;padding:20px 26px 16px;border-radius:5px; }
+.vn-name { display:flex;justify-content:space-between;align-items:center;gap:12px; }
+.modal-card .vn-name h2 { margin:0;color:#bce8d4;font-size:22px;letter-spacing:2px; }
+.vn-name small { color:#749e98;font-size:12px;letter-spacing:2px; }
+.modal-card #vn-text { margin:15px 0;min-height:65px;font-size:19px;line-height:1.8;letter-spacing:1px;color:#e1eee6; }
+.vn-controls { display:flex;align-items:center;justify-content:space-between;gap:14px; }
+.vn-controls>span { color:#82a59d;font-size:11px; }
+.vn-controls .primary { min-width:138px;padding:10px 18px;font-size:13px; }
+@media(max-width:650px) {
+ .vn-scene { padding:18px 14px;min-height:450px; }
+ .vn-heading { top:15px;left:14px;right:14px; }
+ .vn-heading>span { font-size:9px;letter-spacing:1px; }
+ .vn-actors { inset:65px 0 150px; }
+ .vn-actor { width:49%; }
+ .vn-box { padding:16px; }
+ .modal-card #vn-text { font-size:16px;min-height:85px; }
+ .modal-card .vn-name h2 { font-size:20px; }
+ .vn-controls>span { font-size:9px; }
+ .vn-controls .primary { min-width:115px; }
+}
+@media(prefers-reduced-motion:reduce) { .vn-actor { transition:none; } }
+
+/* Keep portraits above the text panel, with a larger opposing character. */
+.vn-actors { inset:54px 4% 205px; }
+.vn-actor { max-height:none; }
+.vn-enemy { width:47%; }
+.vn-enemy img { transform:none;object-position:center bottom; }
+.vn-enemy-symbol { width:190px;height:190px; }
+.vn-box { position:relative;z-index:2; }
+@media(max-width:650px) {
+ .vn-actors { inset:58px 0 235px; }
+ .vn-actor { width:49%; }
+ .vn-enemy img { transform:none; }
+ .vn-enemy-symbol { width:125px;height:125px; }
+}
+
+/* Dialogue floats over the untouched, paused map rather than a modal backdrop. */
+#modal[data-kind="encounter"] {
+ background:transparent;
+ backdrop-filter:none;
+ -webkit-backdrop-filter:none;
+}
+#modal[data-kind="encounter"] .modal-card {
+ background:transparent;
+ border:0;
+ box-shadow:none;
+ border-radius:0;
+}
+.story-chapter { text-align:left;border-left:2px solid #bdcf93;margin:20px 0;padding:14px 18px;background:linear-gradient(90deg,#a4d6bc12,transparent); }
+.story-chapter>small { color:#b5cda4;font-size:11px;letter-spacing:2px; }
+.story-chapter h3 { color:#d6e8c8;font-size:21px;margin:8px 0;letter-spacing:1px; }
+.modal-card .story-chapter p { font-size:14px;line-height:1.95;color:#bcd1c6;margin:8px 0; }
+.story-chapter>span { font-size:12px;color:#a5c2af; }
+.modal-card .story-chapter .story-last { color:#ead9a5;font-size:16px; }
+.story-lamp { align-self:center;display:grid;place-items:center;width:190px;height:220px;border:1px solid #e3d5a070;border-radius:50% 50% 18px 18px;background:radial-gradient(ellipse,#e9cc6055,#d5a95e12 65%,transparent);box-shadow:0 0 70px #efc96620,inset 0 0 40px #eac2601a; }
+.story-lamp>span { color:#ffeba2;font-size:95px;text-shadow:0 0 30px #f2ce66; }
+.story-lamp>small { color:#dfd4a3;font-size:13px;letter-spacing:2px; }
+@media(max-width:650px) { .story-lamp { width:130px;height:170px; }.story-lamp>span { font-size:70px; }.story-lamp>small { font-size:10px;letter-spacing:0; } }

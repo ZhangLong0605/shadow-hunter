@@ -12,3 +12,187 @@
 @media (prefers-reduced-motion: reduce) {
  .health-track i, .focus-track i { transition: none; }
 }
+
+/* Kill rewards report actual inventory and resource gains without pausing combat. */
+.kill-rewards { position:absolute;right:22px;top:110px;z-index:5;width:min(310px,38%);display:grid;gap:9px;pointer-events:none; }
+.kill-reward { display:grid;gap:5px;padding:12px 16px;border:1px solid #a8d4b14d;border-left:3px solid #bdd894;border-radius:4px;background:linear-gradient(110deg,#152d29f2,#102127e8);box-shadow:0 7px 24px #0003; }
+.kill-reward small { color:#a7c9af;font-size:10px;letter-spacing:2px; }
+.kill-reward strong { color:#e4edca;font-size:16px;font-weight:400; }
+.kill-reward span { color:#b5cabb;font-size:11px;line-height:1.6; }
+.kill-reward.rare { border-left-color:#c7a0eb; }
+.kill-reward.rare strong { color:#ddc0f1; }
+@media(max-width:650px) { .kill-rewards { top:90px;right:10px;width:43%; }.kill-reward { padding:9px; }.kill-reward strong { font-size:14px; }.kill-reward span { font-size:10px; } }
+
+/* Shared item artwork: the same SVG identity in loot, satchel and reports. */
+.item-art { display:inline-grid;place-items:center;flex-shrink:0;width:52px;height:52px;vertical-align:middle;border:1px solid #96b9aa45;border-radius:8px;background:radial-gradient(ellipse at 45% 35%,#8cc6aa26,#10232cb3);box-shadow:inset 0 1px #e2fff40b; }
+.item-art svg { width:90%;height:90%;filter:drop-shadow(0 2px 3px #020d1666); }
+.item-art.relic { border-color:#d0af7866;background:radial-gradient(ellipse at 45% 35%,#c7ad6633,#182332c9); }
+.inventory-item>.item-art { width:70px;height:70px;float:left;margin:0 13px 10px 0; }
+.inventory-item>h3 { min-height:32px; }
+.inventory-item>p { clear:both; }
+.inventory-equipped .item-art { width:36px;height:36px;margin-right:10px; }
+.return-loot-icon { width:54px;height:54px;border:0;background:transparent; }
+.return-loot-icon .item-art { width:54px;height:54px; }
+.loot-pill { display:inline-flex;align-items:center;gap:10px; }
+.loot-pill .item-art { width:38px;height:38px; }
+.kill-reward { display:flex;align-items:center;gap:12px; }
+.kill-reward .item-art { width:46px;height:46px; }
+.kill-reward-copy { display:grid;gap:5px;min-width:0; }
+@media(max-width:650px) { .kill-reward { gap:8px; }.kill-reward .item-art { width:36px;height:36px; }.inventory-item>.item-art { width:56px;height:56px; } }
+.atlas-loot>span { display:inline-flex;align-items:center;gap:7px; }
+.atlas-loot .item-art { width:32px;height:32px; }
+
+/* A brief skill milestone, separate from the ordinary kill reward feed. */
+.level-up { position:absolute;top:65px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:17px;width:min(470px,70%);padding:18px 22px;border:1px solid var(--level-color);border-radius:8px;background:linear-gradient(120deg,#173c36f5,#101c2bf5);box-shadow:0 8px 40px #0005,inset 0 1px #edffed16;pointer-events:none; }
+.level-up>.skill-icon { width:60px;height:60px;flex-shrink:0; }
+.level-up-copy { min-width:0; }
+.level-up-copy>small { color:var(--level-color);font-size:11px;letter-spacing:2px; }
+.level-up-copy h3 { margin:7px 0;font-size:23px;color:#eef4d8; }
+.level-up-copy h3 span { margin-left:9px;font-size:16px;color:var(--level-color);white-space:nowrap; }
+.level-up-copy p { margin:0;line-height:1.9;font-size:12px;color:#d3e2d1; }
+.level-up-copy p>span { display:block; }
+.level-stars { display:flex;gap:7px;align-items:center;margin-top:9px; }
+.level-stars i { font-style:normal;font-size:14px;color:#617976; }
+.level-stars i.lit { color:var(--level-color);text-shadow:0 0 9px #c6e7c34d; }
+.level-stars b { font-size:10px;font-weight:400;color:#a8c4b5;margin-left:5px; }
+.level-spark { position:absolute;top:-13px;right:20px;font-size:26px;color:#e7e2b4; }
+.level-pop { animation:level-arrive .55s cubic-bezier(.18,.85,.32,1.2); }
+@keyframes level-arrive { from { opacity:0;transform:translate(-50%,12px) scale(.92); } to { opacity:1;transform:translate(-50%,0) scale(1); } }
+.skill-growth { margin:5px 4px 8px; }
+.skill-growth>div:first-child { display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#9ab9a7;margin-bottom:6px; }
+.skill-growth-track { height:4px;background:#40594b;border-radius:4px;overflow:hidden; }
+.skill-growth-track>i { display:block;height:100%;border-radius:4px;transition:width .35s ease; }
+@media(max-width:650px) {
+ .level-up { top:70px;width:82%;gap:10px;padding:13px; }
+ .level-up>.skill-icon { width:44px;height:44px; }
+ .level-up-copy h3 { font-size:19px; }.level-up-copy h3 span { font-size:14px; }
+}
+@media(prefers-reduced-motion:reduce) { .level-pop { animation:none; }.skill-growth-track>i { transition:none; } }
+
+/* A chest-opening celebration for supplies that are consumed immediately. */
+#modal[data-kind="discovery"] .modal-card { width:660px;max-width:100%;padding:26px 30px;border-color:#b7ce8d70;background:radial-gradient(ellipse at 50% 0,#6c84452a,transparent 58%),linear-gradient(145deg,#19332c,#101e25); }
+.discovery-ceremony { text-align:center; }
+.discovery-treasure { position:relative;display:grid;place-items:center;width:116px;height:100px;margin:0 auto 12px; }
+.discovery-treasure>.ui-glyph { width:65px;height:65px;color:#e4d49b;stroke-width:1.1;filter:drop-shadow(0 0 16px #c9d58650);animation:treasure-rise .65s ease-out both; }
+.treasure-rays { position:absolute;inset:0;border:1px solid #d5dc9b33;border-radius:50%;background:radial-gradient(#d5dc9b25,transparent 70%);animation:treasure-halo 1s ease-out both; }
+.discovery-treasure>i,.discovery-treasure>b { position:absolute;font-style:normal;font-weight:400;color:#e8dda3; }
+.discovery-treasure>i { right:4px;top:8px;font-size:23px; }.discovery-treasure>b { left:5px;bottom:10px;font-size:19px; }
+#modal .discovery-ceremony h2 { margin:8px 0;font-size:30px;color:#e3edce;letter-spacing:2px; }
+#modal .discovery-subtitle { margin:8px 0 21px;font-size:13px;color:#a8bdac; }
+.discovery-rewards { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;text-align:left; }
+.discovery-reward { position:relative;display:flex;align-items:center;gap:14px;padding:16px;border:1px solid #b3cfad30;border-radius:7px;background:#091b1d80;animation:treasure-rise .5s ease-out both; }
+.discovery-reward:nth-child(2) { animation-delay:.09s; }.discovery-reward:nth-child(3) { animation-delay:.18s; }
+.discovery-reward>div { display:grid;gap:5px; }.discovery-reward small { color:#b9cdbd;font-size:12px; }.discovery-reward strong { color:var(--reward-color);font-size:30px;font-weight:400;line-height:1; }.discovery-reward span { color:#8ea99a;font-size:12px;letter-spacing:1px; }
+.discovery-check { position:absolute;right:12px;top:10px;font-size:12px;color:#a7c3a2;font-weight:400; }
+.discovery-extra { display:flex;align-items:center;gap:15px;grid-column:1/-1;padding:14px 16px;background:#d2d49b0c;border:1px solid #cdd49b30;border-radius:7px; }
+.discovery-extra>.skill-icon,.discovery-extra>.ui-glyph { width:44px;height:44px;flex-shrink:0;color:#cbdba7; }.discovery-extra small { color:#cddba7;font-size:12px; }#modal .discovery-extra p { margin:5px 0 0;font-size:13px;line-height:1.7; }
+#modal .discovery-applied { display:flex;justify-content:center;align-items:center;gap:7px;color:#a8c49f;font-size:11px;margin:15px 0 20px; }.discovery-applied>.ui-glyph { width:14px;height:14px; }
+.discovery-next { text-align:left;padding:13px 16px;border-left:2px solid #8dab85;background:#a7c69409; }.discovery-next small { color:#b8cdab;font-size:11px; }#modal .discovery-next p { margin:5px 0 0;font-size:12px;line-height:1.8;color:#9eb6a8; }
+.discovery-footer { display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:22px; }.discovery-footer>span { color:#829f90;font-size:11px; }.discovery-footer>.primary { min-width:190px; }
+@keyframes treasure-rise { from { opacity:0;transform:translateY(10px) scale(.95); }to { opacity:1;transform:none; } }
+@keyframes treasure-halo { from { opacity:0;transform:scale(.6); }to { opacity:1;transform:scale(1); } }
+@media(max-width:550px) { #modal[data-kind="discovery"] .modal-card { padding:20px 16px; }.discovery-reward { padding:13px 10px;gap:9px; }.discovery-reward .item-art { width:40px;height:40px; }.discovery-reward strong { font-size:26px; }.discovery-footer { flex-direction:column; }.discovery-footer>.primary { width:100%; } }
+@media(prefers-reduced-motion:reduce) { .discovery-treasure>.ui-glyph,.treasure-rays,.discovery-reward { animation:none; } }
+
+/* Illustrated skill emblems keep their identity at every UI size. */
+.skill-icon { border-radius:13px;background:radial-gradient(ellipse at 40% 25%,#a3d5c529,#10212be6);box-shadow:inset 0 1px #e2fff317,0 5px 16px #0003; }
+.skill-icon svg { width:84%;height:84%;fill:none;stroke:none;filter:drop-shadow(0 2px 3px #020b1866); }
+.skill-icon[data-skill-icon="fire"] { background:radial-gradient(ellipse at 40% 25%,#eaa46f33,#261c24ef); }
+.skill-icon[data-skill-icon="shield"] { background:radial-gradient(ellipse at 40% 25%,#8dbce83b,#101e32ef); }
+.skill-icon[data-skill-icon="archer"] { background:radial-gradient(ellipse at 40% 25%,#c8de8c2d,#172823ef); }
+.active-skill .skill-icon svg,.skill-acquired .skill-icon svg { width:84%;height:84%; }
+
+/* Persistent achievement collection and queued unlock celebrations. */
+#modal[data-kind="achievements"] .modal-card { width:960px;max-width:100%; }
+.achievement-heading { display:flex;align-items:center;justify-content:space-between;gap:25px; }
+#modal .achievement-heading h2 { margin:9px 0;font-size:29px; }
+#modal .achievement-heading p { font-size:13px;color:#a4bfae;margin:8px 0; }
+.achievement-total { flex-shrink:0;white-space:nowrap;color:#98b8a5; }.achievement-total b { color:#e2dbaa;font-size:42px;font-weight:400; }.achievement-total span { font-size:12px; }
+.achievement-overall { height:6px;background:#54725c66;border-radius:6px;overflow:hidden;margin:20px 0; }.achievement-overall>i { display:block;height:100%;background:linear-gradient(90deg,#8acdb2,#ded99a); }
+.achievement-filters { display:flex;flex-wrap:wrap;gap:7px;margin-bottom:22px; }.achievement-filters button { padding:7px 12px;border:1px solid #93b29b30;border-radius:4px;color:#a3bdac;font-size:12px; }.achievement-filters button.active { color:#e4efd1;background:#b8d49118;border-color:#bdd49180; }
+.achievement-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+.achievement-card { display:flex;gap:15px;align-items:flex-start;padding:18px;border:1px solid #8aab9933;border-radius:7px;background:#0c1c2255; }.achievement-card.unlocked { border-color:#c6ce8d60;background:linear-gradient(130deg,#b0be7714,#1b302859); }
+.achievement-medal { display:grid;place-items:center;width:44px;height:50px;flex-shrink:0;color:#739787;background:#759a7d11;border:1px solid #829e8b30;border-radius:50% 50% 8px 8px; }.achievement-medal .ui-glyph { width:27px;height:27px; }.unlocked .achievement-medal { color:#e1d69a;border-color:#dfd49a66;background:#d1bf7520;box-shadow:0 0 18px #d1bf7511; }
+.achievement-card-copy { min-width:0;width:100%; }.achievement-card-copy>small { color:#92af9d;font-size:10px;letter-spacing:1px; }.achievement-card h3 { margin:7px 0;color:#d1e3d1;font-size:20px; }#modal .achievement-card p { margin:6px 0 12px;color:#97b3a2;font-size:12px;line-height:1.7; }
+.achievement-progress { display:flex;align-items:center;gap:9px; }.achievement-progress>div { flex:1;background:#72947a30;height:4px;border-radius:3px;overflow:hidden; }.achievement-progress i { display:block;height:100%;background:#95c8aa; }.unlocked .achievement-progress i { background:#d5cd92; }.achievement-progress>span { color:#9db9a5;font-size:10px;white-space:nowrap; }
+.achievement-empty { grid-column:1/-1;padding:28px;text-align:center;color:#afc8b9; }
+#achievement-toast { display:flex;align-items:center;gap:13px;max-width:min(360px,85%);padding:14px 18px;border:1px solid #d8ce9380;border-left:3px solid #e0d79d;border-radius:6px;background:linear-gradient(120deg,#24372af5,#14282bf5);box-shadow:0 8px 28px #0005;pointer-events:none; }
+.achievement-toast-medal { display:grid;place-items:center;flex-shrink:0;width:42px;height:46px;color:#e7dba1;border:1px solid #d4ca7c66;border-radius:50% 50% 6px 6px;background:#dfc78915; }.achievement-toast-medal .ui-glyph { width:27px;height:27px; }
+#achievement-toast>div:last-child { display:grid;gap:5px; }#achievement-toast small { color:#c5cf9b;font-size:10px;letter-spacing:2px; }#achievement-toast strong { color:#efe6ba;font-size:19px;font-weight:400; }#achievement-toast span { color:#adc4ae;font-size:11px;line-height:1.6; }
+@media(max-width:650px) { .achievement-grid { grid-template-columns:1fr; }.achievement-heading { align-items:flex-start;gap:10px; }#modal .achievement-heading h2 { font-size:23px; }.achievement-total b { font-size:31px; }.achievement-total span { display:block; } }
+.achievement-flavor { margin:8px 0 14px;padding:9px 12px;border-left:2px solid #b4c78d45;background:#a7c4830a;color:#b8c6a6;font-size:12px;line-height:1.8; }
+.unlocked .achievement-flavor { color:#ddd4a5;border-left-color:#d1c17c99;background:#c7b5780e; }
+#achievement-toast em { color:#d5cba3;font-size:11px;font-style:normal;line-height:1.6; }
+#achievement-toast { top:24px;right:24px;left:auto;transform:none;z-index:40;width:350px; }
+#achievement-toast.achievement-pop { animation:achievement-arrive .35s ease-out; }
+@keyframes achievement-arrive { from { opacity:0;transform:translateY(-12px); }to { opacity:1;transform:none; } }
+@media(max-width:650px) { #achievement-toast { top:14px;right:12px;width:min(340px,85%); } }
+@media(prefers-reduced-motion:reduce) { #achievement-toast.achievement-pop { animation:none; } }
+/* New achievements appear in the triggering frame, even while another is visible. */
+#achievement-toast { display:grid;gap:9px;padding:0;border:0;border-radius:0;background:none;box-shadow:none; }
+.achievement-popup { display:flex;align-items:center;gap:12px;padding:13px 16px;border:1px solid #d8ce9380;border-left:3px solid #e0d79d;border-radius:6px;background:linear-gradient(120deg,#24372af5,#14282bf5);box-shadow:0 8px 28px #0005;animation:achievement-arrive .3s ease-out; }
+.achievement-notice-copy { display:grid;gap:4px; }
+@media(prefers-reduced-motion:reduce) { .achievement-popup { animation:none; } }
+/* Viewport-level notices cannot be clipped by the arena or lost while scrolled. */
+#achievement-toast { position:fixed;top:100px;right:24px;z-index:1000; }
+@media(max-width:650px) { #achievement-toast { top:86px;right:12px; } }
+
+/* Center achievement notices in the viewport. */
+#achievement-toast { top:50%;left:50%;right:auto;transform:translate(-50%,-50%);width:min(380px,88vw);max-width:88vw; }
+#achievement-toast.achievement-pop { animation:none; }
+@media(max-width:650px) { #achievement-toast { top:50%;left:50%;right:auto; } }
+#modal[data-kind="discoveryChoice"] .modal-card { width:740px;max-width:100%;padding:25px 28px;background:radial-gradient(ellipse at 50% 0,#68844922,transparent 60%),linear-gradient(145deg,#19332c,#101e25); }
+.chest-choices { display:grid;grid-template-columns:1fr 1fr;gap:15px;text-align:left; }
+.chest-choice { display:flex;flex-direction:column;align-items:flex-start;gap:10px;border:1px solid #99bb9d50;border-radius:8px;padding:20px;background:#0b1e2480;text-align:left; }
+.chest-choice.selected { border-color:#cbdc9c;box-shadow:inset 0 0 0 1px #cbdc9c44;background:linear-gradient(140deg,#adcb8a15,#10242c); }
+.chest-choice>.item-art,.chest-choice>.skill-icon { width:66px;height:66px;margin-bottom:5px; }
+.chest-choice small { color:#a0b8a6;font-size:11px; }.chest-choice strong { color:#e2eac8;font-size:23px;font-weight:400; }
+#modal .chest-choice p { margin:0;font-size:13px;line-height:1.9;color:#b3cabb; }
+.chest-choice>span:last-child { margin-top:auto;padding-top:10px;color:#c8dda8;font-size:12px; }
+#modal .chest-choice-note { color:#8caa99;font-size:11px;line-height:1.9;margin:18px 0 0; }
+@media(max-width:550px) { #modal[data-kind="discoveryChoice"] .modal-card { padding:20px 15px; }.chest-choices { gap:10px; }.chest-choice { padding:14px 11px; }.chest-choice strong { font-size:20px; } }
+
+/* Satchel sits beside the arena; tooltips live at viewport level to avoid clipping. */
+.is-world.in-combat .game-layout { grid-template-columns:minmax(0,1fr) 252px;gap:18px;align-items:start; }
+.quick-inventory { position:sticky;top:18px;min-width:0;border:1px solid #789c8150;border-radius:7px;background:linear-gradient(145deg,#182d29,#102026);padding:18px 15px;max-height:calc(100svh - 36px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#668b73 #14251f; }
+.quick-inventory header>span { font-size:9px;letter-spacing:2px;color:#84a793; }.quick-inventory h2 { margin:8px 0;font-size:23px;color:#d4e9cc;letter-spacing:2px; }.quick-inventory header>p { font-size:11px;color:#96b39f;margin:0 0 15px; }
+.quick-inventory-total { padding:9px 0;border-top:1px solid #a4c39b25;border-bottom:1px solid #a4c39b25;font-size:11px;color:#a6bfaa; }
+.quick-section-title { display:flex;flex-direction:column;gap:4px;margin:18px 0 12px; }.quick-section-title h3 { color:#c8dfc5;font-size:16px;margin:0; }.quick-section-title small { color:#8ba895;font-size:10px; }
+.quick-item-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px; }
+.quick-item { position:relative;display:flex;flex-direction:column;align-items:center;padding:0;gap:6px;min-width:0; }
+.quick-item .item-art { width:58px;height:58px;max-width:100%;transition:border-color .15s; }.quick-item:hover .item-art,.quick-item:focus-visible .item-art { border-color:#d3dfa7; }.quick-item.equipped .item-art { border-color:#d6ce95;box-shadow:0 0 0 1px #c4c5814d; }
+.quick-item-count { position:absolute;right:0;top:40px;min-width:17px;padding:1px 4px;background:#0d2226;border:1px solid #7d9d8166;border-radius:3px;font-size:10px;color:#dae5c0;line-height:1.3; }.quick-item-equipped { position:absolute;left:1px;top:1px;color:#e5d48c;font-style:normal;font-size:11px; }.quick-item-name { font-size:10px;color:#b3c8b5;text-align:center;line-height:1.5;overflow-wrap:anywhere; }
+.quick-empty { grid-column:1/-1;margin:0;font-size:11px;line-height:1.8;color:#6e9280; }.quick-inventory-help { margin-top:20px;padding-top:12px;border-top:1px solid #a5c09322;color:#789e88;font-size:10px;line-height:1.8; }
+.item-tooltip { position:fixed;z-index:1100;width:270px;max-width:calc(100vw - 24px);padding:16px;border:1px solid #b5c99c80;border-radius:7px;background:linear-gradient(135deg,#203831fa,#10232cfa);box-shadow:0 10px 36px #0007;pointer-events:none; }
+.item-tooltip-heading { display:flex;align-items:center;gap:12px; }.item-tooltip-heading>div { display:grid;gap:6px; }.item-tooltip-heading small { color:#a8be9a;font-size:11px; }.item-tooltip-heading strong { color:#e3ecd1;font-size:19px;font-weight:400; }.item-tooltip>p { font-size:14px;color:#d1e1cb;line-height:1.8;margin:13px 0; }.item-tooltip-meta { display:grid;gap:6px;font-size:11px;color:#aac3ad; }.item-tooltip-meta b { font-weight:400;color:#e0d399; }.item-tooltip-help { display:block;margin-top:12px;padding-top:11px;border-top:1px solid #9cb89030;color:#89a99a;font-size:11px;line-height:1.8; }
+@media(max-width:1000px) { .is-world.in-combat .game-layout { grid-template-columns:minmax(0,1fr) 210px;gap:12px; }.quick-inventory { padding:15px 11px; }.quick-item .item-art { width:50px;height:50px; }.quick-item-count { top:33px; } }
+@media(max-width:750px) { .is-world.in-combat .game-layout { grid-template-columns:1fr; }.quick-inventory { position:static;max-height:300px; }.quick-item-grid { grid-template-columns:repeat(auto-fill,minmax(60px,1fr)); }.quick-inventory h2 { font-size:21px; } }
+@media(prefers-reduced-motion:reduce) { .quick-item .item-art { transition:none; } }
+/* Player HUD follows the selected playable appearance. */
+.hunter-portrait.character-avatar { position:relative;overflow:hidden;background-image:none;background-color:#244132;color:transparent; }
+.hunter-portrait.character-avatar img { display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%;transform:scale(1.65);transform-origin:center 20%; }
+.basketball-icon { display:inline-grid;place-items:center;width:40px;height:40px;flex-shrink:0; }
+.basketball-icon svg { width:100%;height:100%;filter:drop-shadow(0 0 6px #e5b77b33); }
+#basketball-button { border-color:#cfb47770;color:#e8ce9d; }
+#basketball-button .basketball-icon { width:26px;height:26px; }
+.profession-card[data-profession="basket"] img { image-rendering:pixelated; }
+
+.hunter-portrait[data-appearance="basket"] img { image-rendering:pixelated; }
+.basketball-codex { display:flex;align-items:center;gap:18px;margin:20px 0;padding:18px;border:1px solid #d3b17d66;border-radius:7px;background:linear-gradient(110deg,#d7ac6d12,#17262c); }
+.basketball-codex>.basketball-icon { width:60px;height:60px; }.basketball-codex small { font-size:11px;color:#cfbb91; }.basketball-codex h3 { margin:8px 0;font-size:22px;color:#e9d8b0; }#modal .basketball-codex p { font-size:13px;line-height:1.8;margin:6px 0; }.basketball-codex span { font-size:11px;color:#acbba7; }
+.ride-icon { display:inline-grid;place-items:center;width:88px;height:62px;flex-shrink:0; }.ride-icon svg { width:100%;height:100%; }
+#modal[data-kind="shop"] .modal-card { width:960px;max-width:100%; }
+.shop-heading { display:flex;justify-content:space-between;gap:20px;align-items:center; }.shop-heading h2 { color:#e4debb; }#modal .shop-heading p { font-size:12px;color:#a7bda9; }.shop-wallet { font-size:32px;font-weight:400;color:#e4ce8d;white-space:nowrap; }
+.shop-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:22px 0; }.shop-good { display:flex;flex-direction:column;align-items:flex-start;gap:11px;padding:17px;border:1px solid #b2bf8e4d;border-radius:7px;background:#0a1b2255; }.shop-good h3 { font-size:21px;margin:0;color:#dbe5c8; }.shop-good small { color:#acbd96;font-size:11px; }#modal .shop-good p { color:#abc1ac;font-size:12px;line-height:1.8;margin:0 0 5px; }.shop-good button { margin-top:auto;min-width:0;width:100%;font-size:12px;padding:10px; }.shop-good>.item-art { width:64px;height:62px; }
+#shop-result { min-height:24px;color:#c6d6a9;font-size:13px; }
+.quick-wallet { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;color:#e5d399;font-size:21px; }.quick-wallet button { font-size:10px;color:#a9c2a7;text-decoration:underline;text-underline-offset:4px; }
+.quick-ride { display:flex;align-items:center;gap:9px;padding:10px 0 15px;border-top:1px solid #9cb38b33; }.quick-ride>.ride-icon { width:70px;height:50px; }.quick-ride>.ui-glyph { width:32px;height:32px;color:#8db497; }.quick-ride>div { display:grid;gap:5px; }.quick-ride strong { font-size:14px;font-weight:400;color:#d1e2c5; }.quick-ride small { font-size:10px;line-height:1.6;color:#8aaa96; }.quick-ride button { padding:4px 7px;border:1px solid #8cb39a55;border-radius:4px;font-size:11px;color:#bad5aa; }
+@media(max-width:650px) { .shop-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }.shop-good { padding:12px; }.shop-heading { align-items:flex-start; }.shop-wallet { font-size:24px; } }
+
+/* Readable tactical minimap, independent of the main camera zoom. */
+.world-hud #world-map-button,.world-hud #world-minimap { width:240px; }
+.world-hud #world-minimap { height:160px;display:block;border-radius:3px; }
+.minimap-legend { display:flex;justify-content:space-between;gap:5px;margin-top:7px;color:#bcd4bd;font-size:10px; }
+.minimap-legend i { font-style:normal; }.minimap-legend i:first-child { color:#b9ffe2; }.minimap-legend i:nth-child(3),.minimap-legend i:nth-child(4) { color:#e7c47e; }.minimap-legend i:last-child { color:#f18c7c; }
+@media(max-width:850px){.world-hud #world-map-button,.world-hud #world-minimap { width:180px; }.world-hud #world-minimap { height:120px; }.minimap-legend { font-size:9px;gap:3px; }.is-world .scene-top { right:215px; }}
+@media(max-width:550px){.world-hud #world-map-button,.world-hud #world-minimap { width:150px; }.world-hud #world-minimap { height:100px; }.minimap-legend { flex-wrap:wrap;justify-content:center;gap:3px 8px; }.is-world .scene-top { right:135px; }}

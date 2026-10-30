@@ -1,0 +1,74 @@
+.modal[data-kind="profession"] { padding:32px; background:linear-gradient(135deg,#08191bf5,#071015f5); }
+.modal[data-kind="profession"] .modal-card { width:1120px;max-width:100%; }
+.profession-heading { display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px; }
+.profession-heading h2 { color:#d7f2e9;font-size:32px;margin:10px 0;letter-spacing:2px; }
+.profession-heading p { margin:0;font-size:14px;color:#94ada5; }
+.profession-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px; }
+.profession-card { display:flex;flex-direction:column;position:relative;text-align:left;padding:0;overflow:hidden;border:1px solid #a4d9cf30;border-radius:8px;background:#112126;transition:border-color .2s,box-shadow .2s; }
+.profession-card:hover { border-color:var(--profession-color); }
+.profession-card.selected { border-color:var(--profession-color);box-shadow:0 0 0 1px var(--profession-color),0 10px 35px #0003; }
+.profession-number { position:absolute;top:16px;left:18px;z-index:1;color:var(--profession-color);font-size:12px;letter-spacing:2px; }
+.profession-art { display:grid;place-items:center;position:relative;height:220px;background:radial-gradient(ellipse at 50% 75%,#22474b,#0b151d 75%);overflow:hidden; }
+.profession-art.ember { background:radial-gradient(ellipse at 50% 75%,#543322,#15151d 75%); }
+.profession-sigil { display:block;font-size:120px;color:var(--profession-color);text-shadow:0 0 35px var(--profession-color);font-family:Georgia,serif!important; }
+.profession-art:not(.has-image)::after { content:'';position:absolute;width:150px;height:150px;border:1px solid var(--profession-color);opacity:.3;transform:rotate(45deg); }
+.profession-art i { position:absolute;inset:22px 50px;border:1px solid #d4f7ed20;border-radius:50%; }
+.profession-art.has-image { background:#fffef6; }
+.profession-art img { width:100%;height:100%;object-fit:contain;padding:12px; }
+.profession-card:has(.has-image) .profession-number { color:#685225;background:#fffdf0d9;padding:3px 6px;border-radius:3px; }
+.profession-copy { display:flex;flex-direction:column;gap:12px;padding:22px;flex:1; }
+.profession-copy small { color:var(--profession-color);font-size:13px;letter-spacing:1px; }
+.profession-copy strong { color:#e2f3ec;font-size:26px;letter-spacing:2px; }
+.profession-copy>span { font-size:14px;line-height:1.7;color:#a4bcb1; }
+.profession-copy b { margin-top:auto;padding-top:8px;color:var(--profession-color);font-size:13px;font-weight:400; }
+.profession-confirm { display:flex;justify-content:space-between;align-items:center;gap:24px;margin-top:24px;padding-top:22px;border-top:1px solid #91c8bd30; }
+.profession-confirm small { color:#abd9ce;font-size:14px; }
+.profession-confirm p { margin:6px 0;font-size:15px; }
+.profession-confirm span { color:#91a99f;font-size:12px; }
+.profession-confirm .primary { flex-shrink:0;min-width:225px; }
+@media(max-width:750px) {
+ .modal[data-kind="profession"] { padding:16px; }
+ .profession-grid { grid-template-columns:1fr;gap:12px; }
+ .profession-card { display:grid;grid-template-columns:125px 1fr; }
+ .profession-art { height:100%;min-height:190px; }
+ .profession-number { top:8px;left:8px;font-size:10px;letter-spacing:0; }
+ .profession-copy { padding:18px;gap:8px; }
+ .profession-copy strong { font-size:23px; }
+ .profession-sigil { font-size:80px; }
+ .profession-art:not(.has-image)::after { width:80px;height:80px; }
+ .profession-heading { flex-wrap:wrap;gap:10px; }
+ .profession-heading h2 { font-size:25px; }
+ .profession-confirm { flex-direction:column;align-items:stretch;gap:16px; }
+}
+/* Appearance choice previews the actual playable characters. */
+.profession-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.profession-art { height:260px; }
+.profession-art.has-image { background:radial-gradient(ellipse at 50% 75%,#574c20,#122025 75%); }
+.profession-art img { padding:18px; }
+.profession-card:has(.has-image) .profession-number { color:#f4d276;background:#122025bb; }
+.profession-art.shade .profession-sigil,.profession-art.shade i { display:none; }
+.profession-art.shade::after { width:220px;height:220px;transform:none;border:0;opacity:1;background:url('assets/hunter-directions.png') 0 0 / 400% 200% no-repeat; }
+@media(max-width:750px) {
+ .profession-grid { grid-template-columns:1fr; }
+ .profession-art { height:100%;min-height:200px; }
+ .profession-art.shade::after { width:130px;height:190px;background-size:400% 200%; }
+}
+/* Five appearances share one readable selection grid. */
+.profession-grid { grid-template-columns:repeat(3,minmax(0,1fr));gap:14px; }
+.profession-art { height:190px; }
+.profession-copy { padding:18px;gap:9px; }
+.profession-copy strong { font-size:23px; }
+.profession-copy>span { font-size:13px; }
+@media(min-width:751px) {
+ .modal[data-kind="profession"] .modal-card { max-height:calc(100svh - 80px);overflow-y:auto;padding:4px 12px 16px 4px; }
+ .profession-confirm { position:sticky;bottom:0;padding:18px;background:#0c191ef5;z-index:2;backdrop-filter:blur(12px); }
+}
+@media(min-width:551px) and (max-width:750px) {
+ .profession-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .profession-card { display:flex; }
+ .profession-art { height:180px;min-height:180px; }
+}
+@media(max-width:550px) {
+ .profession-grid { grid-template-columns:1fr; }
+ .profession-art { height:100%;min-height:190px; }
+}

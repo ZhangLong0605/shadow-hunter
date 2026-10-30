@@ -24,7 +24,7 @@ const localStorage={getItem:k=>{if(storageFail)throw Error('Storage blocked');re
 const sandbox={window,document,localStorage,requestAnimationFrame:noop,console,Math};
 for(const name of ['release-data.js','art.js','feedback.js','scene-fx.js','combat-cues.js'])vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist',name),'utf8'),sandbox);
 const code=fs.readFileSync(require('node:path').join(__dirname,'../dist/game.js'),'utf8');
-const hook=`window.testGame={get state(){return state},get player(){return player},get enemies(){return enemies},get projectiles(){return projectiles},get minions(){return minions},get effects(){return effects},get keys(){return keys},get mouse(){return mouse},reset,start,update,enterRoom,damageEnemy,hitPlayer,expose,gainKill,skill,dash,basicAttack,updateCapture,openBuild,openCodex,openGuide,pause,closeModal,showRoute,combo,normalizeSkills,showReward,equipSkill,beginTutorial,finishTutorial,updateTutorial,setTutorialStep,openSkillDetails,startPractice,practiceTargets,refreshPractice,updateObjective,retryObjective,requestPractice,draw,enterWorld,updateCamera,get camera(){return {...camera}},pointOnScreen,mousePosition,moveEntity,worldPositionFree,worldMoveSpeed,worldTravelEnd,spawnWorldEnemy,updateWorldEnemy,performEnemyAttack,interactWorld,startWorldMission,completeWorldMission,openWorldMap,updateWorld,useFlask,startRecall,updateJourney,chooseBoon,navigationTarget,leaveWorldMission,stunBoss,pressureBreak,updateEnemy,shoot,spawnMinion,showModal,projectileBlocked,drawHazard,get hazards(){return hazards}};\n`;
+const hook=`window.testGame={shopSite,openShop,buyShopGood,toggleRide,worldMoveSpeed,basketballSkill,updateQuickInventory,selectChestChoice,confirmChestChoice,cancelChestChoice,get knownAchievements(){return knownAchievements},openAchievements,renderAchievements,skillGrowth,updateLevelCelebration,itemIcon,lootMarkup,showKillReward,showSettlement,updateKillRewards,showPrologue,storyCompanions,storyChapterMarkup,openEncounter,checkEncounter,advanceEncounter,finishEncounter,updateEncounter,get encounterSeen(){return encounterSeen},openProfession,selectProfession,confirmProfession,get state(){return state},get player(){return player},get enemies(){return enemies},get projectiles(){return projectiles},get minions(){return minions},get effects(){return effects},get keys(){return keys},get mouse(){return mouse},reset,start,update,enterRoom,damageEnemy,hitPlayer,expose,gainKill,skill,dash,basicAttack,updateCapture,openBuild,openCodex,openGuide,pause,closeModal,showRoute,combo,normalizeSkills,showReward,equipSkill,beginTutorial,finishTutorial,updateTutorial,setTutorialStep,openSkillDetails,startPractice,practiceTargets,refreshPractice,updateObjective,retryObjective,requestPractice,draw,enterWorld,updateCamera,get camera(){return {...camera}},pointOnScreen,mousePosition,moveEntity,worldPositionFree,worldMoveSpeed,worldTravelEnd,spawnWorldEnemy,updateWorldEnemy,performEnemyAttack,interactWorld,startWorldMission,completeWorldMission,openWorldMap,updateWorld,useFlask,startRecall,updateJourney,chooseBoon,navigationTarget,leaveWorldMission,stunBoss,pressureBreak,updateEnemy,shoot,spawnMinion,showModal,projectileBlocked,drawHazard,get hazards(){return hazards}};\n`;
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/guide-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/world-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/expedition-data.js'),'utf8'),sandbox);
@@ -35,7 +35,8 @@ const releaseHook='window.releaseTest={openSettings,openRecords,openCredits,upda
 const campaignHook='window.campaignTest={openAtlas,closeAtlas,travelWorld,openInventory,useCampaignItem,campaignWorld,journeyMods,setupCampaignObjective,interactCampaignNode,completeCampaignWorld,get map(){return WORLD}};';
 vm.runInNewContext(code.replace('makeGround();reset();requestAnimationFrame(frame);',hook+expeditionHook+releaseHook+campaignHook+'makeGround();reset();'),sandbox);
 const g=window.testGame;
-function test(name,fn){try{storage.clear();storageFail=false;fn();console.log('PASS '+name);passed++;}catch(e){console.error('FAIL '+name);throw e;}}
+function test(name,fn){try{storage.clear();storageFail=false;localStorage.setItem('shadow-hunter-prologue-v1','read');for(const w of ['forest','forge','tide','ruins','eclipse'])for(const e of ['wolf','fire','shield','giant','ghost','archer','mirror','swarm','cinder','stalker','sentinel','boss'])g.encounterSeen.add(w+':'+e);fn();console.log('PASS '+name);passed++;}catch(e){console.error('FAIL '+name);throw e;}}
+function chooseChest(){assert.equal(g.state.phase,'discoveryChoice');el('chest-confirm').onclick();}
 function tick(seconds){for(let n=0;n<Math.ceil(seconds/.02);n++)g.update(.02);}
 function start(){g.reset();g.enterRoom(0,'hunt');}
 function choice(data,value){return el('modal-card').querySelectorAll(`[data-${data}]`).find(b=>b.dataset[data]===String(value));}
@@ -200,17 +201,17 @@ test('Nearby scout teaches capture, resists harvesting and unlocks a single supp
  expedition();const scout=g.enemies.find(e=>e.scout),site=ex.discoveries[0];assert.ok(Math.hypot(scout.x-520,scout.y-2010)<520);g.player.x=scout.x;g.player.y=scout.y+50;
  assert.equal(x.claimDiscovery(site),false);g.damageEnemy(scout,1,100);assert.ok(scout.exposed>0);g.damageEnemy(scout,999,999);assert.equal(scout.dead,false);g.player.invincible=100;tick(9);assert.ok(scout.exposed>0&&!scout.dead);
  g.keys.KeyE=true;g.player.focus=100;g.updateCapture(.05);assert.ok(g.state.world.trailCaptured);assert.ok(g.state.owned.has('archer'));choice('equip',0).onclick();assert.equal(g.state.slots[0],'archer');
- g.player.hp=55;g.player.focus=5;assert.equal(x.claimDiscovery(site),true);assert.equal(g.player.hp,75);assert.equal(g.player.focus,35);assert.equal(g.state.phase,'discovery');const time=g.state.time;tick(2);assert.equal(g.state.time,time);el('discovery-close').onclick();assert.equal(x.claimDiscovery(site),false);assert.equal(g.player.hp,75);assert.equal(g.state.world.track,'chase');
+ g.player.hp=55;g.player.focus=5;assert.equal(x.claimDiscovery(site),true);chooseChest();assert.equal(g.player.hp,75);assert.equal(g.player.focus,35);assert.equal(g.state.phase,'discovery');const time=g.state.time;tick(2);assert.equal(g.state.time,time);el('discovery-close').onclick();assert.equal(x.claimDiscovery(site),false);assert.equal(g.player.hp,75);assert.equal(g.state.world.track,'chase');
 });
 test('Opening route returns safely to camp without attracting neighboring patrols',()=>{
  expedition();const walk=(key,t)=>{g.keys[key]=true;tick(t);g.keys[key]=false;};walk('KeyW',1.5);walk('KeyD',.55);walk('KeyW',.72);
- const scout=g.enemies.find(e=>e.scout);g.gainKill(scout,true);assert.equal(x.claimDiscovery(ex.discoveries[0]),true);el('discovery-close').onclick();walk('KeyS',2.1);walk('KeyA',.55);tick(5);assert.equal(g.player.hp,100);assert.equal(x.canSaveCamp(),true);
+ const scout=g.enemies.find(e=>e.scout);g.gainKill(scout,true);assert.equal(x.claimDiscovery(ex.discoveries[0]),true);chooseChest();el('discovery-close').onclick();walk('KeyS',2.1);walk('KeyA',.55);tick(5);assert.equal(g.player.hp,100);assert.equal(x.canSaveCamp(),true);
 });
 test('Remote discoveries require guards cleared; upgrade and max-level fallback differ',()=>{
  expedition();const ash=ex.discoveries[1];g.player.x=ash.x;g.player.y=ash.y;assert.equal(x.claimDiscovery(ash),false);
- for(const e of g.enemies)if(Math.hypot(e.x-ash.x,e.y-ash.y)<330)g.gainKill(e);g.state.corruption=55;assert.equal(x.claimDiscovery(ash),true);assert.equal(g.state.corruption,35);assert.equal(g.state.world.restCharges,2);el('discovery-close').onclick();
- const relic=ex.discoveries[3];g.player.x=relic.x;g.player.y=relic.y;for(const e of g.enemies)if(Math.hypot(e.x-relic.x,e.y-relic.y)<330)g.gainKill(e);const level=g.state.levels.wolf;assert.equal(x.claimDiscovery(relic),true);assert.equal(g.state.levels.wolf,level+1);assert.ok(g.state.xp.wolf>=7);
- expedition();g.state.levels.wolf=2;g.state.xp.wolf=18;g.state.corruption=60;g.player.x=relic.x;g.player.y=relic.y;for(const e of g.enemies)if(Math.hypot(e.x-relic.x,e.y-relic.y)<330)g.gainKill(e);assert.equal(x.claimDiscovery(relic),true);assert.equal(g.state.levels.wolf,2);assert.equal(g.state.corruption,35);
+ for(const e of g.enemies)if(Math.hypot(e.x-ash.x,e.y-ash.y)<330)g.gainKill(e);g.state.corruption=55;assert.equal(x.claimDiscovery(ash),true);chooseChest();assert.equal(g.state.corruption,35);assert.equal(g.state.world.restCharges,2);el('discovery-close').onclick();
+ const relic=ex.discoveries[3];g.player.x=relic.x;g.player.y=relic.y;for(const e of g.enemies)if(Math.hypot(e.x-relic.x,e.y-relic.y)<330)g.gainKill(e);const level=g.state.levels.wolf;assert.equal(x.claimDiscovery(relic),true);chooseChest();assert.equal(g.state.levels.wolf,level+1);assert.ok(g.state.xp.wolf>=7);
+ expedition();g.state.levels.wolf=2;g.state.xp.wolf=18;g.state.corruption=60;g.player.x=relic.x;g.player.y=relic.y;for(const e of g.enemies)if(Math.hypot(e.x-relic.x,e.y-relic.y)<330)g.gainKill(e);assert.equal(x.claimDiscovery(relic),true);chooseChest();assert.equal(g.state.levels.wolf,2);assert.equal(g.state.corruption,35);
 });
 test('Camp roundtrip restores build, resources, rewards, enemy deaths and mission progress',()=>{
  expedition();const scout=g.enemies.find(e=>e.scout);g.gainKill(scout,true);g.state.owned.add('archer');g.state.slots[0]='archer';g.state.world.claimed.add('trail-cache');g.state.world.completed.add('chase');g.state.world.visited.add('marsh');g.state.world.seen.add('stalker');g.state.world.track='defend';g.state.world.restCharges=0;g.state.stored='ghost';g.state.time=123;g.state.corruption=37;g.player.hp=63;g.player.focus=42;
@@ -426,7 +427,7 @@ test('Opening a modal clears capture progress and held combat inputs before resu
 test('Esc closes a first-run discovery back into the same expedition',()=>{
  g.reset();g.openGuide();el('guide-close').onclick();g.start();el('world-begin').onclick();
  const scout=g.enemies.find(e=>e.scout),site=ex.discoveries[0];g.gainKill(scout,true);g.player.x=site.x;g.player.y=site.y;
- assert.equal(x.claimDiscovery(site),true);assert.equal(g.state.phase,'discovery');const world=g.state.world;
+ assert.equal(x.claimDiscovery(site),true);chooseChest();assert.equal(g.state.phase,'discovery');const world=g.state.world;
  keyEvent('keydown','Escape');keyEvent('keyup','Escape');assert.equal(g.state.phase,'playing');assert.equal(g.state.world,world);assert.ok(el('intro').classList.contains('hidden'));assert.ok(world.claimed.has(site.id));
 });
 test('Boss pressure breaks cancel an active lunge before it can move or damage again',()=>{
@@ -670,10 +671,231 @@ if(fs.existsSync(require('node:path').join(__dirname,'../release/影子猎手-�
   const sourceHtml=fs.readFileSync(require('node:path').join(__dirname,'../dist/index.html'),'utf8');
   const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];assert.equal(scripts.length,[...sourceHtml.matchAll(/<script src=/g)].length);
   for(const script of scripts)vm.runInNewContext(script[1],portable);
-  assert.equal(portableWindow.shadowHunter.snapshot().phase,'intro');el('skip-intro').onclick();assert.equal(portableWindow.shadowHunter.snapshot().phase,'worldIntro');el('world-begin').onclick();
+  assert.equal(portableWindow.shadowHunter.snapshot().phase,'intro');el('skip-intro').onclick();assert.equal(portableWindow.shadowHunter.snapshot().phase,'profession');el('profession-confirm').onclick();assert.equal(portableWindow.shadowHunter.snapshot().phase,'worldIntro');el('world-begin').onclick();
   assert.equal(portableWindow.shadowHunter.snapshot().phase,'playing');assert.ok(portableWindow.shadowHunter.snapshot().enemies.length>=30);assert.ok(portableWindow.HUNTER_AUDIO);assert.ok(portableWindow.HUNTER_ART);assert.ok(html.includes('data:image/png;base64,'));
   assert.ok(portableWindow.HUNTER_SCENE);assert.doesNotMatch(html,/<script[^>]+src=/);assert.doesNotMatch(html,/<link rel="stylesheet"/);
  });
 }
+test('Character selection changes appearance without changing skills and cancels safely',()=>{
+ g.reset();g.openProfession(false);g.selectProfession('shade');g.confirmProfession();
+ g.reset();const before=g.state.slots[0];g.openProfession(false);g.selectProfession('sun');
+ el('profession-back').onclick();assert.equal(window.shadowHunter.snapshot().appearance,'shade');
+ g.openProfession(false);g.selectProfession('sun');g.confirmProfession();
+ assert.equal(g.state.phase,'worldIntro');assert.equal(g.state.slots[0],before);
+ assert.equal(window.shadowHunter.snapshot().appearance,'sun');
+ assert.equal(localStorage.getItem('shadow-hunter-appearance'),'sun');
+ g.draw();assert.equal(g.player.appearance,'sun');
+ g.reset();assert.equal(window.shadowHunter.snapshot().appearance,'sun');
+ g.openProfession(true);g.selectProfession('sun');g.confirmProfession();
+ g.draw();assert.ok(g.state.tutorial);assert.equal(g.player.appearance,'sun');
+ g.finishTutorial();g.draw();assert.equal(g.player.appearance,'sun');
+});
+test('All reference characters remain distinct, selectable and independent of skills',()=>{
+ for(const id of ['sun','bull','orange','round','shade']){
+  g.reset();const slots=JSON.stringify(g.state.slots);g.openProfession(false);g.selectProfession(id);g.confirmProfession();
+  assert.equal(window.shadowHunter.snapshot().appearance,id);assert.equal(JSON.stringify(g.state.slots),slots);
+  g.draw();assert.equal(g.player.appearance,id);assert.equal(localStorage.getItem('shadow-hunter-appearance'),id);
+ }
+});
+test('Encounter dialogue pauses combat, reveals text, advances and records completion',()=>{
+ g.reset();g.start();el('world-begin').onclick();g.encounterSeen.clear();
+ const enemy=g.enemies.find(e=>!e.dead);enemy.type='wolf';enemy.variant=null;
+ const before={hp:g.player.hp,time:g.state.time,x:enemy.x,y:enemy.y};
+ assert.ok(g.openEncounter(enemy));assert.equal(g.state.phase,'encounter');
+ g.update(.5);assert.ok(el('vn-text').textContent.length>0);assert.equal(g.state.time,before.time);assert.equal(g.player.hp,before.hp);assert.equal(enemy.x,before.x);assert.equal(enemy.y,before.y);
+ g.advanceEncounter();const first=el('vn-text').textContent;assert.ok(first.length>5);
+ g.advanceEncounter();assert.equal(el('vn-counter').textContent,'2 / 4');
+ for(let i=0;i<6;i++)g.advanceEncounter();
+ assert.equal(g.state.phase,'playing');assert.ok(g.encounterSeen.has('forest:wolf'));assert.ok(g.player.invincible>=1.2);
+ assert.equal(g.openEncounter(enemy),false);assert.ok(JSON.parse(localStorage.getItem('shadow-hunter-dialogues-v1')).includes('forest:wolf'));
+});
+test('Encounter scripts differ by enemy and skipping works even with blocked storage',()=>{
+ g.reset();g.start();el('world-begin').onclick();g.encounterSeen.clear();
+ const enemy=g.enemies.find(e=>!e.dead);enemy.type='fire';enemy.variant=null;
+ g.openEncounter(enemy);g.advanceEncounter();const fire=el('vn-text').textContent;g.finishEncounter();
+ enemy.type='ghost';g.openEncounter(enemy);g.advanceEncounter();assert.notEqual(el('vn-text').textContent,fire);
+ storageFail=true;g.finishEncounter();storageFail=false;assert.equal(g.state.phase,'playing');assert.ok(g.encounterSeen.has('forest:ghost'));
+ g.state.mode='practice';enemy.type='mirror';assert.equal(g.openEncounter(enemy),false);g.state.mode='hunt';
+ g.state.tutorial={step:0};assert.equal(g.openEncounter(enemy),false);g.state.tutorial=null;
+});
+test('Encounter proximity triggers before aggression and never interrupts incoming attacks',()=>{
+ g.reset();g.start();el('world-begin').onclick();g.encounterSeen.clear();
+ const enemy=g.enemies[0];for(const e of g.enemies){e.dead=e!==enemy;e.aggro=false;e.telegraph=0;e.dash=0;e.hit=0;}enemy.exposed=0;enemy.type='wolf';enemy.variant=null;enemy.x=g.player.x+100;enemy.y=g.player.y;
+ g.updateCamera(1);enemy.aggro=true;assert.equal(g.checkEncounter(),false);enemy.aggro=false;
+ g.projectiles.push({enemy:true,life:1});assert.equal(g.checkEncounter(),false);g.projectiles.length=0;
+ assert.ok(g.checkEncounter());g.finishEncounter();assert.equal(g.checkEncounter(),false);
+});
+test('First departure tells the prologue, then starts the selected character and teaching path',()=>{
+ g.reset();storage.delete('shadow-hunter-prologue-v1');g.openProfession(true);g.selectProfession('bull');g.confirmProfession();
+ assert.equal(g.state.phase,'encounter');assert.equal(g.state.tutorial,null);
+ g.advanceEncounter();assert.ok(el('vn-text').textContent.includes('晴昼镇'));
+ assert.ok(g.storyCompanions().every(p=>p.id!=='bull'));
+ g.finishEncounter();assert.equal(g.state.phase,'playing');assert.ok(g.state.tutorial);assert.equal(window.shadowHunter.snapshot().appearance,'bull');
+ assert.equal(localStorage.getItem('shadow-hunter-prologue-v1'),'read');
+ g.reset();g.openProfession(false);g.confirmProfession();assert.equal(g.state.phase,'worldIntro');
+});
+test('Prologue replay returns home, chapter clues follow the campaign and storage denial permits departure',()=>{
+ g.reset();g.showPrologue();g.finishEncounter();assert.equal(g.state.phase,'intro');
+ for(const id of ['forest','forge','tide','ruins','eclipse']){assert.ok(g.storyChapterMarkup(id).includes('旅途线索'));assert.ok(g.storyChapterMarkup(id,true).includes('记忆回响'));}
+ storage.delete('shadow-hunter-prologue-v1');storageFail=true;g.openProfession(false);g.confirmProfession();assert.equal(g.state.phase,'encounter');g.finishEncounter();storageFail=false;assert.equal(g.state.phase,'worldIntro');
+});
+test('New story clears the previous world and paints the newly selected character before pausing',()=>{
+ g.reset();g.openProfession(false);g.selectProfession('sun');g.confirmProfession();el('world-begin').onclick();g.draw();
+ assert.equal(g.player.appearance,'sun');assert.ok(g.state.world);
+ g.reset();storage.delete('shadow-hunter-prologue-v1');g.openProfession(true);g.selectProfession('bull');g.confirmProfession();
+ assert.equal(g.state.phase,'encounter');assert.equal(g.state.world,null);assert.equal(g.player.appearance,'bull');
+ const time=g.state.time,x=g.player.x;g.update(1);assert.equal(g.state.time,time);assert.equal(g.player.x,x);
+ g.finishEncounter();assert.ok(g.state.tutorial);assert.equal(window.shadowHunter.snapshot().appearance,'bull');
+});
+test('Slaying awards a real item, accurate resources and a timed reward notice exactly once',()=>{
+ g.reset();g.start();el('world-begin').onclick();g.player.hp=70;g.player.focus=20;
+ const enemy=g.enemies.find(e=>!e.dead&&!e.boss&&!e.elite),count=()=>Object.values(g.state.campaign.inventory).reduce((a,b)=>a+b,0);
+ const before=count(),skill=g.state.slots[0],xp=g.state.xp[skill];g.gainKill(enemy);
+ assert.equal(count(),before+1);assert.equal(g.player.hp,73);assert.equal(g.player.focus,28);assert.equal(g.state.xp[skill],xp+1);
+ assert.ok(el('kill-rewards').innerHTML.includes('生命 +3'));assert.ok(el('kill-rewards').innerHTML.includes('已放入行囊'));
+ g.gainKill(enemy);assert.equal(count(),before+1);assert.equal(g.state.xp[skill],xp+1);
+ g.updateKillRewards(5);assert.equal(el('kill-rewards').innerHTML,'');g.reset();assert.equal(el('kill-rewards').innerHTML,'');
+});
+test('All 20 items have distinct shared artwork in drops, inventory and settlement',()=>{
+ g.reset();g.start();el('world-begin').onclick();const ids=Object.keys(window.HUNTER_CAMPAIGN.items),art=new Set();assert.equal(ids.length,20);
+ for(const id of ids){
+  const icon=g.itemIcon(id);assert.ok(icon.includes('data-item-icon="'+id+'"'));assert.ok(icon.includes('<svg'));assert.ok(g.lootMarkup(id).includes(icon));
+  art.add(icon.match(/<g[^>]*>([\s\S]*?)<\/g>/)[1]);g.state.campaign.inventory[id]=1;
+  g.showKillReward({x:100,y:100},id,[]);assert.ok(el('kill-rewards').innerHTML.includes(icon));
+ }
+ assert.equal(art.size,20);assert.equal(g.itemIcon('unknown'),'');
+ g.state.phase='camp';window.campaignTest.openInventory('camp');
+ for(const id of ids)assert.ok(el('modal-card').innerHTML.includes(g.itemIcon(id)));
+ g.state.settlement={items:Object.fromEntries(ids.map(id=>[id,1])),skills:[],perks:[],discoveries:[],elapsed:10,kills:20,captures:0,completed:0,campSaved:true,profileSaved:true};g.showSettlement();
+ for(const id of ids)assert.ok(el('modal-card').innerHTML.includes(g.itemIcon(id)));
+});
+test('Skill thresholds celebrate accurate upgrades, max rank and safe notice expiry',()=>{
+ start();const id=g.state.slots[0];g.state.xp[id]=6;g.state.levels[id]=0;
+ const enemy=g.enemies[0];g.gainKill(enemy);assert.equal(g.state.levels[id],1);assert.equal(el('level-up').classList.contains('hidden'),false);
+ assert.ok(el('level-up').innerHTML.includes('Lv.1 → Lv.2'));assert.ok(el('level-up').innerHTML.includes('100% → 122%'));assert.ok(el('level-up').innerHTML.includes('4.8s → 4.4s'));assert.ok(g.skillGrowth(id).includes('还需 11'));
+ const before=g.effects.length;g.gainKill(enemy);assert.equal(g.effects.length,before);
+ g.state.xp[id]=17;g.gainKill(g.enemies[1]);assert.equal(g.state.levels[id],2);assert.ok(el('level-up').innerHTML.includes('影技觉醒'));assert.ok(el('level-up').innerHTML.includes('122% → 144%'));assert.ok(g.skillGrowth(id).includes('MAX'));
+ g.pause();g.update(10);assert.equal(el('level-up').classList.contains('hidden'),false);
+ g.updateLevelCelebration(5);assert.equal(el('level-up').classList.contains('hidden'),true);
+ g.reset();assert.equal(el('level-up').classList.contains('hidden'),true);
+});
+test('Chest ceremony shows supply artwork and actual capped gains without duplicate claiming',()=>{
+ g.reset();g.start();el('world-begin').onclick();g.state.world.trailCaptured=true;
+ for(const e of g.enemies)e.dead=true;
+ const site=window.expeditionTest.allWorldSites().find(s=>s.id==='trail-cache');assert.ok(site);
+ g.player.x=site.x;g.player.y=site.y;g.player.hp=96;g.player.focus=85;
+ assert.ok(window.expeditionTest.claimDiscovery(site));chooseChest();assert.equal(g.player.hp,100);assert.equal(g.player.focus,100);
+ const html=el('modal-card').innerHTML;assert.ok(html.includes('discovery-treasure'));assert.ok(html.includes('data-item-icon="leaf"'));assert.ok(html.includes('data-item-icon="seed"'));assert.ok(html.includes('+4'));assert.ok(html.includes('+15'));assert.ok(html.includes('补给已使用'));
+ el('discovery-close').onclick();assert.equal(g.state.phase,'playing');assert.equal(window.expeditionTest.claimDiscovery(site),false);
+});
+test('Achievement progress excludes teaching and practice, opens a filtered collection and pauses gameplay',()=>{
+ g.reset();g.start();el('world-begin').onclick();g.state.kills=10;
+ g.state.tutorial={step:0};window.releaseTest.updateRelease(.3);assert.ok(!window.HUNTER_RELEASE.journal().achievements.includes('hunter10'));
+ g.state.tutorial=null;g.state.mode='practice';window.releaseTest.updateRelease(.3);assert.ok(!window.HUNTER_RELEASE.journal().achievements.includes('hunter10'));
+ g.state.mode='hunt';window.releaseTest.updateRelease(.3);assert.ok(window.HUNTER_RELEASE.journal().achievements.includes('hunter10'));
+ g.openAchievements();assert.equal(g.state.phase,'achievements');assert.ok(el('modal-card').innerHTML.includes('归途勋章'));assert.ok(el('modal-card').innerHTML.includes('10 / 10'));
+ const time=g.state.time;g.update(2);assert.equal(g.state.time,time);
+ g.renderAchievements('战斗');assert.ok(el('modal-card').innerHTML.includes('刚热完身'));assert.ok(!el('modal-card').innerHTML.includes('<h3>配饰比武器还多</h3>'));
+ el('achievements-close').onclick();assert.equal(g.state.phase,'playing');
+});
+test('Playful achievements trigger from actual dodge, counter, healing and return actions',()=>{
+ g.reset();g.start();el('world-begin').onclick();const release=window.HUNTER_RELEASE;
+ g.player.hp=10;g.state.journey.flasks=2;g.state.journey.flaskCd=0;assert.ok(g.useFlask());assert.ok(release.journal().achievements.includes('lastsip'));
+ const enemy=g.enemies[0];for(const e of g.enemies)e.dead=e!==enemy;
+ enemy.exposed=0;enemy.hp=enemy.maxHp=1000;enemy.x=g.player.x+30;enemy.y=g.player.y;enemy.r=18;
+ g.player.invincible=0;g.player.dash=0;g.player.shield=2;g.hitPlayer(10);assert.ok(release.journal().achievements.includes('shieldcounter'));
+ enemy.telegraph=1;enemy.target={x:g.player.x,y:g.player.y};g.state.dashCd=0;g.dash();assert.ok(release.journal().achievements.includes('perfectdodge'));
+ for(const e of g.enemies)e.dead=true;g.player.dash=0;g.player.hp=9;g.state.adventure.items={leaf:10};g.state.campaign.inventory.leaf=10;
+ assert.ok(g.startRecall());g.updateJourney(3.1);assert.equal(g.state.phase,'settlement');
+ assert.ok(release.journal().achievements.includes('closecall'));assert.ok(release.journal().achievements.includes('shopping'));
+});
+test('Full-stat chest earns the playful discovery achievement only on a valid claim',()=>{
+ g.reset();g.start();el('world-begin').onclick();for(const e of g.enemies)e.dead=true;
+ const site=window.expeditionTest.allWorldSites().find(s=>s.id==='trail-cache');g.player.x=site.x;g.player.y=site.y;g.player.hp=100;g.player.focus=100;
+ assert.equal(window.expeditionTest.claimDiscovery(site),false);assert.ok(!window.HUNTER_RELEASE.journal().achievements.includes('fullchest'));
+ g.state.world.trailCaptured=true;assert.ok(window.expeditionTest.claimDiscovery(site));chooseChest();assert.ok(window.HUNTER_RELEASE.journal().achievements.includes('fullchest'));
+});
+test('Newly earned return achievement remains visible over the settlement panel',()=>{
+ g.reset();for(let i=0;i<30;i++)window.releaseTest.updateRelease(6);g.knownAchievements.delete('closecall');g.start();el('world-begin').onclick();for(const e of g.enemies)e.dead=true;
+ g.player.hp=9;assert.ok(g.startRecall());g.updateJourney(3.1);assert.equal(g.state.phase,'settlement');
+ assert.ok(window.HUNTER_RELEASE.journal().achievements.includes('closecall'));assert.equal(el('achievement-toast').classList.contains('hidden'),false);
+ assert.ok(el('achievement-toast').innerHTML.includes('差一点就留在这里'));
+});
+test('Achievements appear in the triggering action without waiting for the release update or prior notices',()=>{
+ g.reset();for(let i=0;i<10;i++)window.releaseTest.updateRelease(6);g.start();el('world-begin').onclick();
+ for(const id of ['hunter10','capture5','skillmax'])g.knownAchievements.delete(id);
+ g.state.kills=9;g.state.captures=4;g.gainKill(g.enemies[0],true);
+ const first=el('achievement-toast').innerHTML;
+ assert.equal(el('achievement-toast').classList.contains('hidden'),false);
+ assert.ok(first.includes('data-achievement-popup="hunter10"'));assert.ok(first.includes('data-achievement-popup="capture5"'));
+ const skill=g.state.slots[0];g.state.levels[skill]=1;g.state.xp[skill]=17;g.gainKill(g.enemies[1]);
+ const next=el('achievement-toast').innerHTML;assert.ok(next.includes('data-achievement-popup="skillmax"'));assert.ok(next.includes('data-achievement-popup="capture5"'));
+});
+test('First enemy defeated in a real adventure immediately unlocks the first-kill notice',()=>{
+ g.reset();for(let i=0;i<10;i++)window.releaseTest.updateRelease(6);g.knownAchievements.delete('firstkill');g.start();el('world-begin').onclick();
+ assert.equal(g.state.kills,0);g.gainKill(g.enemies[0]);
+ assert.ok(window.HUNTER_RELEASE.journal().achievements.includes('firstkill'));
+ assert.equal(el('achievement-toast').classList.contains('hidden'),false);assert.ok(el('achievement-toast').innerHTML.includes('data-achievement-popup="firstkill"'));
+});
+test('Legacy kills cannot pre-unlock first defeat, and a fresh run always shows its first actual defeat',()=>{
+ localStorage.setItem('shadow-hunter-journal-v1',JSON.stringify({achievements:['hunter10'],progress:{kills:35}}));g.knownAchievements.delete('firstkill');
+ g.reset();g.start();window.releaseTest.updateRelease(.3);assert.ok(!window.HUNTER_RELEASE.journal().achievements.includes('firstkill'));
+ el('world-begin').onclick();g.gainKill(g.enemies[0]);assert.ok(el('achievement-toast').innerHTML.includes('data-achievement-popup="firstkill"'));
+ g.reset();g.start();el('world-begin').onclick();g.gainKill(g.enemies[0]);assert.ok(el('achievement-toast').innerHTML.includes('本次旅程 · 首次斩杀'));
+});
+test('Chest choice previews pause gameplay and grant only the confirmed alternative once',()=>{
+ g.reset();g.start();el('world-begin').onclick();for(const e of g.enemies)e.dead=true;g.state.world.trailCaptured=true;
+ const site=window.expeditionTest.allWorldSites().find(s=>s.id==='trail-cache');g.player.x=site.x;g.player.y=site.y;g.player.hp=40;g.player.focus=5;
+ const item=window.HUNTER_CAMPAIGN.worlds.find(w=>w.id===g.state.world.id).loot[0],count=()=>g.state.campaign.inventory[item]||0,inventory=count();
+ assert.ok(window.expeditionTest.claimDiscovery(site));assert.equal(g.state.phase,'discoveryChoice');assert.equal(g.player.hp,40);assert.equal(count(),inventory);assert.ok(!g.state.world.claimed.has(site.id));
+ const time=g.state.time;g.update(2);assert.equal(g.state.time,time);g.cancelChestChoice();assert.equal(g.state.phase,'playing');assert.ok(!g.state.world.claimed.has(site.id));
+ assert.ok(window.expeditionTest.claimDiscovery(site));assert.equal(g.selectChestChoice('forged'),false);assert.ok(g.selectChestChoice('pack'));assert.ok(g.confirmChestChoice());
+ assert.equal(g.player.hp,40);assert.equal(g.player.focus,5);assert.equal(count(),inventory+2);assert.ok(g.state.world.claimed.has(site.id));assert.equal(g.state.adventure.items[item],2);
+ assert.equal(g.confirmChestChoice(),false);assert.equal(count(),inventory+2);el('discovery-close').onclick();assert.equal(window.expeditionTest.claimDiscovery(site),false);
+});
+test('Side satchel shows actual owned items and quantities with hover and focus tooltips',()=>{
+ g.reset();g.start();el('world-begin').onclick();g.state.campaign.inventory={leaf:2,fang:1};g.state.campaign.equipped='fang';g.updateQuickInventory();
+ assert.equal(el('quick-inventory').classList.contains('hidden'),false);assert.ok(el('quick-inventory-content').innerHTML.includes('2 种物品 · 3 件'));
+ const buttons=el('quick-inventory-content').querySelectorAll('button');const leaf=buttons.find(b=>b.dataset['quick-item']==='leaf'),fang=buttons.find(b=>b.dataset['quick-item']==='fang');assert.ok(leaf&&fang);
+ leaf.listeners.mouseenter();assert.equal(el('item-tooltip').classList.contains('hidden'),false);assert.ok(el('item-tooltip').innerHTML.includes('恢复生命 22'));assert.ok(el('item-tooltip').innerHTML.includes('持有 2 件'));
+ leaf.listeners.mouseleave();assert.equal(el('item-tooltip').classList.contains('hidden'),true);
+ fang.listeners.focus();assert.ok(el('item-tooltip').innerHTML.includes('普攻伤害 +10%'));assert.ok(el('item-tooltip').innerHTML.includes('已装备'));
+ g.state.campaign.inventory.leaf=0;g.updateQuickInventory();assert.ok(!el('quick-inventory-content').innerHTML.includes('data-quick-item="leaf"'));assert.equal(el('item-tooltip').classList.contains('hidden'),true);
+ g.reset();assert.equal(el('quick-inventory').classList.contains('hidden'),true);
+});
+test('HUD portrait and name follow every selected character and restore the original hunter',()=>{
+ for(const [id,name] of [['sun','暖阳伙伴'],['bull','牛角伙伴'],['orange','橙嘴伙伴'],['round','圆肚伙伴'],['basket','运球小将'],['shade','影子猎手']]){
+  g.reset();g.openProfession(false);g.selectProfession(id);g.confirmProfession();
+  assert.equal(el('hud-portrait').dataset.appearance,id);assert.equal(el('hud-character-name').textContent,name);
+  assert.equal(el('hud-portrait').classList.contains('character-avatar'),id!=='shade');
+  if(id!=='shade')assert.ok(el('hud-portrait').innerHTML.includes('character-'+id+'.png'));else assert.equal(el('hud-portrait').innerHTML,'⟡');
+ }
+});
+test('Basketball character has an exclusive lob, visible cooldown and one area hit after landing',()=>{
+ g.reset();g.openProfession(false);g.selectProfession('basket');g.confirmProfession();el('world-begin').onclick();g.player.invincible=100;
+ assert.equal(window.shadowHunter.snapshot().appearance,'basket');assert.equal(el('basketball-button').classList.contains('hidden'),false);
+ const target=g.enemies[0],far=g.enemies[1];for(const e of g.enemies)e.dead=true;
+ Object.assign(target,{dead:false,type:'giant',hp:1000,maxHp:1000,pressure:1000,maxPressure:1000,x:g.player.x+100,y:g.player.y,cd:100,aggro:true});
+ Object.assign(far,{dead:false,type:'giant',hp:1000,maxHp:1000,pressure:1000,maxPressure:1000,x:g.player.x+450,y:g.player.y,cd:100,aggro:true});
+ g.mouse.x=target.x;g.mouse.y=target.y;assert.ok(g.basketballSkill());assert.equal(g.state.basketballCd,8);assert.equal(g.basketballSkill(),false);
+ const ball=g.effects.find(e=>e.kind==='basketball');assert.ok(ball);g.draw();
+ g.pause();const life=ball.life;g.update(.5);assert.equal(ball.life,life);g.closeModal('playing');
+ tick(.8);assert.ok(target.hp<1000);assert.equal(far.hp,1000);const hp=target.hp;tick(.5);assert.equal(target.hp,hp);
+ assert.ok(g.state.basketballCd>0);g.reset();assert.equal(g.state.basketballCd,0);
+ g.beginTutorial();assert.equal(g.basketballSkill(),false);
+ g.reset();g.openProfession(false);g.selectProfession('sun');g.confirmProfession();el('world-begin').onclick();assert.equal(g.basketballSkill(),false);assert.equal(el('basketball-button').classList.contains('hidden'),true);
+});
+test('World shop buys real items and vehicles, pauses the world and riding changes movement',()=>{
+ g.reset();g.start();el('world-begin').onclick();for(const e of g.enemies)e.dead=true;
+ const shop=g.shopSite();assert.ok(g.worldPositionFree(shop.x,shop.y,20));g.player.x=shop.x;g.player.y=shop.y;
+ const garage=window.HUNTER_CAMPAIGN.garage(g.state.campaign);garage.coins=200;g.interactWorld();assert.equal(g.state.phase,'shop');
+ const time=g.state.time;g.update(1);assert.equal(g.state.time,time);
+ assert.ok(g.buyShopGood('moonbike'));assert.equal(garage.coins,140);assert.equal(garage.selected,'moonbike');assert.ok(g.buyShopGood('moonbike'));assert.equal(garage.coins,140);
+ assert.ok(g.buyShopGood('fang'));assert.equal(garage.coins,90);assert.ok(g.state.campaign.inventory.fang>0);
+ el('shop-close').onclick();const speed=g.worldMoveSpeed();assert.ok(g.toggleRide());assert.equal(g.worldMoveSpeed(),speed*1.45);g.draw();
+ g.state.attackCd=0;g.basicAttack();assert.equal(g.state.mounted,false);assert.equal(g.worldMoveSpeed(),speed);
+ const camp=window.HUNTER_CAMPAIGN.map(g.state.world.id).sites[0];g.player.x=camp.x;g.player.y=camp.y;g.state.world.track='shop';assert.ok(window.expeditionTest.saveCamp());assert.equal(ex.read(localStorage).data.world.track,'shop');
+
+});
 console.log(`\n${passed} gameplay smoke scenarios passed.`);
 

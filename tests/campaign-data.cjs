@@ -24,3 +24,14 @@ for(const w of c.worlds){const m=c.map(w.id),sc=m.create(),step=40,cols=m.width/
 }
 assert.equal(layouts.size,5);
 console.log('Campaign: AND unlocks, repeat rewards, distinct loot, persistence, denial and five connected maps passed.');
+for(const w of c.worlds){
+ const rewards=c.empty();
+ for(const kind of ['monster','elite']){
+  const token=w.id+':guaranteed:'+kind;
+  assert.equal(c.reward(rewards,w.id,token,kind,()=>.99).item,w.loot[0]);
+  const before=JSON.stringify(rewards.inventory);
+  assert.ok(c.reward(rewards,w.id,token,kind,()=>0).duplicate);
+  assert.equal(JSON.stringify(rewards.inventory),before);
+ }
+}
+console.log('Kill loot: every world guarantees a basic supply on a failed bonus roll; repeated claims never duplicate it.');
