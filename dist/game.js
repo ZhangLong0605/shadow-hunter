@@ -80,9 +80,16 @@ const itemIllustrations={
  prism:'<path fill="#8c83b2" d="m32 7 19 18-6 26-23 6-10-26Z"/><path fill="#b9dfe4" d="m32 7 4 25 15-7-6 26-9-19-14 25-10-26Z"/><path fill="#e5d3f6" d="m32 7 4 25-24-1Z"/><path d="m32 7-10 50m-10-26 33 20"/>',
  crown:'<path fill="#d9bd76" d="m10 20 13 11 9-18 9 18 13-11-5 30H15Z"/><path fill="#b9935c" d="M15 44h34v9H15Z"/><path fill="#b8def0" d="m32 29 6 8-6 8-6-8Z"/><circle fill="#f4e6b9" cx="10" cy="18" r="3"/><circle fill="#f4e6b9" cx="32" cy="11" r="3"/><circle fill="#f4e6b9" cx="54" cy="18" r="3"/>'
 };
+Object.assign(itemIllustrations,{
+ sugar:'<path fill="#f3c86f" d="m32 8 7 15 17 2-12 12 3 18-15-8-15 8 3-18L8 25l17-2Z"/><path fill="#fff4d1" d="m32 17 4 10 11 1-8 8 2 10-9-5-9 5 2-10-8-8 11-1Z"/>',
+ sodapearl:'<circle cx="32" cy="34" r="22" fill="#9edbeb"/><circle cx="25" cy="25" r="8" fill="#e8faff"/><path d="M18 44q14 10 28-2"/><circle cx="45" cy="11" r="5" fill="#d2f1f8"/><circle cx="14" cy="12" r="3" fill="#f6faff"/>',
+ honeydrop:'<path fill="#efbd59" d="M32 7c0 0-19 23-19 34a19 16 0 0 0 38 0C51 30 32 7 32 7Z"/><path fill="#ffe1a0" d="M28 22c-7 7-10 14-8 21 3-1 6-2 7-6Z"/><path d="m30 35 8-4 8 4v9l-8 5-8-5Z"/>',
+ rainbow:'<path d="M17 8q0 14 15 14T47 8"/><path d="M12 48a20 20 0 0 1 40 0" fill="none" stroke="#e994b6" stroke-width="8"/><path d="M19 48a13 13 0 0 1 26 0" fill="none" stroke="#f2cf74" stroke-width="7"/><path d="M26 48a6 6 0 0 1 12 0" fill="none" stroke="#91cbbb" stroke-width="6"/><ellipse cx="13" cy="49" rx="10" ry="7" fill="#fff6f0"/><ellipse cx="51" cy="49" rx="10" ry="7" fill="#fff6f0"/>'
+});
 function itemIcon(id){
  const item=CAMPAIGN.items[id],art=itemIllustrations[id];if(!item||!art)return '';
- const color=CAMPAIGN.worlds.find(w=>w.id===item.world).color;
+ const color=CAMPAIGN.catalog.find(w=>w.id===item.world).color;
+ if(id==='sugar'&&window.HUNTER_Q_ART)return `<span class="item-art ${item.kind}" data-item-icon="${id}" role="img" aria-label="${item.name}"><img src="${window.HUNTER_Q_ART.sources['sugar-shard']}" alt=""></span>`;
  return `<span class="item-art ${item.kind}" data-item-icon="${id}" role="img" aria-label="${item.name}" style="--item-color:${color}"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g stroke="#dbe5d3" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${art}</g></svg></span>`;
 }
 function uiGlyph(name){const paths={arrow:'M4 12h16m-6-6 6 6-6 6',flask:'M9 3h6m-5 0v6l-5 9a3 3 0 0 0 3 4h8a3 3 0 0 0 3-4l-5-9V3M8 15h8',home:'m3 11 9-8 9 8M6 9v12h12V9m-9 12v-7h6v7',star:'m12 2 3 6 7 4-7 3-3 7-3-7-7-3 7-4Z',clock:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v6l4 2',seal:'m12 2 9 10-9 10-9-10Zm0 5v10m-4-5h8',box:'m3 7 9-4 9 4v12l-9 3-9-3Zm0 0 9 4 9-4m-9 4v11',check:'m4 12 5 5L20 6'};return `<svg class="ui-glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name]||paths.star}"/></svg>`;}
@@ -94,15 +101,16 @@ for(let i=0;i<180;i++)grasses.push({x:rng()*W,y:rng()*H,s:3+rng()*10,t:rng()});
 for(let i=0;i<66;i++)stones.push({x:rng()*W,y:rng()*H,r:2+rng()*8,rot:rng()*TAU});
 for(let i=0;i<35;i++)stars.push({x:rng()*W,y:rng()*H,s:rng()*TAU});
 const obstacles=[{x:320,y:250,r:32},{x:884,y:278,r:34},{x:278,y:567,r:30},{x:936,y:568,r:30}];
+let selectedTheme='main';
 let state,player,enemies=[],effects=[],projectiles=[],minions=[],hazards=[],floating=[],keys={},mouse={x:760,y:350,down:false,held:0},last=0,clock=0,screenShake=0,toastTimer=0,modalReturn='intro',soundOn=false,audioCtx;
 let uiElapsed=0,runCount=0;
 // One sampled shake offset is shared by the world and the essential cue layer.
 let renderShake={x:0,y:0};
 function sampleRenderShake(){const active=screenShake>0&&releaseSettings().shake!==false&&!reducedMotion?.matches;renderShake={x:active?rand(-screenShake,screenShake):0,y:active?rand(-screenShake,screenShake):0};ctx.translate(renderShake.x,renderShake.y);}
 try{runCount=+(localStorage.getItem('shadow-hunter-runs')||0);}catch{}
-function freshState(){return {campaign:CAMPAIGN.read(campStorage()),journey:JOURNEY.create(),pendingBoons:[],phase:'intro',world:null,mode:'hunt',practiceTarget:'dummy',objective:null,checkpoint:null,hitStop:0,room:0,roomType:'hunt',time:0,kills:0,captures:0,hits:0,corruption:0,nightmare:0,locked:false,skillCd:0,basketballCd:0,mounted:false,dashCd:0,attackCd:0,capture:0,captureTarget:null,clearTimer:0,bossWon:false,weapon:'blade',slots:['wolf'],owned:new Set(['wolf','fire']),levels:Object.fromEntries(shadowIds.map(id=>[id,0])),xp:Object.fromEntries(shadowIds.map(id=>[id,0])),stored:null,modalType:null,muted:false,tutorial:null};}
+function freshState(){return {campaign:CAMPAIGN.read(campStorage(),selectedTheme),journey:JOURNEY.create(),pendingBoons:[],phase:'intro',world:null,mode:'hunt',practiceTarget:'dummy',objective:null,checkpoint:null,hitStop:0,room:0,roomType:'hunt',time:0,kills:0,captures:0,hits:0,corruption:0,nightmare:0,locked:false,skillCd:0,basketballCd:0,mounted:false,dashCd:0,attackCd:0,capture:0,captureTarget:null,clearTimer:0,bossWon:false,weapon:'blade',slots:['wolf'],owned:new Set(['wolf','fire']),levels:Object.fromEntries(shadowIds.map(id=>[id,0])),xp:Object.fromEntries(shadowIds.map(id=>[id,0])),stored:null,modalType:null,muted:false,tutorial:null};}
 function newPlayer(){return {x:660,y:450,r:15,hp:100,maxHp:100,focus:0,angle:-.5,invincible:0,dash:0,dx:0,dy:0,shield:0,slash:0,charging:0,...window.HUNTER_ART?.createMotion()};}
-function reset(){quickInventorySignature='';pendingChest=null;levelCelebration=null;$('level-up').classList.add('hidden');killRewards=[];$('kill-rewards').innerHTML='';encounterDialogue=null;cancelRecall();state=freshState();player=newPlayer();enemies=[];effects=[];projectiles=[];minions=[];hazards=[];floating=[];keys={};mouse.down=false;screenShake=0;toastTimer=0;spawnEnemy('wolf',845,365);spawnEnemy('fire',810,585);spawnEnemy('archer',530,244);$('tutorial-card').classList.add('hidden');$('context-hint').classList.add('hidden');$('intro').classList.remove('hidden');$('modal').classList.add('hidden');$('boss-hud').classList.add('hidden');$('toast').classList.add('hidden');$('capture-hud').classList.add('hidden');$('room-name').textContent='遗忘林地';$('objective').textContent='穿过月光，追寻你的第一枚影子';$('room-tag').innerHTML='猎场 <span>01 / 05</span>';updateBuild();updateUI();refreshResume();}
+function reset(){appearanceReturn=null;quickInventorySignature='';pendingChest=null;levelCelebration=null;$('level-up').classList.add('hidden');killRewards=[];$('kill-rewards').innerHTML='';encounterDialogue=null;cancelRecall();state=freshState();player=newPlayer();enemies=[];effects=[];projectiles=[];minions=[];hazards=[];floating=[];keys={};mouse.down=false;screenShake=0;toastTimer=0;spawnEnemy('wolf',845,365);spawnEnemy('fire',810,585);spawnEnemy('archer',530,244);$('tutorial-card').classList.add('hidden');$('context-hint').classList.add('hidden');$('intro').classList.remove('hidden');$('modal').classList.add('hidden');$('boss-hud').classList.add('hidden');$('toast').classList.add('hidden');$('capture-hud').classList.add('hidden');$('room-name').textContent='遗忘林地';$('objective').textContent='穿过月光，追寻你的第一枚影子';$('room-tag').innerHTML='猎场 <span>01 / 05</span>';updateBuild();updateUI();refreshResume();}
 // Appearance is independent of combat skills and survives camp restoration.
 const professions=[
  {id:'shade',name:'影子猎手',tag:'原初形象 · 暗夜行者',color:'#96e5dc',mark:'⟡',description:'披上暗色斗篷，以熟悉的猎手形象探索五境。',detail:'游戏中使用原版猎手形象。'},
@@ -114,30 +122,93 @@ const professions=[
 
 
 ];
+professions.push(...[['q-shadow','影','hero-shadow-hunter'],['q-shadow-f','汐','hero-shadow-hunter-f']].map(([id,name,asset])=>({id,name:'影子猎手 · '+name,tag:'甜梦云原 · Q 版伙伴',color:'#9edbcf',mark:'✦',image:window.HUNTER_Q_ART?.sources[asset],description:'来自甜梦云原设计稿的冒险伙伴。',detail:'使用 QMap 原画；移动、攻击与闪避时呈现轻盈动作。'})));
 let characterAppearance='shade';
 try{const saved=localStorage.getItem('shadow-hunter-appearance');if(professions.some(p=>p.id===saved))characterAppearance=saved;}catch{}
-let professionChoice=characterAppearance,professionTutorial=false;
+let professionChoice=characterAppearance,professionTutorial=false,professionMode='new',appearanceReturn=null;
+let monsterChoice='mob-wolf',monsterGroup='mob',monsterDraft={};
+const MONSTERS=window.HUNTER_MONSTERS;
+// Keep the actual underlying panel nodes, including their event handlers and choices.
+// Opening a wardrobe over a reward, shop, dialogue or pause screen must not discard it.
+function rememberAppearanceReturn(){
+ if(appearanceReturn)return;
+ const card=$('modal-card');
+ appearanceReturn={phase:state.phase,modalReturn,modalType:state.modalType,kind:$('modal').dataset.kind,
+  hidden:$('modal').classList.contains('hidden'),introHidden:$('intro').classList.contains('hidden'),
+  nodes:Array.from(card.childNodes||[]),scroll:card.scrollTop,focus:document.activeElement};
+}
+function closeAppearance(){
+ if(!appearanceReturn)return;
+ const previous=appearanceReturn;appearanceReturn=null;
+ state.phase=previous.phase;state.modalType=previous.modalType;modalReturn=previous.modalReturn;
+ const card=$('modal-card');card.replaceChildren(...previous.nodes);card.scrollTop=previous.scroll;
+ $('modal').dataset.kind=previous.kind||'';$('modal').classList.toggle('hidden',previous.hidden);
+ $('intro').classList.toggle('hidden',previous.introHidden);keys={};mouse.down=false;
+ updateUI();if(previous.focus?.isConnected)previous.focus.focus({preventScroll:true});else canvas.focus({preventScroll:true});
+}
 function openProfession(tutorial=true){
- if(state.phase!=='intro'&&state.phase!=='profession')return;
- professionChoice=characterAppearance;professionTutorial=tutorial;modalReturn='intro';renderProfession();
+ if(state.phase!=='intro')return;
+ rememberAppearanceReturn();professionMode='new';professionChoice=characterAppearance;professionTutorial=tutorial;renderProfession();
+}
+function openResumeProfession(){
+ if(state.phase!=='intro')return false;
+ if(getCampSave().status!=='ready'){refreshResume();toast('未找到可用的营地存档。',3);return false;}
+ rememberAppearanceReturn();professionMode='resume';professionChoice=characterAppearance;renderProfession();return true;
+}
+function openCharacterWardrobe(){
+ if(['profession','monsters'].includes(state.phase))return;
+ rememberAppearanceReturn();professionMode='switch';professionChoice=characterAppearance;renderProfession();
 }
 function renderProfession(){
  const scroll=state.phase==='profession'?$('modal-card').scrollTop:0;
  const chosen=professions.find(p=>p.id===professionChoice)||professions[0];
- showModal('profession',`<div class="profession-heading"><div><div class="modal-eyebrow">AWAKENING / 选择你的形象</div><h2 id="modal-title">以何种姿态，踏入长梦？</h2><p>选择你在游戏中操控的人物形象。外观不影响技能、属性与战斗规则。</p></div><button class="secondary" id="profession-back">返回首页</button></div><div class="profession-grid">${professions.map((p,i)=>`<button class="profession-card ${p.id===chosen.id?'selected':''}" data-profession="${p.id}" style="--profession-color:${p.color}" aria-pressed="${p.id===chosen.id}"><span class="profession-number">0${i+1} / ${p.id===chosen.id?'已选择':'可选择'}</span><span class="profession-art ${p.image?'has-image':p.id}" aria-hidden="true">${p.image?`<img src="${p.image}" alt="">`:`<span class="profession-sigil">${p.mark}</span><i></i>`}</span><span class="profession-copy"><small>${p.tag}</small><strong>${p.name}</strong><span>${p.description}</span><b>${p.id===chosen.id?'✓ 已选择':'选择此形象 ↗'}</b></span></button>`).join('')}</div><div class="profession-confirm"><div><small>当前选择 · ${chosen.name}</small><p>${chosen.detail}</p><span>${professionTutorial?'所选人物将立即出现在教学和正式探索中。':'确认后直接进入月蚀森林。'}</span></div><button class="primary" id="profession-confirm">以${chosen.name}出发 ↗</button></div>`);
+ const resume=professionMode==='resume',switching=professionMode==='switch',saved=resume?getCampSave():null;
+ const title=resume?'换个伙伴，继续归途。':switching?'换一种姿态，接着冒险。':'以何种姿态，踏入长梦？';
+ const note=resume?'确认后读取同一份营地存档，保留已保存的任务、装备与世界进度。':switching?'确认后立即切换；当前生命、任务、装备和技能冷却继续保留。':professionTutorial?'所选人物将立即出现在教学和正式探索中。':'确认后直接进入月蚀森林。';
+ showModal('profession',`<div class="profession-heading"><div><div class="modal-eyebrow">APPEARANCE / ${resume?'继续存档 · 选择人物':'人物形象'}</div><h2 id="modal-title">${title}</h2><p>同行伙伴，自由选择。运球小将另有 V 键篮球绝技。</p></div><button class="secondary" id="profession-back">${switching?'取消 · 返回':'返回首页'} <kbd>Esc</kbd></button></div>${saved?.status==='ready'?`<div class="appearance-save"><span>即将继续的营地存档</span><b>${saveDescription(saved.data)}</b></div>`:''}<div class="profession-grid">${professions.map((p,i)=>`<button class="profession-card ${p.id===chosen.id?'selected':''}" data-profession="${p.id}" style="--profession-color:${p.color}" aria-pressed="${p.id===chosen.id}"><span class="profession-number">0${i+1} / ${p.id===chosen.id?'已选择':'可选择'}</span><span class="profession-art ${p.image?'has-image':p.id}" aria-hidden="true">${p.image?`<img src="${p.image}" alt="">`:`<span class="profession-sigil">${p.mark}</span><i></i>`}</span><span class="profession-copy"><small>${p.tag}</small><strong>${p.name}</strong><span>${p.description}</span><b>${p.id===chosen.id?'✓ 已选择':'选择此形象 ↗'}</b></span></button>`).join('')}</div><div class="profession-confirm"><div><small>当前选择 · ${chosen.name}</small><p>${chosen.detail}</p><span>${note}</span></div><button class="primary" id="profession-confirm">${resume?'以'+chosen.name+'继续存档':switching?'切换为'+chosen.name:'以'+chosen.name+'出发'} ↗</button></div>`);
  $('modal-card').querySelectorAll('[data-profession]').forEach(b=>b.onclick=()=>selectProfession(b.dataset.profession));
- $('profession-back').onclick=()=>closeModal('intro');$('profession-confirm').onclick=confirmProfession;
+ $('profession-back').onclick=closeAppearance;$('profession-confirm').onclick=confirmProfession;
  requestAnimationFrame(()=>{$('modal-card').scrollTop=scroll;$('modal-card').querySelector('[data-profession="'+chosen.id+'"]')?.focus({preventScroll:true});});
 }
 function selectProfession(id){if(state.phase!=='profession'||!professions.some(p=>p.id===id))return;professionChoice=id;renderProfession();}
 function confirmProfession(){
  if(state.phase!=='profession')return;
  const p=professions.find(p=>p.id===professionChoice);if(!p)return;
+ if(professionMode==='resume'&&getCampSave().status!=='ready'){closeAppearance();refreshResume();toast('存档暂时无法读取，请重试。',3);return;}
  const tutorial=professionTutorial;characterAppearance=p.id;
- try{localStorage.setItem('shadow-hunter-appearance',characterAppearance);}catch{}
+ let saved=true;try{localStorage.setItem(selectedTheme==='cloud'?'shadow-hunter-q-appearance':'shadow-hunter-appearance',characterAppearance);}catch{saved=false;}
+ if(professionMode==='switch'){closeAppearance();refreshEncounterAppearance();updateHudPortrait();updateBasketballHud();toast('已切换为'+p.name+(saved?'':' · 本次已生效，浏览器保存失败'),3);return;}
+ if(professionMode==='resume'){appearanceReturn=null;resumeCamp();if(!saved)toast('人物已切换，本次有效；浏览器未能记住形象。',4);return;}
+ appearanceReturn=null;
  const depart=()=>{closeModal('intro');if(tutorial)beginTutorial();else start();};
  let read=false;try{read=localStorage.getItem('shadow-hunter-prologue-v1')==='read';}catch{}
  if(read)depart();else showPrologue(depart);
+}
+function openMonsterWardrobe(){
+ if(!MONSTERS||['profession','monsters'].includes(state.phase))return;
+ if(isCloud()){rememberAppearanceReturn();renderQCreatures();return;}
+ rememberAppearanceReturn();monsterDraft=MONSTERS.preferences();renderMonsterWardrobe();
+}
+function renderQCreatures(selected='bubble'){
+ const creatures=Object.entries(window.HUNTER_Q_THEME.variants).map(([id,v])=>({id,name:v.name,tip:v.tip,asset:id==='bubble'?'bubble-mob':'mob-'+id}));
+ creatures.push(...CAMPAIGN.qWorlds.map((w,i)=>({id:w.id,name:w.boss,tip:w.name+'的首领：完成任意三项活动后开启，打破外壳，再戳破护卫泡泡。',asset:['mob-giant','mob-drop','mob-bee','mob-mirror','nightmare-marshmallow'][i]})));
+ const chosen=creatures.find(c=>c.id===selected)||creatures[0];
+ showModal('monsters',`<div class="modal-eyebrow">SWEET DREAM / 甜梦图鉴</div><h2 id="modal-title">认识这片世界的小伙伴</h2><p>八种怪物与五位首领，使用 QMap 提供的对象原画。被碰到只会减速，不损失生命。</p><div class="q-creature-detail"><img src="${window.HUNTER_Q_ART.sources[chosen.asset]}" alt="${chosen.name}"><div><h3>${chosen.name}</h3><p>${chosen.tip}</p></div></div><div class="q-creature-grid">${creatures.map(c=>`<button data-q-creature="${c.id}" aria-pressed="${c.id===chosen.id}"><img src="${window.HUNTER_Q_ART.sources[c.asset]}" alt=""><span>${c.name}</span></button>`).join('')}</div><button class="primary" id="q-creatures-close">返回旅程 · Esc</button>`);
+ $('modal-card').querySelectorAll('[data-q-creature]').forEach(b=>b.onclick=()=>renderQCreatures(b.dataset.qCreature));$('q-creatures-close').onclick=closeAppearance;
+}
+function renderMonsterWardrobe(){
+ const entry=MONSTERS.catalog.find(e=>e.id===monsterChoice)||MONSTERS.catalog[0];
+ const current=monsterDraft[entry.id],actual=MONSTERS.preferences();
+ const changed=MONSTERS.catalog.filter(e=>monsterDraft[e.id]!==actual[e.id]).length;
+ const list=MONSTERS.catalog.filter(e=>monsterGroup==='boss'?!!e.world:!e.world);
+ const names={standard:'标准 Q 版',soft:'超 Q 版',original:'原版画风'};
+ showModal('monsters',`<div class="profession-heading"><div><div class="modal-eyebrow">BESTIARY / 怪物形象</div><h2 id="modal-title">给梦境里的对手，换个模样。</h2><p>选择一种敌人，再挑选形象。小怪、变体与五境首领均可单独设置。</p></div><button class="secondary" id="monster-back">取消 · 返回 <kbd>Esc</kbd></button></div><div class="monster-layout"><aside class="monster-browser"><div class="monster-filters" aria-label="敌人分类"><button data-monster-group="mob" aria-pressed="${monsterGroup==='mob'}">小怪与变体 <small>11</small></button><button data-monster-group="boss" aria-pressed="${monsterGroup==='boss'}">BOSS <small>5</small></button></div><div class="monster-roster">${list.map(e=>`<button data-monster="${e.id}" class="monster-entry ${e.id===entry.id?'selected':''}" aria-pressed="${e.id===entry.id}" style="--profession-color:${e.color}"><img src="${MONSTERS.source(e.id,monsterDraft[e.id])||e.standard}" alt=""><span><strong>${e.name}</strong><small>${names[monsterDraft[e.id]]}</small></span></button>`).join('')}</div></aside><section class="monster-detail" style="--profession-color:${entry.color}"><div class="monster-detail-heading"><small>${entry.role}</small><h3>${entry.name}</h3><p>当前选择：${names[current]} · ${current===actual[entry.id]?'已应用':'待确认'}</p></div><div class="monster-style-grid">${['standard','soft'].map(style=>`<button class="profession-card ${current===style?'selected':''}" data-monster-style="${style}" aria-pressed="${current===style}"><span class="profession-number">${current===style?'✓ 已选择':'选择此形象'}</span><span class="profession-art has-image"><img src="${MONSTERS.source(entry.id,style)}" alt="${entry.name} · ${names[style]}"></span><span class="profession-copy"><strong>${names[style]}</strong><span>${style==='standard'?'清晰轮廓，保留装备与种族特征。':'圆润比例，柔和色彩与大眼睛。'}</span></span></button>`).join('')}</div><button class="monster-original ${current==='original'?'selected':''}" data-monster-style="original" aria-pressed="${current==='original'}">${icon(entry.type)}<span><b>原版画风</b><small>使用游戏原有的怪物绘制</small></span><strong>${current==='original'?'✓':'↗'}</strong></button><div class="monster-presets"><span>整套应用</span><button data-monster-preset="standard">全部标准 Q 版</button><button data-monster-preset="soft">全部超 Q 版</button><button data-monster-preset="original">全部原版</button></div></section></div><div class="profession-confirm"><div><small>${changed?'已调整 '+changed+' 类敌人':'16 类敌人 · 两套新形象'}</small><p>确认后，场景中的敌人和遭遇对话会同步更新。</p><span>形象选择自动记住；敌人的技能、数值和任务身份保持原样。</span></div><button class="primary" id="monster-confirm">应用形象 · 返回旅途 ↗</button></div>`);
+ $('monster-back').onclick=closeAppearance;
+ $('modal-card').querySelectorAll('[data-monster-group]').forEach(b=>b.onclick=()=>{monsterGroup=b.dataset.monsterGroup||b.dataset['monster-group'];monsterChoice=MONSTERS.catalog.find(e=>monsterGroup==='boss'?!!e.world:!e.world).id;renderMonsterWardrobe();});
+ $('modal-card').querySelectorAll('[data-monster]').forEach(b=>b.onclick=()=>{monsterChoice=b.dataset.monster;renderMonsterWardrobe();});
+ $('modal-card').querySelectorAll('[data-monster-style]').forEach(b=>b.onclick=()=>{monsterDraft[entry.id]=b.dataset.monsterStyle||b.dataset['monster-style'];renderMonsterWardrobe();});
+ $('modal-card').querySelectorAll('[data-monster-preset]').forEach(b=>b.onclick=()=>{for(const e of MONSTERS.catalog)monsterDraft[e.id]=b.dataset.monsterPreset||b.dataset['monster-preset'];renderMonsterWardrobe();});
+ $('monster-confirm').onclick=()=>{const saved=MONSTERS.apply(monsterDraft);closeAppearance();refreshEncounterAppearance();toast(saved?'怪物形象已应用并保存':'形象已应用，本次有效；浏览器未能保存。',3);};
 }
 // The lamp gathers voices and memories; it does not add a second progression save.
 const journeyStory={
@@ -150,7 +221,7 @@ const journeyStory={
 function storyCompanions(){return professions.filter(p=>p.id!==characterAppearance).slice(0,4);}
 function storyChapterMarkup(id,ending=false){
  const chapter=journeyStory[id];if(!chapter)return '';
- const friends=storyCompanions(),index=CAMPAIGN.worlds.findIndex(w=>w.id===id);
+ const friends=storyCompanions(),index=CAMPAIGN.catalog.findIndex(w=>w.id===id);
  const companion=friends[Math.min(index,3)];
  return `<section class="story-chapter"><small>最后一盏归途灯 / ${ending?'记忆回响':'旅途线索'}</small><h3>${chapter.title}</h3><p>${ending?chapter.clue:chapter.arrival}</p>${ending&&id!=='eclipse'?`<span>灯中的同行者 · ${companion.name}</span>`:''}${ending&&id==='eclipse'?'<p>清晨，你们在晴昼镇门口醒来。桌上的点心已经凉了，窗前却一盏灯也没有熄。有人问，流星还看不看。你把灯放回窗边：“看。下次一起去。”</p><p class="story-last">“这次换我走在前面。你们记得，把灯留着。”</p>':''}</section>`;
 }
@@ -191,11 +262,13 @@ let encounterSeen=new Set(),encounterDialogue=null;
 try{const stored=JSON.parse(localStorage.getItem('shadow-hunter-dialogues-v1')||'[]');if(Array.isArray(stored))encounterSeen=new Set(stored.filter(k=>typeof k==='string').slice(-100));}catch{}
 function encounterKey(e){return state.world.id+':'+(e.boss?'boss':e.variant||e.type);}
 function encounterPortrait(e){
+ const entry=MONSTERS?.entryFor(e,state.world?.id||'forest'),source=entry&&MONSTERS.source(entry.id);if(source)return source;
  const portrait=document.createElement('canvas');portrait.width=320;portrait.height=360;
  if(typeof portrait.toDataURL!=='function'||!window.HUNTER_ART)return '';
  try{const g=portrait.getContext('2d');if(e.type==='wolf'){g.translate(160,200);g.scale(3.15,3.15);window.HUNTER_ART.wolf(g,{...e,x:0,y:0,r:28}, {x:-100,y:0},0);}else window.HUNTER_ART.hunter(g,160,260,-.6,shadows[e.type].color,3.8,true,0,false,'blade',{});return portrait.toDataURL('image/png');}catch{return '';}
 }
 function openEncounter(e){
+ if(isCloud())return false;
  if(!e||e.dead||!state.world||state.phase!=='playing'||state.tutorial||state.mode==='practice'||encounterSeen.has(encounterKey(e)))return false;
  const script=encounterScripts[e.variant]||encounterScripts[e.type];if(!script)return false;
  const hero=professions.find(p=>p.id===characterAppearance)||professions[0];
@@ -206,11 +279,18 @@ function openEncounter(e){
  {side:'enemy',text:journeyStory[state.world.id].boss},
  {side:'hero',text:journeyStory[state.world.id].reply}
  ]:[{side:'enemy',text:script.lines[0]},{side:'hero',text:hero.id==='shade'?'我不是第一个来到这里的人，但我会继续走下去。':'大家都说这里很危险。但总得有人，往前走一步。'},{side:'enemy',text:script.lines[1]},{side:'hero',text:script.reply}];
- encounterDialogue={key:encounterKey(e),name,hero,lines,index:0,elapsed:0,revealed:0,portrait:encounterPortrait(e)};
+ encounterDialogue={key:encounterKey(e),name,hero,enemy:e,lines,index:0,elapsed:0,revealed:0,portrait:encounterPortrait(e)};
  modalReturn='playing';
  showModal('encounter',`<div class="vn-scene"><div class="vn-heading"><span>ENCOUNTER / ${campaignWorld().name}</span><button id="vn-skip">跳过对话 · Esc</button></div><div class="vn-actors"><div id="vn-hero" class="vn-actor vn-hero">${hero.image?`<img src="${hero.image}" alt="${hero.name}">`:'<div class="vn-original" role="img" aria-label="影子猎手"></div>'}</div><div id="vn-enemy" class="vn-actor vn-enemy">${encounterDialogue.portrait?`<img src="${encounterDialogue.portrait}" alt="${name}">`:`<div class="vn-enemy-symbol">${icon(e.type)}</div>`}</div></div><section class="vn-box" aria-label="剧情对话"><div class="vn-name"><h2 id="modal-title"></h2><small id="vn-counter"></small></div><p id="vn-text" aria-live="polite" aria-atomic="true"></p><div class="vn-controls"><span>点击继续 · 空格 / 回车</span><button id="vn-next" class="primary">继续 ▸</button></div></section></div>`);
  $('vn-next').onclick=advanceEncounter;$('vn-text').onclick=advanceEncounter;$('vn-skip').onclick=finishEncounter;
  renderEncounterLine();return true;
+}
+function refreshEncounterAppearance(){
+ const d=encounterDialogue;if(state.phase!=='encounter'||!d)return;
+ d.hero=professions.find(p=>p.id===characterAppearance)||professions[0];
+ $('vn-hero').innerHTML=d.hero.image?`<img src="${d.hero.image}" alt="${d.hero.name}">`:'<div class="vn-original" role="img" aria-label="影子猎手"></div>';
+ if(d.enemy){d.portrait=encounterPortrait(d.enemy);$('vn-enemy').innerHTML=d.portrait?`<img src="${d.portrait}" alt="${d.name}">`:`<div class="vn-enemy-symbol">${icon(d.enemy.type)}</div>`;}
+ const line=d.lines[d.index];$('modal-title').textContent=line.name||(line.side==='hero'?d.hero.name:d.name);
 }
 function renderEncounterLine(){
  const d=encounterDialogue;if(!d)return;d.elapsed=0;d.revealed=0;
@@ -241,7 +321,7 @@ function finishEncounter(){
  closeModal('playing');player.invincible=Math.max(player.invincible,1.2);
 }
 function checkEncounter(){
- if(!state.world||state.phase!=='playing'||state.bossWon||state.tutorial||state.mode==='practice'||player.dash>0||state.capture>0||state.journey.recall>0)return false;
+ if(isCloud()||!state.world||state.phase!=='playing'||state.bossWon||state.tutorial||state.mode==='practice'||player.dash>0||state.capture>0||state.journey.recall>0)return false;
  // Never interrupt an active fight or an incoming attack to introduce another foe.
  if(projectiles.some(p=>p.enemy&&p.life>0)||hazards.some(h=>!h.friendly&&h.life>0)||enemies.some(e=>!e.dead&&(e.telegraph>0||e.dash>0||e.hit>0||e.aggro)))return false;
  const candidates=enemies.filter(e=>!e.dead&&!e.exposed&&!encounterSeen.has(encounterKey(e))&&distance(e,player)<(e.scout?340:540)&&worldVisible(e.x,e.y)).sort((a,b)=>distance(a,player)-distance(b,player));
@@ -276,7 +356,7 @@ function celebrateLevelUp(id,previous,next){
  const color=shadows[id].color,title=next>=2?'影技觉醒':'影技进阶';
  levelCelebration={id,previous,next,remaining:4};
  const card=$('level-up');card.style.setProperty('--level-color',color);
- card.innerHTML=`<div class="level-spark" aria-hidden="true">✦</div>${skillIcon(id)}<div class="level-up-copy"><small>${title} / LEVEL UP</small><h3>${skills[id].name} <span>Lv.${previous+1} → Lv.${next+1}</span></h3><p>伤害倍率 ${100+previous*22}% → ${100+next*22}%<span>基础冷却 ${(4.8-previous*.4).toFixed(1)}s → ${(4.8-next*.4).toFixed(1)}s</span></p><div class="level-stars" aria-label="${next+1}级">${[0,1,2].map(i=>`<i class="${i<=next?'lit':''}">◆</i>`).join('')}${next>=2?'<b>已达最高等级</b>':'<b>新的力量，回应了你</b>'}</div></div>`;
+ card.innerHTML=`<div class="level-spark" aria-hidden="true">✦</div>${skillIcon(id)}<div class="level-up-copy"><small>${title} / LEVEL UP</small><h3>${skills[id].name} <span>Lv.${previous+1} → Lv.${next+1}</span></h3><p>伤害倍率 ${100+previous*22}% → ${100+next*22}%<span>基础冷却 ${(4.8-previous*.4).toFixed(1)}s → ${(4.8-next*.4).toFixed(1)}s</span></p><div class="level-stars" aria-label="${next+1}级">${Array.from({length:sealCount()},(_,i)=>i).map(i=>`<i class="${i<=next?'lit':''}">◆</i>`).join('')}${next>=2?'<b>已达最高等级</b>':'<b>新的力量，回应了你</b>'}</div></div>`;
  card.classList.remove('hidden','level-pop');void card.offsetWidth;card.classList.add('level-pop');
  const subdued=releaseSettings().atmosphere===false||reducedMotion?.matches;
  ring(player.x,player.y,subdued?55:85,color,subdued?.45:.8);
@@ -310,6 +390,7 @@ function gainKill(e,captured=false){if(e.dead)return;e.dead=true;if(e.scout&&cap
 function expose(e){if(e.exposed||e.dead)return;e.exposed=e.boss?8:7;state.hitStop=.055;e.telegraph=0;e.dash=0;ring(e.x,e.y,e.r+45,'#dcffe8',.6);textFloat(e.x,e.y-35,'影子暴露','#e0ffec');tone(620,.3,'sine');if(state.tutorial?.step===1){setTutorialStep(2);return;}if(e.scout)toast('斥候影子已暴露：停下攻击，靠近并长按 E 夺影，解锁补给箱',4);else if(state.room===0)toast('影子已暴露！靠近并长按 E 夺影，或攻击收割回血',3);}
 function skillCast(){return Object.freeze({active:state.slots[0],level:state.levels[state.slots[0]],corruption:state.corruption,nightmare:state.nightmare>0,skillBonus:journeyMods().skill,attackBonus:journeyMods().attack,origin:Object.freeze({x:player.x,y:player.y})});}
 function damageEnemy(e,amount,pressure=amount*.6,source='basic',cast=null){
+ if(isCloud()&&e.qKind){hitCloudEnemy(e,amount,source,cast);return;}
  if(e.dead)return;
  if(state.tutorial?.step===4&&source==='skill')state.tutorial.skillHit=true;
  if(e.exposed){
@@ -332,7 +413,7 @@ function pressureBreak(e){
 }
 function stunBoss(e){e.telegraph=0;e.dash=0;e.target=null;e.attack=null;e.cueActive=false;e.cd=2.6;ring(e.x,e.y,80,'#d0ffe2');textFloat(e.x,e.y-70,'破影 · 打断','#caffe8');}
 
-function hitPlayer(amount,purple=false){if(state.tutorial||state.journey.recall>0)return;if(state.phase!=='playing'||player.invincible>0&&!purple||state.nightmare>0)return;if(player.dash>0&&!purple){player.focus=clamp(player.focus+20,0,100);return;}if(player.shield>0){const cast=player.shieldCast||skillCast();player.shield=0;player.shieldCast=null;ring(player.x,player.y,155,'#abcddd');for(const e of living())if(distance(e,player)<170){damageEnemy(e,40,35,'skill',cast);}textFloat(player.x,player.y-40,'防御反击','#a7dbe7');earnMoment('shieldcounter');tone(440,.2,'triangle');return;}if(state.mode==='practice')return;state.journey.streak=0;state.journey.streakTime=0;cancelRecall();state.mounted=false;player.hp-=amount*journeyMods().incoming;player.invincible=.85;state.hits++;state.capture=0;state.captureTarget=null;screenShake=8;burst(player.x,player.y,'#c78088',10);tone(110,.18,'sawtooth',.04);if(player.hp<=0){player.hp=0;if(state.objective?.status==='active')failObjective('你倒在了猎场。','留意攻击预警，用闪避避开红色区域。重试后可以换一套影子再挑战。');else endRun(false);} }
+function hitPlayer(amount,purple=false){if(isCloud()){if(state.phase==='playing'&&player.invincible<=0&&player.dash<=0&&state.journey.recall<=0){state.qSnared=.6;player.invincible=.8;textFloat(player.x,player.y-45,'泡泡减速 · 不掉血','#9c598e');}return;}if(state.tutorial||state.journey.recall>0)return;if(state.phase!=='playing'||player.invincible>0&&!purple||state.nightmare>0)return;if(player.dash>0&&!purple){player.focus=clamp(player.focus+20,0,100);return;}if(player.shield>0){const cast=player.shieldCast||skillCast();player.shield=0;player.shieldCast=null;ring(player.x,player.y,155,'#abcddd');for(const e of living())if(distance(e,player)<170){damageEnemy(e,40,35,'skill',cast);}textFloat(player.x,player.y-40,'防御反击','#a7dbe7');earnMoment('shieldcounter');tone(440,.2,'triangle');return;}if(state.mode==='practice')return;state.journey.streak=0;state.journey.streakTime=0;cancelRecall();state.mounted=false;player.hp-=amount*journeyMods().incoming;player.invincible=.85;state.hits++;state.capture=0;state.captureTarget=null;screenShake=8;burst(player.x,player.y,'#c78088',10);tone(110,.18,'sawtooth',.04);if(player.hp<=0){player.hp=0;if(state.objective?.status==='active')failObjective('你倒在了猎场。','留意攻击预警，用闪避避开红色区域。重试后可以换一套影子再挑战。');else endRun(false);} }
 function moveEntity(entity,dx,dy){if(state.world){moveWorldEntity(entity,dx,dy);return;}entity.x=clamp(entity.x+dx,80,W-80);entity.y=clamp(entity.y+dy,120,H-100);for(const o of obstacles){const d=distance(entity,o),min=o.r+entity.r;if(d<min&&d>.01){entity.x=o.x+(entity.x-o.x)/d*min;entity.y=o.y+(entity.y-o.y)/d*min;}}}
 function basketballIcon(){return '<span class="basketball-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#ed963b" stroke="#f7cd80" stroke-width="2"/><g fill="none" stroke="#754325" stroke-width="2.2"><path d="M8 32h48M32 8v48M15 15q33 10 34 34M15 49q33-10 34-34"/></g><path d="m14 8 3-5m31 5-3-5" stroke="#d8ecd6" stroke-width="2"/></svg></span>';}
 function basketballSkill(){
@@ -398,7 +479,7 @@ function skill(){
  if(state.phase!=='playing')return;if(state.tutorial&&state.tutorial.step<4){toast('先完成当前教学，再试用技能');return;}
  if(state.skillCd>0){toast('技能冷却中',1);return;}if(state.capture>0)return;cancelRecall();
  const id=state.slots[0];state.skillCd=skillCooldown(id);player.angle=angle(player,mouse);executeSkill(id,player.angle,skillCast());
- state.corruption=state.mode==='practice'?0:clamp(state.corruption+skillCorruptionCost(),0,100);
+ state.corruption=state.mode==='practice'||isCloud()?0:clamp(state.corruption+skillCorruptionCost(),0,100);
  if(state.corruption>=100&&state.nightmare<=0){if(state.locked){endRun(true,'corrupt');return;}state.nightmare=9;state.skillCd=0;syncAchievements();toast('梦魇觉醒 · 9 秒无敌、双倍伤害',4);ring(player.x,player.y,350,'#c08fe1',1.3);}updateBuild();
 }
 function combo(){const info=skills[state.slots[0]];return {name:info.name,description:info.summary,tags:[info.tag],active:true};}
@@ -450,7 +531,7 @@ function updateHudPortrait(){
  portrait.dataset.appearance=hero.id;portrait.setAttribute('aria-label',hero.name);portrait.classList.toggle('character-avatar',!!hero.image);
  portrait.innerHTML=hero.image?`<img src="${hero.image}" alt="" draggable="false">`:'⟡';
 }
-function updateUI(){updateBasketballHud();updateHudPortrait();updateQuickInventory();updateJourneyUI();updateModeUI();updateContextHint();updateWorldUI();updateJourneyHint();const hp=Math.ceil(player.hp),focus=Math.floor(player.focus);$('hp-text').textContent=`${hp} / 100`;$('health-bar').style.width=hp+'%';$('focus-bar').style.width=focus+'%';$('focus-text').textContent=`${focus} / 100`;$('kills').textContent=String(state.kills).padStart(2,'0');$('corruption-text').textContent=Math.floor(state.corruption);$('corruption-bar').style.width=state.corruption+'%';$('timer').textContent=formatTime(state.time);$('phase-label').textContent=state.tutorial?'新手教学':state.mode==='practice'&&state.phase==='playing'?'自由试炼':state.world&&state.phase==='playing'?'旷野探索':({intro:'等待入梦',playing:'狩猎进行中',paused:'梦境暂停',map:'岔路抉择',pickup:'夺影成功',end:'梦境终了',build:'选择技能',codex:'影子图鉴',guide:'猎人手册',atlas:'五境星图',inventory:'整理行囊',worldVictory:'世界通关',worldmap:'查看全图',worldIntro:'整装待发',worldComplete:'印记取得',camp:'营地休整',settlement:'冒险结算',discovery:'探索收获',briefing:'任务准备',missionFailed:'任务未完成'}[state.phase]||'长梦之中');$('weapon-name').textContent=`折叠弓刃 · ${state.weapon==='blade'?'刃形':'弓形'}`;$('skill-label').textContent=state.skillCd>0?`冷却 ${state.skillCd.toFixed(1)}s`:skills[state.slots[0]].name;$('skill-button').style.setProperty('--cooldown',Math.min(100,state.skillCd/skillCooldown()*100)+'%');$('skill-button').classList.toggle('cooling',state.skillCd>0);$('dash-label').textContent=state.dashCd>0?`${state.dashCd.toFixed(1)}s`:'闪避';$('corruption-description').textContent=state.nightmare>0?`梦魇形态 ${state.nightmare.toFixed(1)}s · 双倍伤害 / 无敌`:state.locked?'梦魇已觉醒一次 · 再满 100 将进入同化结局':state.corruption>=75?'梦蚀 ≥75 · 治疗减半，喝药可以净化':state.corruption>=40?'梦蚀正在加深 · 影技增伤，谨慎使用黑暗':`每次 Q +${skillCorruptionCost()} 梦蚀；普攻免费。75 起治疗减半，首次 100 强化，再次 100 同化。`;$('depth-label').textContent=`0${state.room+1} / 05`;$('route').innerHTML=Array.from({length:5},(_,i)=>`<span class="route-node ${i===state.room?'current':i<state.room?'done':''}"><span>${i<state.room?'✓':i===4?'☾':'·'}</span></span>`).join('');const boss=enemies.find(e=>e.boss&&!e.dead);if(boss){$('boss-bar').style.width=clamp(boss.hp/boss.maxHp*100,0,100)+'%';$('boss-phase').textContent=boss.exposed?'影子暴露 · 长按 E 夺影':boss.phase===2?'第二阶段 · 饥饿觉醒':'月蚀的守门者';}}
+function updateUI(){updateBasketballHud();updateHudPortrait();updateQuickInventory();updateJourneyUI();updateModeUI();updateContextHint();updateWorldUI();updateJourneyHint();const hp=Math.ceil(player.hp),focus=Math.floor(player.focus);$('hp-text').textContent=`${hp} / 100`;$('health-bar').style.width=hp+'%';$('focus-bar').style.width=focus+'%';$('focus-text').textContent=`${focus} / 100`;$('kills').textContent=String(state.kills).padStart(2,'0');$('corruption-text').textContent=Math.floor(state.corruption);$('corruption-bar').style.width=state.corruption+'%';$('timer').textContent=formatTime(state.time);$('phase-label').textContent=state.tutorial?'新手教学':state.mode==='practice'&&state.phase==='playing'?'自由试炼':state.world&&state.phase==='playing'?'旷野探索':({intro:'等待入梦',playing:'狩猎进行中',paused:'梦境暂停',map:'岔路抉择',pickup:'夺影成功',end:'梦境终了',build:'选择技能',codex:'影子图鉴',guide:'猎人手册',atlas:'子地图星图',inventory:'整理行囊',worldVictory:'世界通关',worldmap:'查看全图',profession:'选择人物',monsters:'怪物形象',worldIntro:'整装待发',worldComplete:'印记取得',camp:'营地休整',settlement:'冒险结算',discovery:'探索收获',briefing:'任务准备',missionFailed:'任务未完成'}[state.phase]||'长梦之中');$('weapon-name').textContent=`折叠弓刃 · ${state.weapon==='blade'?'刃形':'弓形'}`;$('skill-label').textContent=state.skillCd>0?`冷却 ${state.skillCd.toFixed(1)}s`:skills[state.slots[0]].name;$('skill-button').style.setProperty('--cooldown',Math.min(100,state.skillCd/skillCooldown()*100)+'%');$('skill-button').classList.toggle('cooling',state.skillCd>0);$('dash-label').textContent=state.dashCd>0?`${state.dashCd.toFixed(1)}s`:'闪避';$('corruption-description').textContent=state.nightmare>0?`梦魇形态 ${state.nightmare.toFixed(1)}s · 双倍伤害 / 无敌`:state.locked?'梦魇已觉醒一次 · 再满 100 将进入同化结局':state.corruption>=75?'梦蚀 ≥75 · 治疗减半，喝药可以净化':state.corruption>=40?'梦蚀正在加深 · 影技增伤，谨慎使用黑暗':`每次 Q +${skillCorruptionCost()} 梦蚀；普攻免费。75 起治疗减半，首次 100 强化，再次 100 同化。`;$('depth-label').textContent=`0${state.room+1} / 05`;$('route').innerHTML=Array.from({length:5},(_,i)=>`<span class="route-node ${i===state.room?'current':i<state.room?'done':''}"><span>${i<state.room?'✓':i===4?'☾':'·'}</span></span>`).join('');const boss=enemies.find(e=>e.boss&&!e.dead);if(boss){$('boss-bar').style.width=clamp(boss.hp/boss.maxHp*100,0,100)+'%';$('boss-phase').textContent=isCloud()?(boss.phase===1?'第一阶段 · 戳破泡泡外壳':'第二阶段 · 先清除小泡泡，再戳本体'):boss.exposed?'影子暴露 · 长按 E 夺影':boss.phase===2?'第二阶段 · 饥饿觉醒':'月蚀的守门者';}}
 /* Expedition growth is isolated from the tutorial and practice arena. */
 function journeyMods(){const mods=JOURNEY.modifiers(state.journey.perks);mods.incoming*=window.HUNTER_RELEASE?.incoming()??1;if(state.world&&state.mode==='hunt'&&state.campaign.equipped){const effect=CAMPAIGN.items[state.campaign.equipped].effect;mods.attack*=effect.attack||1;mods.skill*=effect.skill||1;mods.incoming*=effect.incoming||1;mods.dash*=effect.dash||1;mods.heal+=effect.heal||0;}return mods;}
 function skillCorruptionCost(){return state.mode==='practice'?0:Math.max(0,(state.roomType==='rift'?16:8)+journeyMods().corruption);}
@@ -468,7 +549,7 @@ function useFlask(){
  toast(`饮用月露：恢复 ${Math.round(player.hp-before)} 生命，净化 12 梦蚀`,2.5);tone(680,.2);updateUI();return true;
 }
 function cancelRecall(){if(state?.journey)state.journey.recall=0;recallOrigin=null;}
-let recallOrigin=null,memoryCamp=null;
+let recallOrigin=null,memoryCamp=null;const memoryCamps={};
 function beginAdventure(){state.adventure={elapsed:0,kills:0,captures:0,items:{},owned:[...state.owned],perks:[...state.journey.perks],claimed:[...state.world.claimed],completed:state.world.completed.size};state.settlement=null;}
 function recordAdventureLoot(id){if(state.adventure&&CAMPAIGN.items[id])state.adventure.items[id]=(state.adventure.items[id]||0)+1;}
 function recallBlocked(){
@@ -518,7 +599,7 @@ function updateJourney(dt){
  if(moving||recallBlocked()){cancelRecall();toast('回城已取消 · 保持静止即可重新引导',2);return;}
  j.recall=Math.max(0,j.recall-dt);if(j.recall<.000001){j.recall=0;arriveCamp(true);}
 }
-function getCampSave(){return memoryCamp?{status:'ready',data:memoryCamp,temporary:true}:EXPEDITION.read(campStorage());}
+function getCampSave(theme=selectedTheme){const saved=memoryCamps[theme];return saved?{status:'ready',data:saved,temporary:true}:EXPEDITION.read(campStorage(),theme);}
 function saveSettlement(){
  const report=state.settlement;if(!report)return false;
  const previous=state.phase;state.phase='camp';report.campSaved=saveCamp();state.phase=previous;
@@ -528,7 +609,7 @@ function closeSettlement(){if(state.phase!=='settlement')return;const owned=new 
 function showSettlement(){
  const r=state.settlement;if(!r)return;const w=campaignWorld(),items=Object.entries(r.items).filter(([,n])=>n>0).sort(([a],[b])=>(CAMPAIGN.items[b].kind==='relic')-(CAMPAIGN.items[a].kind==='relic'));
  const count=items.reduce((sum,[,n])=>sum+n,0),saved=r.campSaved&&r.profileSaved;
- const growth=[...r.skills.map(id=>`新技能 · ${skills[id].name}`),...r.perks.map(id=>`祝福 · ${JOURNEY.perks.find(p=>p.id===id).name}`),...r.discoveries.map(id=>`探索 · ${worldDiscoveries().find(d=>d.id===id).name}`)];
+ const growth=[...r.skills.map(id=>`新技能 · ${skills[id].name}`),...r.perks.map(id=>`祝福 · ${JOURNEY.perks.find(p=>p.id===id).name}`),...r.discoveries.map(id=>`探索 · ${allWorldSites().find(d=>d.id===id)?.name||id}`)];
  showModal('settlement',`<section class="return-report" style="--world-color:${w.color}"><header class="return-heading"><div class="return-emblem">${uiGlyph('home')}</div><div><div class="modal-eyebrow">JOURNEY COMPLETE / ${w.name}</div><h2 id="modal-title">归来，满载故事。</h2></div><button id="settlement-x" class="return-close" aria-label="关闭结算并返回首页" title="关闭 · Esc">×</button></header><p class="return-subtitle">已抵达初始营地，火光为你留着。<br>这一程走过的路，和带回来的收获，都在这里。</p><div class="return-stats"><div class="return-stat time">${uiGlyph('clock')}<strong>${formatTime(r.elapsed)}</strong><small>本轮冒险用时</small></div><div class="return-stat">${uiGlyph('seal')}<strong>${r.kills}</strong><small>击败梦魇</small></div><div class="return-stat">${uiGlyph('star')}<strong>${r.captures}</strong><small>成功夺影</small></div><div class="return-stat">${uiGlyph('box')}<strong>${count}</strong><small>获得物品</small></div></div><div class="return-section-head"><h3>本轮战利品</h3><span>${items.length} 种 · ${count} 件</span></div><div class="return-loot-grid">${items.map(([id,n])=>{const item=CAMPAIGN.items[id];return `<article class="return-loot ${item.kind}"><div class="return-loot-icon">${itemIcon(id)}</div><div class="return-loot-copy"><small>${item.rarity} · ${item.kind==='relic'?'护符装备':'营地补给'}</small><h4>${item.name}</h4><p>${item.description}</p></div><b class="return-quantity">×${n}</b></article>`;}).join('')||`<div class="return-empty">${uiGlyph('box')}<b>这一程，平安也是收获。</b><p>本轮暂未获得装备或道具。现有行囊仍然保留。</p></div>`}</div>${growth.length?`<div class="return-section-head"><h3>旅途成长</h3><span>新印记 ${r.completed}</span></div><div class="return-growth">${growth.map(s=>`<span>${s}</span>`).join('')}</div>`:''}<footer class="return-footer"><div id="settlement-status" class="return-save ${saved?'':'is-warning'}" role="status">${uiGlyph(saved?'check':'box')}<span>${saved?'收获与营地进度已保存':'收获暂存于本页 · 浏览器保存未完成'}<small>${saved?'下次点击首页「继续营地存档」，带着当前装备出发。':'可关闭结算回首页并继续；请勿刷新或关闭网页，稍后重试保存。'}</small></span></div><div class="return-actions"><button id="settlement-retry" class="secondary ${saved?'hidden':''}">重试保存</button><button id="settlement-close" class="primary">关闭结算 · 返回首页 ${uiGlyph('arrow')}</button></div></footer><p class="return-note">用时仅计入实际冒险，阅读面板和暂停不计时。${r.abandoned?`已结束未完成的「${r.abandoned}」，已获得的物品全部保留。`:''}补给若已在本轮使用，会计入获得数量；剩余数量可在行囊查看。</p></section>`);
  $('settlement-close').onclick=closeSettlement;$('settlement-x').onclick=closeSettlement;
  $('settlement-retry').onclick=()=>{saveSettlement();showSettlement();};
@@ -548,7 +629,8 @@ function chooseBoon(id){
  tone(780,.3);updateBuild();updateUI();$('world-continue').focus();return true;
 }
 function navigationTarget(){
- if(!state.world)return null;const o=state.objective;if(o?.nodes){const n=o.nodes.find((_,i)=>!o.activated.includes(i));if(n)return n;}if(o?.kind==='hunt'){const e=enemies.find(e=>o.targets.includes(e.id)&&!e.dead);if(e)return {...e,name:'清剿目标',color:campaignWorld().color};}const site=currentWorldSite(state.world.track);
+ if(!state.world)return null;const o=state.objective;if(isCloud()&&o){const t=o.kind==='bubble'?enemies.find(e=>e.qActivity===o.site.id&&!e.dead):QMAP.target(o,player);if(t)return {...t,name:t.name||'戳破标记泡泡',color:o.site.color};}if(o?.nodes&&o.activated){const n=o.nodes.find((_,i)=>!o.activated.includes(i));if(n)return n;}if(o?.kind==='hunt'){const e=enemies.find(e=>o.targets.includes(e.id)&&!e.dead);if(e)return {...e,name:'清剿目标',color:campaignWorld().color};}const site=currentWorldSite(state.world.track);
+ if(isCloud()&&!WORLD.river.vertical){const r=WORLD.river,across=player.y<r.y&&site.y>r.y+r.h||player.y>r.y+r.h&&site.y<r.y;if(across){const x=[...WORLD.bridges].sort((a,b)=>Math.abs(player.x-a)+Math.abs(site.x-a)-Math.abs(player.x-b)-Math.abs(site.x-b))[0],north=player.y<r.y,approach=Math.abs(player.x-x)>75;return {x,y:approach?(north?r.y-80:r.y+r.h+80):(north?r.y+r.h+80:r.y-80),name:'云朵桥 · 前往'+site.name,color:site.color,bridge:true};}return site;}
  const west=player.x<1220&&site.x>1390,east=player.x>1390&&site.x<1220;
  if(WORLD.bridges.length&&(west||east)){
   const y=[...WORLD.bridges].sort((a,b)=>(Math.abs(player.y-a)+Math.abs(site.y-a))-(Math.abs(player.y-b)+Math.abs(site.y-b)))[0];
@@ -571,7 +653,7 @@ function updateJourneyUI(){
  $('recall-progress').classList.toggle('hidden',j.recall<=0);$('recall-progress').innerHTML=`<div class="recall-copy"><span>归途法阵 · 保持静止</span><b>${j.recall.toFixed(1)} 秒</b></div><div class="recall-meter"><i style="width:${clamp((3-j.recall)/3*100,0,100)}%"></i></div>`;
  const s=currentWorldSite(state.world.track),waypoint=navigationTarget(),dx=waypoint.x-player.x,dy=waypoint.y-player.y;
  const direction=['东','东南','南','西南','西','西北','北','东北'][(Math.round(Math.atan2(dy,dx)/(Math.PI/4))+8)%8];
- $('journey-stage').textContent=`世界 ${campaignWorld().number} · Lv.${campaignWorld().level} · ${state.world.completed.size} / 3 印记 → ${campaignWorld().boss}`;
+ $('journey-stage').textContent=`世界 ${campaignWorld().number} · Lv.${campaignWorld().level} · ${Math.min(state.world.completed.size,sealCount())} / ${sealCount()} 印记 → ${campaignWorld().boss}`;
  $('journey-target').textContent=state.objective?`当前任务：${state.objective.site.name}`:`下一站：${s.name}`;
  $('journey-direction').textContent=state.objective?'完成条件见画面右上 · 阅读面板时计时暂停':distance(player,s)<130?'已抵达 · 按 F 互动':`${direction}方 · ${Math.round(distance(player,waypoint))} 步${waypoint.bridge?` · 经${waypoint.name}`:' · M 选择目标'}`;
  $('journey-perks').innerHTML=j.perks.length?j.perks.map(id=>{const p=JOURNEY.perks.find(p=>p.id===id);return `<span title="${p.description}">${p.symbol} ${p.name}</span>`;}).join(''):'<span>完成印记任务，选择猎人祝福</span>';
@@ -581,7 +663,7 @@ function updateJourneyUI(){
 function formatTime(t){return `${Math.floor(t/60).toString().padStart(2,'0')}:${Math.floor(t%60).toString().padStart(2,'0')}`;}
 function showModal(type,html){cancelRecall();state.capture=0;state.captureTarget=null;player.charging=0;mouse.held=0;$('capture-hud').classList.add('hidden');state.phase=type;state.modalType=type;keys={};mouse.down=false;$('modal-card').innerHTML=html;$('modal-card').scrollTop=0;$('modal').dataset.kind=type;$('modal').classList.remove('hidden');$('intro').classList.add('hidden');updateUI();requestAnimationFrame(()=>{$('modal-card').querySelector('button')?.focus({preventScroll:true});});}
 function closeModal(next=modalReturn){state.phase=next;state.modalType=null;$('modal').classList.add('hidden');if(next==='intro')$('intro').classList.remove('hidden');keys={};mouse.down=false;canvas.focus({preventScroll:true});updateUI();}
-function pause(){if(state.phase==='paused'){closeModal();return;}if(state.phase!=='playing'&&state.phase!=='intro')return;modalReturn=state.phase;showModal('paused',`<div class="modal-eyebrow">THE DREAM CAN WAIT</div><h2 id="modal-title">让梦境，停留片刻。</h2><p>C 饮用月露，B 静止 3 秒回城并自动结算保存，F 与营火互动。刷新或退出只保留上次营地存档。</p><div class="pause-summary"><span>印记 <b>${state.world?.completed.size||0} / 3</b></span><span>生命 <b>${Math.ceil(player.hp)} / 100</b></span><span>已掌握 <b>${state.owned.size} / 4</b></span></div><div class="modal-actions"><button class="primary" id="resume">继续狩猎 ↗</button><button class="secondary" id="pause-settings">声音与画面</button><button class="secondary" id="pause-guide">操作指南</button><button class="secondary" id="restart">重新入梦</button><button class="secondary" id="pause-home">返回标题</button></div>`);$('resume').onclick=()=>closeModal();$('restart').onclick=()=>confirmLeave(false);$('pause-home').onclick=()=>confirmLeave(true);$('pause-settings').onclick=openSettings;$('pause-guide').onclick=()=>openGuide();}
+function pause(){if(state.phase==='paused'){closeModal();return;}if(state.phase!=='playing'&&state.phase!=='intro')return;modalReturn=state.phase;showModal('paused',`<div class="modal-eyebrow">THE DREAM CAN WAIT</div><h2 id="modal-title">让梦境，停留片刻。</h2><p>C 饮用月露，B 静止 3 秒回城并自动结算保存，F 与营火互动。刷新或退出只保留上次营地存档。</p><div class="pause-summary"><span>印记 <b>${state.world?.completed.size||0} / 3</b></span><span>生命 <b>${Math.ceil(player.hp)} / 100</b></span><span>已掌握 <b>${state.owned.size} / 4</b></span></div><div class="modal-actions"><button class="primary" id="resume">继续狩猎 ↗</button><button class="secondary" id="pause-settings">声音与画面</button><button class="secondary" id="pause-guide">操作指南</button><button class="secondary" id="pause-character">切换人物</button><button class="secondary" id="pause-monster">怪物形象</button><button class="secondary" id="restart">重新入梦</button><button class="secondary" id="pause-home">返回标题</button></div>`);$('resume').onclick=()=>closeModal();$('restart').onclick=()=>confirmLeave(false);$('pause-home').onclick=()=>confirmLeave(true);$('pause-settings').onclick=openSettings;$('pause-guide').onclick=()=>openGuide();$('pause-character').onclick=openCharacterWardrobe;$('pause-monster').onclick=openMonsterWardrobe;}
 function openGuide(){
  if(!['intro','playing','paused','guide'].includes(state.phase))return;if(!['paused','guide'].includes(state.phase))modalReturn=state.phase;
  showModal('guide',`<div class="modal-eyebrow">猎人手册</div><h2 id="modal-title">击破，夺影，释放。</h2><div class="guide-visual"><span><kbd>左键</kbd>击破</span><i>→</i><span><kbd>E</kbd>长按夺影</span><i>→</i><span><kbd>Tab</kbd>选择技能</span><i>→</i><span><kbd>Q</kbd>释放</span></div><p>四种技能，装备一个。夺影会学会新技能，并恢复生命。</p><div class="control-chips"><span><kbd>WASD</kbd>移动</span><span><kbd>SPACE</kbd>闪避</span><span><kbd>R</kbd>刀 / 弓</span><span><kbd>C</kbd>喝药</span><span><kbd>M</kbd>地图</span><span><kbd>N</kbd>星图</span><span><kbd>F</kbd>互动</span><span><kbd>B</kbd>回营</span></div><details class="visual-details"><summary>战斗与成长</summary><p>敌人变白后，靠近长按 E 约 1 秒夺影；继续攻击则收割回血。攻击、击杀和精准闪避积累专注，满专注可瞬间夺影。</p><p>Tab 免费换技能，切换保留冷却。使用中的技能随击杀成长，7 / 18 次升至 Lv.2 / Lv.3；每级伤害 +22%，冷却 −0.4 秒。</p><p>普通攻击免费，Q 增加梦蚀并提升伤害。75 起治疗减半；首次到 100 获得 9 秒强化，结束降至 25；再次到 100 会进入同化结局。喝药或营地休整可以净化。</p></details><details class="visual-details"><summary>探索与保存</summary><p>M 查看任务，N 查看五境。完成当前世界三处任务，再挑战首领解锁航路。F 互动与手动保存，B 随时静止 3 秒回城，自动保存并展示本轮结算。关闭结算返回首页，继续营地存档保留装备与进度。</p><p>滚轮调节视野，0 复位。深河走桥，浅沼减速，余烬灼伤。橙红实线圈与箭头表示敌方危险，紫色交叉纹必须走出去。薄荷绿、浅金、冰蓝光轨是你的技能；橙红尖头是敌方飞弹。关闭增强特效仍保留全部危险提示。</p></details><div class="modal-actions"><button class="primary" id="guide-close">返回</button>${modalReturn==='intro'?'<button class="secondary" id="guide-practice">跟着练一遍</button>':''}</div>`);
@@ -624,11 +706,11 @@ function endRun(win,ending='normal'){
  const outcome=ending==='corrupt'?'assimilated':win?'dawn':'fallen';
  if(!state.releaseRecorded&&state.mode!=='practice'&&!state.tutorial){state.releaseRecorded=true;window.HUNTER_RELEASE?.record({ending:outcome,time:Math.max(1,state.time),kills:state.kills,captures:state.captures});}
  syncAchievements();window.HUNTER_AUDIO?.setScene(win&&ending!=='corrupt'?'victory':'defeat');
- showModal('end',`<div class="ending-emblem ${outcome}">${ending==='corrupt'?'◈':win?'☀':'☾'}</div><div class="modal-eyebrow">${ending==='corrupt'?'ENDING / 长梦同化':win?'CHAPTER COMPLETE / 黎明归来':'THE DREAM IS NOT OVER'}</div><h2 id="modal-title">${ending==='corrupt'?'你，成为了长梦。':win?'长夜将尽，猎人归来。':'影子留在了月光里。'}</h2><p>${ending==='corrupt'?'你再一次拥抱了满溢的梦蚀。猎人与梦魇的边界终于消失，森林迎来了新的主人。营火边的守夜人，再也没有等到你的归来。':win?'月狼的影子在晨风中散去。余烬庭院的灯没有熄灭，失落的名字从祭坛回到了人间。你带回的不只是梦魇的力量，还有这片森林久违的黎明。<br><br><b>《月蚀森林》章节已完成。感谢游玩。</b>':'梦魇夺走了这一次机会。用 R 切换弓形远射，保留闪避应对预警，C 使用月露。也可在游戏设置选择「旅人」难度，再次挑战。'}</p><div class="stats"><div><strong>${formatTime(state.time)}</strong><small>梦中时长</small></div><div><strong>${state.kills}</strong><small>猎杀梦魇</small></div><div><strong>${state.captures}</strong><small>夺取影子</small></div></div><div class="journey-result">最佳连猎 ${state.journey.bestStreak} · 猎人祝福 ${state.journey.perks.length} / 3<br>${state.journey.perks.map(id=>JOURNEY.perks.find(p=>p.id===id).name).join(' · ')||'尚未取得祝福'}</div><p>最终技能：${combo().name}<br>${skills[state.slots[0]].summary}</p><p class="fine-print">通关与结局记录保存在本机「猎人纪事」，不覆盖营地检查点。</p><div class="modal-actions"><button class="primary" id="end-restart">再次踏入长梦 ↗</button><button class="secondary" id="end-home">返回首页</button>${state.world&&EXPEDITION.read(campStorage()).status==='ready'?'<button class="secondary" id="end-load">回到营地存档</button>':''}</div>`);
- $('end-restart').onclick=()=>{reset();start();};$('end-home').onclick=reset;if(state.world&&EXPEDITION.read(campStorage()).status==='ready')$('end-load').onclick=resumeCamp;tone(win?660:160,.7,'sine',.07);
+ showModal('end',`<div class="ending-emblem ${outcome}">${ending==='corrupt'?'◈':win?'☀':'☾'}</div><div class="modal-eyebrow">${ending==='corrupt'?'ENDING / 长梦同化':win?'CHAPTER COMPLETE / 黎明归来':'THE DREAM IS NOT OVER'}</div><h2 id="modal-title">${ending==='corrupt'?'你，成为了长梦。':win?'长夜将尽，猎人归来。':'影子留在了月光里。'}</h2><p>${ending==='corrupt'?'你再一次拥抱了满溢的梦蚀。猎人与梦魇的边界终于消失，森林迎来了新的主人。营火边的守夜人，再也没有等到你的归来。':win?'月狼的影子在晨风中散去。余烬庭院的灯没有熄灭，失落的名字从祭坛回到了人间。你带回的不只是梦魇的力量，还有这片森林久违的黎明。<br><br><b>《月蚀森林》章节已完成。感谢游玩。</b>':'梦魇夺走了这一次机会。用 R 切换弓形远射，保留闪避应对预警，C 使用月露。也可在游戏设置选择「旅人」难度，再次挑战。'}</p><div class="stats"><div><strong>${formatTime(state.time)}</strong><small>梦中时长</small></div><div><strong>${state.kills}</strong><small>猎杀梦魇</small></div><div><strong>${state.captures}</strong><small>夺取影子</small></div></div><div class="journey-result">最佳连猎 ${state.journey.bestStreak} · 猎人祝福 ${state.journey.perks.length} / 3<br>${state.journey.perks.map(id=>JOURNEY.perks.find(p=>p.id===id).name).join(' · ')||'尚未取得祝福'}</div><p>最终技能：${combo().name}<br>${skills[state.slots[0]].summary}</p><p class="fine-print">通关与结局记录保存在本机「猎人纪事」，不覆盖营地检查点。</p><div class="modal-actions"><button class="primary" id="end-restart">再次踏入长梦 ↗</button><button class="secondary" id="end-home">返回首页</button>${state.world&&EXPEDITION.read(campStorage(),selectedTheme).status==='ready'?'<button class="secondary" id="end-load">回到营地存档</button>':''}</div>`);
+ $('end-restart').onclick=()=>{reset();start();};$('end-home').onclick=reset;if(state.world&&EXPEDITION.read(campStorage(),selectedTheme).status==='ready')$('end-load').onclick=resumeCamp;tone(win?660:160,.7,'sine',.07);
 }
 
-function updateEnemy(e,dt){if(e.dead)return;e.hit=Math.max(0,e.hit-dt);if(e.exposed){if(e.scout||state.tutorial||state.mode==='practice'&&state.practiceTarget==='dummy')return;e.exposed-=dt;if(e.exposed<=0){if(state.objective&&['capture','chase'].includes(state.objective.kind)&&state.objective.targetId===e.id){e.exposed=0;e.hp=e.maxHp*.5;e.pressure=e.maxPressure;e.cd=1.5;toast(state.objective.kind==='capture'?'目标重新凝聚：再次击破，靠近长按 E 夺取':'镜魔重新凝聚：击破后及时收割或夺影');}else if(e.boss&&e.hp>0){e.exposed=0;e.hp=Math.max(e.hp,e.maxHp*.15);e.pressure=e.maxPressure;e.cd=1.5;toast((state.world?campaignWorld().boss:'月狼')+'重新凝聚了影子！');}else gainKill(e);}return;}
+function updateEnemy(e,dt){if(e.dead)return;if(isCloud()&&e.qKind){updateCloudEnemy(e,dt);return;}e.hit=Math.max(0,e.hit-dt);if(e.exposed){if(e.scout||state.tutorial||state.mode==='practice'&&state.practiceTarget==='dummy')return;e.exposed-=dt;if(e.exposed<=0){if(state.objective&&['capture','chase'].includes(state.objective.kind)&&state.objective.targetId===e.id){e.exposed=0;e.hp=e.maxHp*.5;e.pressure=e.maxPressure;e.cd=1.5;toast(state.objective.kind==='capture'?'目标重新凝聚：再次击破，靠近长按 E 夺取':'镜魔重新凝聚：击破后及时收割或夺影');}else if(e.boss&&e.hp>0){e.exposed=0;e.hp=Math.max(e.hp,e.maxHp*.15);e.pressure=e.maxPressure;e.cd=1.5;toast((state.world?campaignWorld().boss:'月狼')+'重新凝聚了影子！');}else gainKill(e);}return;}
  if(e.burn>0){const active=Math.min(dt,e.burn);e.burn=Math.max(0,e.burn-dt);e.hp-=9*active*(e.burnCast?.skillBonus??journeyMods().skill);if(Math.random()<dt*15)burst(e.x,e.y,'#f1a05e',1,30);}if(e.bleed>0){const active=Math.min(dt,e.bleed);e.bleed=Math.max(0,e.bleed-dt);e.hp-=7*active*(e.bleedCast?.skillBonus??journeyMods().skill);}if(e.hp<=0){expose(e);return;}
  if(state.tutorial||state.mode==='practice'&&state.practiceTarget==='dummy')return;
  if(updateMissionEnemy(e,dt)||updateWorldEnemy(e,dt))return;
@@ -640,7 +722,7 @@ function updateEnemy(e,dt){if(e.dead)return;e.hit=Math.max(0,e.hit-dt);if(e.expo
  for(const other of enemies){if(other===e||other.dead||other.exposed)continue;const dist=distance(other,e),min=e.r+other.r+4;if(dist<min&&dist>.1)moveEntity(e,(e.x-other.x)/dist*20*dt,(e.y-other.y)/dist*20*dt);}
  if(e.cd<=0&&d<(e.boss?720:ranged?510:170)){e.target={x:player.x,y:player.y};e.attack=e.boss?(e.phase===2&&Math.random()<.45?'curse':Math.random()<.55?'lunge':'slam'):e.type==='wolf'?'lunge':ranged?'shot':'slam';if(e.boss&&state.world&&state.world.id!=='forest')e.attack=e.phase===2&&Math.random()<.3?'curse':Math.random()<.7?campaignWorld().bossMove:'slam';e.telegraph=e.boss?1.05:e.attack==='lunge'?.75:.95;e.cd=e.boss?(e.phase===2?1.5:2):rand(1.8,2.9);}}
 function performEnemyAttack(e){if(performVariantAttack(e))return;const t=e.target;if(!t)return;const a=angle(e,t);if(e.attack==='lantern'&&state.journey.recall>0)return;if(e.attack==='lantern'){ring(e.x,e.y,85,'#d07373',.35);const lamp=state.objective?.lantern;if(lamp&&distance(e,lamp)<105){lamp.hp=Math.max(0,lamp.hp-(e.type==='giant'?14:9));ring(lamp.x,lamp.y,65,'#eda874');}return;}if(e.attack==='lunge'){e.dash=e.boss?.58:.36;e.dx=Math.cos(a);e.dy=Math.sin(a);tone(120,.15,'triangle',.04);}else if(e.attack==='slam'){const r=e.boss?160:e.type==='giant'?110:85;ring(e.x,e.y,r,'#d07373',.35);if(distance(player,e)<r+player.r)hitPlayer(e.boss?24:e.elite?18:12);}else if(e.attack==='curse'){ring(t.x,t.y,145,'#b485db',.6);hazards.push({x:t.x,y:t.y,r:135,life:2.3,tick:0,friendly:false,color:'#a36cca',purple:true});}else{const number=e.type==='mirror'?5:e.type==='swarm'?3:1;for(let i=0;i<number;i++)shoot(e.x,e.y,a+(i-(number-1)/2)*.19,e.type==='archer'?260:200,e.elite?16:10,shadows[e.type].color,{enemy:true,life:3});}}
-function updateCapture(dt){if(keys.KeyE)state.mounted=false;const pressing=keys.KeyE;if(!pressing){state.capture=0;state.captureTarget=null;$('capture-hud').classList.add('hidden');return;}const target=enemies.filter(e=>!e.dead&&e.exposed>0&&distance(e,player)<115).sort((a,b)=>distance(a,player)-distance(b,player))[0];if(!target){state.capture=0;state.captureTarget=null;$('capture-hud').classList.add('hidden');return;}if(state.captureTarget!==target){state.capture=0;state.captureTarget=target;}state.capture+=dt;const duration=player.focus>=100?.04:target.boss?1.65:1.05;$('capture-hud').classList.remove('hidden');$('capture-bar').style.width=clamp(state.capture/duration*100,0,100)+'%';if(Math.random()<.6){const t=rand(0,1);burst(target.x+(player.x-target.x)*t,target.y+(player.y-target.y)*t,'#c8f8df',1,25);}if(state.capture>=duration){if(player.focus>=100)player.focus=0;else player.focus=clamp(player.focus+18,0,100);gainKill(target,true);state.capture=0;state.captureTarget=null;keys.KeyE=false;$('capture-hud').classList.add('hidden');tone(780,.55);captureFeedback(target);showReward(target.type,target.boss);}}
+function updateCapture(dt){if(isCloud())return;if(keys.KeyE)state.mounted=false;const pressing=keys.KeyE;if(!pressing){state.capture=0;state.captureTarget=null;$('capture-hud').classList.add('hidden');return;}const target=enemies.filter(e=>!e.dead&&e.exposed>0&&distance(e,player)<115).sort((a,b)=>distance(a,player)-distance(b,player))[0];if(!target){state.capture=0;state.captureTarget=null;$('capture-hud').classList.add('hidden');return;}if(state.captureTarget!==target){state.capture=0;state.captureTarget=target;}state.capture+=dt;const duration=player.focus>=100?.04:target.boss?1.65:1.05;$('capture-hud').classList.remove('hidden');$('capture-bar').style.width=clamp(state.capture/duration*100,0,100)+'%';if(Math.random()<.6){const t=rand(0,1);burst(target.x+(player.x-target.x)*t,target.y+(player.y-target.y)*t,'#c8f8df',1,25);}if(state.capture>=duration){if(player.focus>=100)player.focus=0;else player.focus=clamp(player.focus+18,0,100);gainKill(target,true);state.capture=0;state.captureTarget=null;keys.KeyE=false;$('capture-hud').classList.add('hidden');tone(780,.55);captureFeedback(target);showReward(target.type,target.boss);}}
 function update(dt){if(state.phase==='encounter'){updateEncounter(dt);return;}clock+=dt;updateCamera(dt);if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.add('hidden');}screenShake=Math.max(0,screenShake-dt*32);if(state.phase!=='playing'){return;}if(checkEncounter())return;updateKillRewards(dt);updateLevelCelebration(dt);if(state.hitStop>0){state.hitStop=Math.max(0,state.hitStop-dt);return;}state.time+=dt;if(state.adventure)state.adventure.elapsed+=state.journey.recall>0?Math.min(dt,state.journey.recall):dt;updateJourney(dt);if(state.phase!=='playing')return;state.basketballCd=Math.max(0,(state.basketballCd||0)-dt);state.skillCd=Math.max(0,state.skillCd-dt);state.dashCd=Math.max(0,state.dashCd-dt);state.attackCd=Math.max(0,state.attackCd-dt);player.invincible=Math.max(0,player.invincible-dt);player.shield=Math.max(0,player.shield-dt);player.slash=Math.max(0,player.slash-dt);player.angle=angle(player,mouse);
  if(state.nightmare>0){state.nightmare=Math.max(0,state.nightmare-dt);if(state.nightmare<=0){state.locked=true;state.corruption=25;toast('梦魇褪去 · 再次满梦蚀将进入同化结局',4);updateBuild();}}
  const motionX=player.x,motionY=player.y,motionDash=player.dash>0;
@@ -777,6 +859,7 @@ function updateMissionEnemy(e,dt){
 }
 function updateObjective(dt){
  const o=state.objective;if(!o||o.status!=='active'||state.phase!=='playing'||state.journey.recall>0)return;
+ if(isCloud()&&QMAP.types.includes(o.kind)){QMAP.step(o,dt,{player,enemies,move:moveEntity,complete:completeWorldMission,tone});return;}
  if(['hunt','survey','sequence','purify'].includes(o.kind)){updateCampaignObjective();return;}
  const target=enemies.find(e=>e.id===o.targetId);
  if(o.kind==='defend'){
@@ -873,11 +956,39 @@ function drawMissionScenery(){
 
 /* Continuous expedition. All combat positions are world coordinates; HUD stays in screen space. */
 const CAMPAIGN=window.HUNTER_CAMPAIGN;
+const QMAP=window.HUNTER_Q;
+function isCloud(){return !!state.world&&CAMPAIGN.themeOf(state.world.id)==='cloud';}
+function activeWorlds(){return CAMPAIGN.forTheme(selectedTheme);}
+function themeName(theme=selectedTheme){return theme==='cloud'?'甜梦云原':'五境远征';}
+function selectTheme(theme){
+ if(state.phase!=='intro'||!['main','cloud'].includes(theme))return false;
+ const changed=theme!==selectedTheme;
+ selectedTheme=theme;state.campaign=CAMPAIGN.read(campStorage(),theme);
+ if(changed){state=freshState();player=newPlayer();}
+ characterAppearance=theme==='cloud'?'q-shadow':'shade';
+ try{const saved=localStorage.getItem(theme==='cloud'?'shadow-hunter-q-appearance':'shadow-hunter-appearance');if(professions.some(p=>p.id===saved))characterAppearance=saved;}catch{}
+ atlasSelected=activeWorlds()[0].id;refreshResume();updateBuild();updateUI();return true;
+}
+function openTheme(theme){if(selectTheme(theme))openAtlas(activeWorlds()[0].id);}
+function openSaveChooser(){
+ if(state.phase!=='intro')return;
+ showModal('saveChooser',`<div class="modal-eyebrow">CONTINUE / 两个世界，各自的旅程</div><h2 id="modal-title">继续哪一段冒险？</h2><p>每个世界拥有五张子地图，地图解锁、行囊、货币与营地存档各自保存。选择后还可更换人物。</p><div class="theme-saves">${['main','cloud'].map(theme=>{const saved=getCampSave(theme);return `<button class="theme-save" data-resume-theme="${theme}" ${saved.status==='ready'?'':'disabled'}><strong>${themeName(theme)}</strong><span>${saved.status==='ready'?saveDescription(saved.data):saved.status==='legacy'?'旧版单地图存档已保留备份，请从新世界入口出发。':'尚无营地存档，从首页对应世界出发。'}</span><b>${saved.status==='ready'?'选择人物，继续 ↗':'未建立旅程'}</b></button>`;}).join('')}</div><button class="secondary" id="save-chooser-back">返回标题</button>`);
+ $('modal-card').querySelectorAll('[data-resume-theme]').forEach(el=>el.onclick=()=>{closeModal('intro');selectTheme(el.dataset.resumeTheme);openResumeProfession();});
+ $('save-chooser-back').onclick=()=>closeModal('intro');
+}
+function drawQHero(){
+ if(!['q-shadow','q-shadow-f'].includes(characterAppearance))return false;
+ const bob=state.phase==='playing'?Math.sin(clock*9)*(player.moveBlend>0?3:1):0;
+ ctx.save();ctx.translate(player.x,player.y+14+bob);if(player.attackPoseTime>0)ctx.rotate(Math.sin(player.attackPoseTime*12)*.12);if(player.dash>0)ctx.scale(1.1,.9);
+ const drawn=window.HUNTER_Q_ART?.draw(ctx,characterAppearance==='q-shadow-f'?'hero-shadow-hunter-f':'hero-shadow-hunter',0,0,100)||false;ctx.restore();return drawn;
+}
+function sealCount(){return isCloud()?3:WORLD.sites.filter(s=>!['camp','boss'].includes(s.kind)).length;}
+function collectionCount(){return isCloud()?WORLD.charms.length:worldDiscoveries().length;}
 let WORLD=window.HUNTER_WORLD;
-function campaignWorld(){return CAMPAIGN.worlds.find(w=>w.id===(state.world?.id||'forest'));}
+function campaignWorld(){return CAMPAIGN.catalog.find(w=>w.id===(state.world?.id||'forest'));}
 function showCampaignIntro(){
- const w=campaignWorld();showModal('worldIntro',`<div class="modal-eyebrow">WORLD ${w.number} / Lv.${w.level}–${w.level+2}</div><div class="campaign-intro-sigil" style="color:${w.color}">${w.symbol}</div><h2 id="modal-title">${w.name}</h2><p>${w.description}</p>${storyChapterMarkup(w.id)}<div class="campaign-missions">${WORLD.sites.filter(s=>s.kind!=='camp').map((s,i)=>`<div><span>${i===3?'☾':'0'+(i+1)}</span><b>${s.name}</b><small>${s.hint}</small></div>`).join('')}</div><p class="fine-print">每次出发重置任务，奖励重新随机抽取；已学影子、行囊和世界解锁保留，祝福与影子等级重新成长。完成任务必得随机物品，首次通关必得此境护符。</p><div class="control-chips"><span><kbd>M</kbd>区域地图</span><span><kbd>N</kbd>五境星图</span><span><kbd>F</kbd>互动</span><span><kbd>B</kbd>回营</span></div><button class="primary" id="world-begin">开始探索 ↗</button>`);
- $('world-begin').onclick=()=>{closeModal('playing');if(state.world.saveOnBegin||EXPEDITION.read(campStorage()).status==='empty')saveCamp();};
+ const w=campaignWorld();showModal('worldIntro',`<div class="modal-eyebrow">WORLD ${w.number} / Lv.${w.level}–${w.level+2}</div><div class="campaign-intro-sigil" style="color:${w.color}">${w.symbol}</div><h2 id="modal-title">${w.name}</h2><p>${w.description}</p>${storyChapterMarkup(w.id)}<div class="campaign-missions">${WORLD.sites.filter(s=>s.kind!=='camp').map((s,i)=>`<div><span>${s.kind==='boss'?'☾':'0'+(i+1)}</span><b>${s.name}</b><small>${s.hint}</small></div>`).join('')}</div><p class="fine-print">每次出发重置任务，奖励重新随机抽取；已学影子、行囊和世界解锁保留，祝福与影子等级重新成长。完成任务必得随机物品，首次通关必得此境护符。</p><div class="control-chips"><span><kbd>M</kbd>区域地图</span><span><kbd>N</kbd>子地图星图</span><span><kbd>F</kbd>互动</span><span><kbd>B</kbd>回营</span></div><button class="primary" id="world-begin">开始探索 ↗</button>`);
+ $('world-begin').onclick=()=>{closeModal('playing');if(state.world.saveOnBegin||EXPEDITION.read(campStorage(),selectedTheme).status==='empty')saveCamp();};
 }
 function campaignSave(){updateQuickInventory();const ok=CAMPAIGN.save(campStorage(),state.campaign);if(!ok)toast('世界进度暂存在本页；浏览器未能写入，请保留页面并稍后重试保存。',6);return ok;}
 function expeditionReward(token,kind){
@@ -891,14 +1002,15 @@ let atlasReturn='intro',atlasSelected='forest';
 function openAtlas(selected){
  if(!['intro','playing','paused','camp','worldmap','atlas','worldVictory','inventory'].includes(state.phase)||state.tutorial||state.mode==='practice')return;
  if(state.phase!=='atlas'&&state.phase!=='inventory')atlasReturn=state.phase==='paused'?'playing':state.phase;
- atlasSelected=CAMPAIGN.worlds.some(w=>w.id===selected)?selected:state.world?.id||atlasSelected;
- const p=state.campaign,w=CAMPAIGN.worlds.find(w=>w.id===atlasSelected),available=CAMPAIGN.unlocked(p,w.id),missing=w.requires.filter(id=>!p.cleared.includes(id));
+ atlasSelected=activeWorlds().some(w=>w.id===selected)?selected:state.world?.id||(activeWorlds().some(w=>w.id===atlasSelected)?atlasSelected:activeWorlds()[0].id);
+ const p=state.campaign,w=activeWorlds().find(w=>w.id===atlasSelected),available=CAMPAIGN.unlocked(p,w.id),missing=w.requires.filter(id=>!p.cleared.includes(id));
  const canTravel=!state.world||state.phase==='worldVictory'||atlasReturn==='worldVictory'||(!state.objective&&distance(player,WORLD.sites[0])<130&&!campThreat());
- const edges=CAMPAIGN.worlds.flatMap(b=>b.requires.map(id=>{const a=CAMPAIGN.worlds.find(w=>w.id===id);return `<path class="${p.cleared.includes(a.id)?'open':''}" d="M${a.pos[0]} ${a.pos[1]} L${b.pos[0]} ${b.pos[1]}"/>`;})).join('');
+ const edges=activeWorlds().flatMap(b=>b.requires.map(id=>{const a=activeWorlds().find(w=>w.id===id);return `<path class="${p.cleared.includes(a.id)?'open':''}" d="M${a.pos[0]} ${a.pos[1]} L${b.pos[0]} ${b.pos[1]}"/>`;})).join('');
  const mobilePositions=[[50,15],[25,36],[75,36],[50,58],[50,80]];
- const mobileSvg=`<svg class="atlas-mobile-edges" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g class="atlas-edges">${CAMPAIGN.worlds.flatMap(b=>b.requires.map(id=>{const a=CAMPAIGN.worlds.find(w=>w.id===id);return `<path class="${p.cleared.includes(a.id)?'open':''}" d="M${mobilePositions[a.number-1].join(' ')} L${mobilePositions[b.number-1].join(' ')}"/>`;})).join('')}</g></svg>`;
- showModal('atlas',`<div class="atlas-heading"><div><div class="modal-eyebrow">ATLAS / 破晓航路</div><h2 id="modal-title">长梦之外，还有世界。</h2></div><span class="atlas-count">${p.cleared.length}<small> / 5 世界已通关</small></span></div><div class="atlas-layout"><div class="atlas-chart"><span class="atlas-chart-label">五境星图 · 点击节点查看</span>${mobileSvg}<svg class="atlas-desktop-edges" viewBox="0 0 850 440" aria-hidden="true"><g class="atlas-edges">${edges}</g>${CAMPAIGN.worlds.map(n=>`<circle cx="${n.pos[0]}" cy="${n.pos[1]}" r="53" fill="${n.color}0c" stroke="${n.color}25"/>`).join('')}</svg>${CAMPAIGN.worlds.map(n=>{const clear=p.cleared.includes(n.id),open=CAMPAIGN.unlocked(p,n.id);return `<button class="atlas-node ${clear?'cleared':''} ${open?'unlocked':'locked'} ${w.id===n.id?'selected':''}" data-world="${n.id}" style="left:${n.pos[0]/850*100}%;top:${n.pos[1]/440*100}%;--world-color:${n.color}" aria-label="世界 ${n.number} ${n.name}，${clear?'已通关':open?'可前往':'未解锁'}" aria-pressed="${w.id===n.id}"><span>${clear?'✓':n.number.toString().padStart(2,'0')}</span><b>${n.name}</b><small>${clear?'已通关 · 可重访':open?'航路已开启':'航路未开启'}</small></button>`;}).join('')}<span class="atlas-chart-note">1 → 2 + 3　·　2 & 3 → 4　·　4 → 5</span></div><section class="atlas-detail" style="--world-color:${w.color}"><div class="atlas-world-icon">${w.symbol}</div><small>WORLD ${w.number.toString().padStart(2,'0')} / Lv.${w.level}–${w.level+2}</small><h3>${w.name}</h3><p class="atlas-subtitle">${w.subtitle}</p><p>${w.description}</p><div class="atlas-feature">${w.feature}<br>首领 · ${w.boss}</div><h4>此境战利品</h4><div class="atlas-loot">${w.loot.map(id=>`<span title="${CAMPAIGN.items[id].description}">${itemIcon(id)}${CAMPAIGN.items[id].name}</span>`).join('')}</div><p class="atlas-requirement">${missing.length?'需先通关：'+missing.map(id=>CAMPAIGN.worlds.find(n=>n.id===id).name).join(' ＋ '):p.cleared.includes(w.id)?`已完成 ${p.clears[w.id]||1} 次 · 重访会刷新任务与随机掉落`:'航路已开启 · 完成三处任务与首领即可通关'}</p><button class="primary" id="atlas-travel" ${!available||!canTravel?'disabled':''}>${available?(p.cleared.includes(w.id)?'重新探索':'前往世界')+' '+w.number+' ↗':'尚未解锁'}</button>${!canTravel?'<small class="atlas-travel-note">完成当前任务，脱战回到营地后出发。</small>':''}</section></div><p class="fine-print">出发会刷新所选地图的任务与敌群；已解锁世界、行囊和护符保留。首次通关必得专属护符。切换世界时自动建立新营地存档。</p><div class="modal-actions"><button class="secondary" id="atlas-bag">行囊与护符 · ${Object.values(p.inventory).reduce((a,b)=>a+b,0)} 件</button><button class="secondary" id="atlas-close">${atlasReturn==='intro'?'返回标题':'返回当前旅途'}</button></div><p class="campaign-save-note">${CAMPAIGN.storageOK?'世界解锁与战利品自动保存在当前浏览器。':'存储不可用：进度暂存本页，请保留页面。'}</p>`);
+ const mobileSvg=`<svg class="atlas-mobile-edges" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g class="atlas-edges">${activeWorlds().flatMap(b=>b.requires.map(id=>{const a=activeWorlds().find(w=>w.id===id);return `<path class="${p.cleared.includes(a.id)?'open':''}" d="M${mobilePositions[a.number-1].join(' ')} L${mobilePositions[b.number-1].join(' ')}"/>`;})).join('')}</g></svg>`;
+ showModal('atlas',`<div class="atlas-heading"><div><div class="modal-eyebrow">ATLAS / ${themeName()}</div><h2 id="modal-title">${themeName()} · 五张子地图</h2></div><span class="atlas-count">${p.cleared.length}<small> / ${activeWorlds().length} 子地图已通关</small></span></div><div class="atlas-layout"><div class="atlas-chart"><span class="atlas-chart-label">${themeName()} · 点击子地图查看</span>${mobileSvg}<svg class="atlas-desktop-edges" viewBox="0 0 850 440" aria-hidden="true"><g class="atlas-edges">${edges}</g>${activeWorlds().map(n=>`<circle cx="${n.pos[0]}" cy="${n.pos[1]}" r="53" fill="${n.color}0c" stroke="${n.color}25"/>`).join('')}</svg>${activeWorlds().map(n=>{const clear=p.cleared.includes(n.id),open=CAMPAIGN.unlocked(p,n.id);return `<button class="atlas-node ${clear?'cleared':''} ${open?'unlocked':'locked'} ${w.id===n.id?'selected':''}" data-world="${n.id}" data-rank="${n.number}" style="left:${n.pos[0]/850*100}%;top:${n.pos[1]/440*100}%;--world-color:${n.color}" aria-label="世界 ${n.number} ${n.name}，${clear?'已通关':open?'可前往':'未解锁'}" aria-pressed="${w.id===n.id}"><span>${clear?'✓':n.number.toString().padStart(2,'0')}</span><b>${n.name}</b><small>${clear?'已通关 · 可重访':open?'航路已开启':'航路未开启'}</small></button>`;}).join('')}<span class="atlas-chart-note">本世界路线：1 → 2 + 3 → 4 → 5</span></div><section class="atlas-detail" style="--world-color:${w.color}"><div class="atlas-world-icon">${w.symbol}</div><small>WORLD ${w.number.toString().padStart(2,'0')} / Lv.${w.level}–${w.level+2}</small><h3>${w.name}</h3><p class="atlas-subtitle">${w.subtitle}</p><p>${w.description}</p><div class="atlas-feature">${w.feature}<br>首领 · ${w.boss}</div><h4>此境战利品</h4><div class="atlas-loot">${w.loot.map(id=>`<span title="${CAMPAIGN.items[id].description}">${itemIcon(id)}${CAMPAIGN.items[id].name}</span>`).join('')}</div><p class="atlas-requirement">${missing.length?'需先通关：'+missing.map(id=>activeWorlds().find(n=>n.id===id).name).join(' ＋ '):p.cleared.includes(w.id)?`已完成 ${p.clears[w.id]||1} 次 · 重访会刷新任务与随机掉落`:`航路已开启 · 完成 3 项活动与首领即可通关`}</p><button class="primary" id="atlas-travel" ${!available||!canTravel?'disabled':''}>${available?(p.cleared.includes(w.id)?'重新探索':'前往子地图')+' '+w.number+' ↗':'尚未解锁'}</button>${!canTravel?'<small class="atlas-travel-note">完成当前任务，脱战回到营地后出发。</small>':''}</section></div><p class="fine-print">本世界的地图解锁、行囊、归途币、载具与营地存档独立保存。出发会刷新所选子地图并更新本世界的营地存档；另一世界的旅程保持原样。</p><div class="modal-actions">${!state.world&&getCampSave().status==='ready'?'<button class="primary" id="atlas-resume">继续本世界存档 · 选择人物 ↗</button>':''}<button class="secondary" id="atlas-bag">行囊与护符 · ${Object.values(p.inventory).reduce((a,b)=>a+b,0)} 件</button><button class="secondary" id="atlas-close">${atlasReturn==='intro'?'返回标题':'返回当前旅途'}</button></div><p class="campaign-save-note">${CAMPAIGN.storageOK?'本世界的地图解锁与战利品自动保存在当前浏览器。':'存储不可用：进度暂存本页，请保留页面。'}</p>`);
  $('modal-card').querySelectorAll('[data-world]').forEach(b=>b.onclick=()=>openAtlas(b.dataset.world));
+ if($('atlas-resume'))$('atlas-resume').onclick=()=>{closeModal('intro');openResumeProfession();};
  $('atlas-travel').onclick=()=>{if(available&&canTravel)travelWorld(w.id);};$('atlas-close').onclick=closeAtlas;$('atlas-bag').onclick=()=>openInventory('atlas');
 }
 function closeAtlas(){if(atlasReturn==='camp')openCamp();else if(atlasReturn==='worldmap'){closeModal('playing');openWorldMap();}else if(atlasReturn==='worldVictory')showWorldVictory();else closeModal(atlasReturn);}
@@ -914,7 +1026,7 @@ function openInventory(back){
  if(!['atlas','camp','inventory','worldVictory','shop'].includes(state.phase))return;
  if(state.phase!=='inventory')inventoryReturn=back||state.phase;
  const p=state.campaign,canUse=!!state.world&&!state.objective&&!campThreat()&&distance(player,WORLD.sites[0])<130;
- showModal('inventory',`<div class="modal-eyebrow">SATCHEL / 跨世界保留</div><h2 id="modal-title">旅途带回的东西。</h2><p>补给品在营地使用；护符同时佩戴一件，在正式探索中生效。重复护符保留在行囊，不叠加属性。</p><p class="inventory-equipped">已佩戴：${p.equipped?itemIcon(p.equipped)+CAMPAIGN.items[p.equipped].name+' · '+CAMPAIGN.items[p.equipped].description:'暂无护符'}</p><div class="inventory-grid">${Object.entries(p.inventory).filter(([,n])=>n>0).map(([id,n])=>{const item=CAMPAIGN.items[id];return `<article class="inventory-item ${item.kind}">${itemIcon(id)}<small>${item.rarity} · ${CAMPAIGN.worlds.find(w=>w.id===item.world).name}</small><h3>${item.name}<span>×${n}</span></h3><p>${item.description}</p><button class="secondary" data-item="${id}" ${item.kind==='supply'&&!canUse||item.kind==='relic'&&p.equipped===id?'disabled':''}>${item.kind==='relic'?p.equipped===id?'已佩戴':'佩戴护符':canUse?'使用一份':'回营地使用'}</button></article>`;}).join('')||'<p class="inventory-empty">行囊还是空的。击败梦魇、完成任务或通关世界，收集属于此境的战利品。</p>'}</div><button class="primary" id="inventory-close">返回 ↗</button><p class="campaign-save-note">${CAMPAIGN.storageOK?'物品与护符自动保存；使用补给后会同步保存营地状态。':'存储不可用：当前收获暂存本页。'}</p>`);
+ showModal('inventory',`<div class="modal-eyebrow">SATCHEL / 本世界内保留</div><h2 id="modal-title">旅途带回的东西。</h2><p>补给品在营地使用；护符同时佩戴一件，在正式探索中生效。重复护符保留在行囊，不叠加属性。</p><p class="inventory-equipped">已佩戴：${p.equipped?itemIcon(p.equipped)+CAMPAIGN.items[p.equipped].name+' · '+CAMPAIGN.items[p.equipped].description:'暂无护符'}</p><div class="inventory-grid">${Object.entries(p.inventory).filter(([,n])=>n>0).map(([id,n])=>{const item=CAMPAIGN.items[id];return `<article class="inventory-item ${item.kind}">${itemIcon(id)}<small>${item.rarity} · ${CAMPAIGN.catalog.find(w=>w.id===item.world).name}</small><h3>${item.name}<span>×${n}</span></h3><p>${item.description}</p><button class="secondary" data-item="${id}" ${item.kind==='supply'&&!canUse||item.kind==='relic'&&p.equipped===id?'disabled':''}>${item.kind==='relic'?p.equipped===id?'已佩戴':'佩戴护符':canUse?'使用一份':'回营地使用'}</button></article>`;}).join('')||'<p class="inventory-empty">行囊还是空的。击败梦魇、完成任务或通关世界，收集属于此境的战利品。</p>'}</div><button class="primary" id="inventory-close">返回 ↗</button><p class="campaign-save-note">${CAMPAIGN.storageOK?'物品与护符自动保存；使用补给后会同步保存营地状态。':'存储不可用：当前收获暂存本页。'}</p>`);
  $('modal-card').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>useCampaignItem(b.dataset.item));
  $('inventory-close').onclick=()=>{if(inventoryReturn==='atlas')openAtlas(atlasSelected);else if(inventoryReturn==='worldVictory')showWorldVictory();else if(inventoryReturn==='shop'){closeModal('playing');openShop();}else openCamp();};
 }
@@ -932,15 +1044,15 @@ function completeCampaignWorld(show=true){
  if(!state.world.victory){
   state.world.victory=CAMPAIGN.complete(state.campaign,state.world.id,state.world.visit)||{item:null};
   const reward=state.world.victory;recordAdventureLoot(reward.item);if(reward.guaranteed!==reward.item)recordAdventureLoot(reward.guaranteed);
-  campaignSave();state.objective=null;state.pendingBoons=[];enemies=enemies.filter(e=>!e.mission);hazards=[];projectiles=[];minions=[];state.releaseRecorded=true;window.HUNTER_RELEASE?.record({ending:'dawn',time:Math.max(1,state.time),kills:state.kills,captures:state.captures});
+  campaignSave();state.objective=null;state.pendingBoons=[];enemies=enemies.filter(e=>!e.mission);hazards=[];projectiles=[];minions=[];state.releaseRecorded=true;window.HUNTER_RELEASE?.record({ending:'dawn',forest:state.world.id==='forest',time:Math.max(1,state.time),kills:state.kills,captures:state.captures});
  }
  syncAchievements();if(show)showWorldVictory();
 }
 function showWorldVictory(){
- const w=campaignWorld(),reward=state.world.victory||{},all=state.campaign.cleared.length===5;
+ const w=campaignWorld(),reward=state.world.victory||{},all=activeWorlds().every(w=>state.campaign.cleared.includes(w.id));
  window.HUNTER_AUDIO?.setScene('victory');
- showModal('worldVictory',`<div class="ending-emblem dawn">${w.symbol}</div><div class="modal-eyebrow">WORLD ${w.number} COMPLETE / ${state.campaign.cleared.length} OF 5</div><h2 id="modal-title">${all?'五境破晓，长梦终尽。':w.name+'，已迎来黎明。'}</h2><p>三枚印记汇聚，${w.boss}的封印已经解除。${all?'所有世界均已通关，你仍可重返任意世界，尝试不同技能。':'星图上的新航路已亮起，下一段旅途由你决定。'}</p>${storyChapterMarkup(w.id,true)}<div class="victory-loot">${lootMarkup(reward.item)}${reward.guaranteed&&reward.guaranteed!==reward.item?lootMarkup(reward.guaranteed):''}</div><p>${reward.guaranteed?'首次通关专属护符已入行囊。':'通关战利品已入行囊。'}世界解锁与物品${CAMPAIGN.storageOK?'已自动保存':'暂存本页，尚未写入浏览器'}。</p><div class="modal-actions"><button class="primary" id="victory-atlas">展开五境星图 ↗</button><button class="secondary" id="victory-bag">查看行囊</button><button class="secondary" id="victory-home">返回标题</button></div>`);
- $('victory-atlas').onclick=()=>openAtlas(CAMPAIGN.worlds.find(n=>!state.campaign.cleared.includes(n.id)&&CAMPAIGN.unlocked(state.campaign,n.id))?.id||w.id);$('victory-bag').onclick=()=>openInventory('worldVictory');$('victory-home').onclick=reset;
+ showModal('worldVictory',`<div class="ending-emblem dawn">${w.symbol}</div><div class="modal-eyebrow">WORLD ${w.number} COMPLETE / ${state.campaign.cleared.length} OF ${activeWorlds().length}</div><h2 id="modal-title">${all?'本世界的五张子地图，已迎来黎明。':w.name+'，已迎来黎明。'}</h2><p>${sealCount()} 枚印记汇聚，${w.boss}的封印已经解除。${all?'本世界的五张子地图均已通关，你仍可重返任意世界，尝试不同技能。':'星图上的新航路已亮起，下一段旅途由你决定。'}</p>${storyChapterMarkup(w.id,true)}<div class="victory-loot">${lootMarkup(reward.item)}${reward.guaranteed&&reward.guaranteed!==reward.item?lootMarkup(reward.guaranteed):''}</div><p>${reward.guaranteed?'首次通关专属护符已入行囊。':'通关战利品已入行囊。'}世界解锁与物品${CAMPAIGN.storageOK?'已自动保存':'暂存本页，尚未写入浏览器'}。</p><div class="modal-actions"><button class="primary" id="victory-atlas">展开子地图星图 ↗</button><button class="secondary" id="victory-bag">查看行囊</button><button class="secondary" id="victory-home">返回标题</button></div>`);
+ $('victory-atlas').onclick=()=>openAtlas(activeWorlds().find(n=>!state.campaign.cleared.includes(n.id)&&CAMPAIGN.unlocked(state.campaign,n.id))?.id||w.id);$('victory-bag').onclick=()=>openInventory('worldVictory');$('victory-home').onclick=reset;
 }
 function setupCampaignObjective(site){
  const o=state.objective={kind:site.kind,status:'active',site,targetId:null,remaining:null,nodes:[],activated:[],targets:[]};
@@ -956,7 +1068,7 @@ function interactCampaignNode(){
  o.activated.push(i);ring(o.nodes[i].x,o.nodes[i].y,100,'#d1e6ac');toast(`${o.nodes[i].name} 已激活 · ${o.activated.length} / 3`);if(o.activated.length===3)completeWorldMission();return true;
 }
 function updateCampaignObjective(){const o=state.objective;if(o?.kind==='hunt'&&o.targets.every(id=>enemies.find(e=>e.id===id)?.dead))completeWorldMission();}
-function drawCampaignNodes(){const o=state.objective;if(!o?.nodes)return;for(const [i,n] of o.nodes.entries()){const done=o.activated.includes(i);glow(n.x,n.y,80,done?'#cde7a025':'#bfa3e544');ctx.strokeStyle=done?'#bad6a0':n.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(n.x,n.y,40,0,TAU);ctx.stroke();ctx.textAlign='center';ctx.fillStyle='#edf3dc';ctx.font='16px sans-serif';ctx.fillText(done?'✓':n.name,n.x,n.y+5);ctx.font='12px sans-serif';ctx.fillText(done?'已激活':distance(player,n)<100?'按 F 激活':'靠近此处',n.x,n.y+64);}}
+function drawCampaignNodes(){const o=state.objective;if(!o?.nodes||isCloud())return;for(const [i,n] of o.nodes.entries()){const done=o.activated.includes(i);glow(n.x,n.y,80,done?'#cde7a025':'#bfa3e544');ctx.strokeStyle=done?'#bad6a0':n.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(n.x,n.y,40,0,TAU);ctx.stroke();ctx.textAlign='center';ctx.fillStyle='#edf3dc';ctx.font='16px sans-serif';ctx.fillText(done?'✓':n.name,n.x,n.y+5);ctx.font='12px sans-serif';ctx.fillText(done?'已激活':distance(player,n)<100?'按 F 激活':'靠近此处',n.x,n.y+64);}}
 const VIEW_RANGE={min:50,max:200,default:100,key:'shadow-hunter-view-range-v1'};
 function readViewRange(){
  try{const value=Number(localStorage.getItem(VIEW_RANGE.key));if(Number.isFinite(value)&&value>=VIEW_RANGE.min&&value<=VIEW_RANGE.max)return Math.round(value);}catch{}
@@ -1009,18 +1121,19 @@ function enterWorld(id='forest',visit=null){state.mounted=false;
  state.objective=null;state.room=0;state.roomType='world';state.phase='playing';state.bossWon=false;
  enemies=[];effects=[];hazards=[];projectiles=[];minions=[];floating=[];state.capture=0;state.captureTarget=null;
  player.x=WORLD.sites[0].x;player.y=WORLD.sites[0].y;player.invincible=2;state.skillCd=0;state.dashCd=0;
- if(!worldGround){worldScenery=WORLD.create();worldGround=document.createElement('canvas');worldGround.width=WORLD.width;worldGround.height=WORLD.height;WORLD.drawGround(worldGround.getContext('2d'));if(id==='forest')window.HUNTER_ART?.ground(worldGround.getContext('2d'),WORLD);window.HUNTER_SCENE?.bake(worldGround.getContext('2d'),WORLD,worldScenery,id);}
+ if(!worldGround){worldScenery=WORLD.create();worldGround=document.createElement('canvas');worldGround.width=WORLD.width;worldGround.height=WORLD.height;WORLD.drawGround(worldGround.getContext('2d'));if(id==='forest')window.HUNTER_ART?.ground(worldGround.getContext('2d'),WORLD);window.HUNTER_SCENE?.bake(worldGround.getContext('2d'),WORLD,worldScenery,isCloud()?'cloud':id);}
  for(const pack of WORLD.packs)pack.types.forEach((id,i)=>spawnWorldEnemy(id,pack.x+(i%2)*72,pack.y+Math.floor(i/2)*66));
  initializeDiscoveries();beginAdventure();
  updateCamera(0,true);updateBuild();updateUI();
  if(id!=='forest'){showCampaignIntro();return;}
  showModal('worldIntro',`<div class="modal-eyebrow">THE MOONLIT FOREST</div><h2 id="modal-title">循着灯，找到伙伴。</h2>${storyChapterMarkup('forest')}<div class="chapter-route"><span>${uiGlyph('arrow')}追猎</span><i>→</i><span>${uiGlyph('home')}守灯</span><i>→</i><span>${uiGlyph('seal')}夺影</span><i>→</i><span>☾<b>月狼</b></span></div><div class="first-stop">${uiGlyph('box')}<div><small>你的第一站</small><b>沿北方石路，寻找斥候补给箱。</b></div></div><div class="control-chips"><span><kbd>M</kbd>地图</span><span><kbd>F</kbd>互动 / 保存</span><span><kbd>C</kbd>喝药</span><span><kbd>B</kbd>回营</span><span><kbd>TAB</kbd>技能</span></div><details class="visual-details"><summary>探索与保存规则</summary><p>完成三处任务后前往东北方月狼之巢。每处任务选一份祝福，补充一瓶月露。首次出发自动建立营地存档；之后回营按 F 保存。深河走桥，浅沼减速，余烬灼伤。B 可随时静止 3 秒回城，自动保存并展示结算。滚轮调整视野，0 复位。打开面板暂停世界。</p></details><button class="primary" id="world-begin">踏入森林 ↗</button>`);
- $('world-begin').onclick=()=>{closeModal('playing');const status=EXPEDITION.read(campStorage()).status;if(state.world.saveOnBegin||status==='empty')saveCamp();else if(status==='ready')toast('沿石路向北，寻找斥候补给箱 · 现有存档仅在营地手动覆盖',4);else toast('当前没有可用存档；可以继续探索，回营地后尝试保存。',5);};
+ $('world-begin').onclick=()=>{closeModal('playing');const status=EXPEDITION.read(campStorage(),selectedTheme).status;if(state.world.saveOnBegin||status==='empty')saveCamp();else if(status==='ready')toast('沿石路向北，寻找斥候补给箱 · 现有存档仅在营地手动覆盖',4);else toast('当前没有可用存档；可以继续探索，回营地后尝试保存。',5);};
 }
 function spawnWorldEnemy(id,x,y,elite=false){
  const v=WORLD.variants[id],e=spawnEnemy(v?v.shadow:id,x,y,elite);
  e.variant=v?id:null;e.home={x,y};e.facing=Math.PI/2;e.aggro=false;e.patrol=Math.random()*TAU;
- if(v){const health={cinder:90,stalker:80,sentinel:145}[id];e.hp=e.maxHp=Math.round(health*(1+(campaignWorld().level-1)*.09));e.pressure=e.maxPressure=id==='sentinel'?80:60;e.r=id==='sentinel'?23:18;}
+ if(isCloud()){e.qKind=v?id:'bubble';e.hp=e.maxHp=1;e.pressure=e.maxPressure=1;e.r=24;}
+ else if(v){const health={cinder:90,stalker:80,sentinel:145}[id];e.hp=e.maxHp=Math.round(health*(1+(campaignWorld().level-1)*.09));e.pressure=e.maxPressure=id==='sentinel'?80:60;e.r=id==='sentinel'?23:18;}
  if(state.world&&worldScenery){const free=nearestFreeWorldPosition(e.x,e.y,e.r);e.x=free.x;e.y=free.y;e.home={...free};}return e;
 }
 function worldPositionFree(x,y,r){
@@ -1061,7 +1174,7 @@ function projectileBlocked(p){
 
 function worldMoveSpeed(){
  if(!state.world)return 224;
- const mud=WORLD.terrainAt(player.x,player.y)?.kind==='mud';
+ const mud=isCloud()?!!WORLD.terrainAt(player.x,player.y)||state.qSnared>0:WORLD.terrainAt(player.x,player.y)?.kind==='mud';
  const poison=hazards.some(h=>h.poison&&distance(player,h)<h.r);
  const ride=state.mounted?CAMPAIGN.rides[CAMPAIGN.garage(state.campaign).selected]:null;return (mud||poison?145:224)*(ride?.speed||1);
 }
@@ -1069,7 +1182,8 @@ function updateWorld(dt){
  if(!state.world||state.phase!=='playing')return;
  const w=state.world,region=WORLD.regionAt(player.x,player.y);
  if(w.region!==region.id){w.region=region.id;w.visited.add(region.id);syncAchievements();toast(`${region.name} · ${region.hint}`,4);}
- w.near=allWorldSites().find(s=>distance(player,s)<130)||null;updateDiscoveries();
+ w.near=allWorldSites().filter(s=>distance(player,s)<130).sort((a,b)=>distance(player,a)-distance(player,b))[0]||null;updateDiscoveries();
+ if(isCloud()){state.qSnared=Math.max(0,(state.qSnared||0)-dt);collectCloudCandy();}
  w.terrainTick-=dt;
  if(w.terrainTick<=0){w.terrainTick=.8;if(WORLD.terrainAt(player.x,player.y)?.kind==='embers'){hitPlayer(6);textFloat(player.x,player.y-38,'余烬灼伤','#e5a071');}}
  if(state.bossWon&&state.phase==='playing'){if(state.journey.recall>0)completeCampaignWorld(false);else endRun(true);}
@@ -1128,11 +1242,13 @@ function missionPoint(x,y,site=state.objective?.site){return site?{x:site.x+(x-6
 function startWorldMission(site){
  if(!state.world||state.phase!=='playing'||state.objective||state.world.completed.has(site.id))return;
  state.world.track=site.id;state.world.missionCheckpoint=worldCheckpoint();state.checkpoint=takeCheckpoint();
- if(site.kind==='boss'&&state.world.completed.size<3)return;
+ if(site.kind==='boss'&&state.world.completed.size<sealCount())return;
+ if(isCloud()&&QMAP.types.includes(site.kind)){startCloudActivity(site);return;}
  const ambient=enemies;
  if(['hunt','survey','sequence','purify'].includes(site.kind)){setupCampaignObjective(site);return;}
  if(site.kind==='boss'){
   const e=spawnEnemy(campaignWorld().bossType,site.x,site.y-40,true,true);e.mission=true;e.home={x:e.x,y:e.y};
+  if(isCloud()){e.qBossName=campaignWorld().boss;e.qKind=['giant','drop','bee','mirror','nightmare'][campaignWorld().number-1];e.hp=e.maxHp=180;e.phase=1;e.r=48;e.guards=[];e.patrol=0;e.facing=0;}
   state.objective={kind:'boss',status:'active',site,targetId:e.id};$('boss-hud').classList.remove('hidden');
   $('boss-name').textContent=campaignWorld().boss;toast(campaignWorld().boss+'已苏醒 · 留意攻击预警',4);return;
  }
@@ -1144,38 +1260,116 @@ function startWorldMission(site){
 }
 function interactWorld(){
  if(!state.world||state.phase!=='playing')return;
+ if(isCloud()&&state.objective&&interactCloudActivity())return;
  if(state.objective&&interactCampaignNode())return;
- const s=allWorldSites().find(s=>distance(player,s)<130);
+ const s=allWorldSites().filter(s=>distance(player,s)<130).sort((a,b)=>distance(player,a)-distance(player,b))[0];
  if(!s){toast('靠近地图上的发光地点，再按 F 互动',2);return;}
  if(state.objective){toast('先完成当前任务，再与其他地点互动',2);return;}
+ if(s.kind==='candy'){collectCloudCandy();return;}
  if(s.kind==='camp'){if(campThreat()){toast('先摆脱附近敌人，再回营地休整或保存',3);return;}openCamp();return;}
  if(s.kind==='shop'){openShop();return;}if(s.kind==='discovery'){claimDiscovery(s);return;}
  if(state.world.completed.has(s.id)){toast('这处印记已完成 · 按 M 寻找其他目标',3);return;}
- if(s.kind==='boss'&&state.world.completed.size<3){toast(`首领封印尚未解除 · 还需要 ${3-state.world.completed.size} 枚印记`,3);return;}
+ if(s.kind==='boss'&&state.world.completed.size<sealCount()){toast(`首领封印尚未解除 · 还需要 ${sealCount()-state.world.completed.size} 枚印记`,3);return;}
  startWorldMission(s);
 }
 function completeWorldMission(){
- if(!state.objective||state.objective.status!=='active'||!state.objective.site)return;const site=state.objective.site;state.world.completed.add(site.id);state.world.restCharges++;syncAchievements();
+ if(!state.objective||state.objective.status!=='active'||!state.objective.site)return;const site=state.objective.site;state.world.completed.add(site.id);state.world.restCharges=Math.min(20,state.world.restCharges+1);syncAchievements();
  enemies=enemies.filter(e=>!e.mission);state.objective=null;state.capture=0;state.captureTarget=null;projectiles=[];hazards=[];minions=[];effects=[];floating=[];
  const loot=expeditionReward('mission:'+site.id,'mission');
- const next=WORLD.sites.find(s=>!['camp','boss'].includes(s.kind)&&!state.world.completed.has(s.id))||WORLD.sites.find(s=>s.kind==='boss');
+ const next=state.world.completed.size>=sealCount()?WORLD.sites.find(s=>s.kind==='boss'):WORLD.sites.find(s=>!['camp','boss'].includes(s.kind)&&!state.world.completed.has(s.id));
  state.world.track=next.id;state.room=state.world.completed.size;state.journey.flasks=Math.min(state.journey.maxFlasks,state.journey.flasks+1);state.pendingBoons=JOURNEY.offers(state.journey.perks,state.world.completed.size).map(p=>p.id);updateBuild();
- showModal('worldComplete',`<div class="modal-eyebrow">FOREST SEAL / ${state.world.completed.size} OF 3</div><h2 id="modal-title">印记已点亮</h2>${lootMarkup(loot)}<div class="seal-progress">${[0,1,2].map(i=>`<span class="${i<state.world.completed.size?'lit':''}">${uiGlyph('seal')}</span>`).join('')}</div><p class="choice-instruction">${state.world.completed.size===3?campaignWorld().boss+'的封印已解除。':'下一站 · '+next.name}　·　月露 +1</p><div class="boon-grid">${state.pendingBoons.map(id=>{const p=JOURNEY.perks.find(p=>p.id===id);return `<button class="boon-card" data-boon="${id}"><span class="boon-symbol">${p.symbol}</span><strong>${p.name}</strong><p>${p.description}</p></button>`;}).join('')}</div><p id="boon-result" class="journey-result" role="status">选择一项祝福 · 本局持续生效 · 回营按 F 保存</p><div class="modal-actions"><button class="primary" id="world-continue" ${state.pendingBoons.length?'disabled':''}>${state.pendingBoons.length?'先选择一项祝福':'继续探索'}</button><button class="secondary" id="world-reward-map" ${state.pendingBoons.length?'disabled':''}>查看全图</button></div>`);
+ showModal('worldComplete',`<div class="modal-eyebrow">FOREST SEAL / ${Math.min(state.world.completed.size,sealCount())} OF ${sealCount()}</div><h2 id="modal-title">印记已点亮</h2>${lootMarkup(loot)}<div class="seal-progress">${Array.from({length:sealCount()},(_,i)=>i).map(i=>`<span class="${i<state.world.completed.size?'lit':''}">${uiGlyph('seal')}</span>`).join('')}</div><p class="choice-instruction">${state.world.completed.size>=sealCount()?campaignWorld().boss+'的封印已解除。':'下一站 · '+next.name}　·　月露 +1</p><div class="boon-grid">${state.pendingBoons.map(id=>{const p=JOURNEY.perks.find(p=>p.id===id);return `<button class="boon-card" data-boon="${id}"><span class="boon-symbol">${p.symbol}</span><strong>${p.name}</strong><p>${p.description}</p></button>`;}).join('')}</div><p id="boon-result" class="journey-result" role="status">选择一项祝福 · 本局持续生效 · 回营按 F 保存</p><div class="modal-actions"><button class="primary" id="world-continue" ${state.pendingBoons.length?'disabled':''}>${state.pendingBoons.length?'先选择一项祝福':'继续探索'}</button><button class="secondary" id="world-reward-map" ${state.pendingBoons.length?'disabled':''}>查看全图</button></div>`);
  $('modal-card').querySelectorAll('[data-boon]').forEach(b=>b.onclick=()=>chooseBoon(b.dataset.boon));$('world-continue').onclick=()=>{if(!state.pendingBoons.length)closeModal('playing');};$('world-reward-map').onclick=()=>{if(state.pendingBoons.length)return;closeModal('playing');openWorldMap();};
 }
 function retryWorldMission(){
  const site=state.objective.site,c=state.world.missionCheckpoint;
  restoreWorldCheckpoint(c);startWorldMission(site);
 }
+// QMap activities use the same mission/reward/save lifecycle as the other worlds.
+function startCloudActivity(site){
+ state.objective=QMAP.create(site,nearestFreeWorldPosition);state.mounted=false;modalReturn='playing';
+ showModal('briefing',`<div class="modal-eyebrow">SWEETDREAM / ${site.name}</div><h2 id="modal-title">${QMAP.names[site.kind]}</h2><p>${QMAP.instructions[site.kind]}</p><div class="explain-box">完成后获得一枚印记、随机物品与一份祝福。这里不扣血，没有失败惩罚。B 回营会结束尚未完成的活动。</div><button id="mission-start" class="primary">开始活动 ↗</button>`);
+ $('mission-start').onclick=()=>{closeModal('playing');if(site.kind==='puzzle')openCloudPuzzle();if(site.kind==='bubble'){const o=state.objective;o.targets=o.nodes.map((n,i)=>{const e=spawnWorldEnemy('bubble',n.x,n.y);e.mission=true;e.qActivity=site.id;return e.id;});}};
+}
+function interactCloudActivity(){
+ const o=state.objective;if(!QMAP.types.includes(o.kind))return false;
+ if(o.kind==='puzzle'){if(distance(player,o.site)<180)openCloudPuzzle();else toast('回到镜面花园，靠近按 F 继续拼图。');}
+ else if(['fish','gather','dig','water','race'].includes(o.kind)){QMAP.interact(o,player);if(QMAP.finished(o)){completeWorldMission();return true;}}
+ else toast(QMAP.status(o));updateCloudUI();return true;
+}
+function openCloudPuzzle(){
+ const o=state.objective;if(!o||o.kind!=='puzzle')return;
+ modalReturn='playing';const b=o.board;
+ const cells=Array.from({length:b.w*b.h},(_,i)=>{const x=i%b.w,y=Math.floor(i/b.w),box=b.boxes.findIndex(v=>v.x===x&&v.y===y),goal=b.goals.findIndex(v=>v.x===x&&v.y===y),wall=x===0||y===0||x===b.w-1||y===b.h-1,hero=b.player.x===x&&b.player.y===y;
+  return `<span class="q-cell ${wall?'q-wall':''} ${goal>=0?'q-goal':''} ${box>=0?'q-box':''} ${hero?'q-hero':''}" style="--candy:${QMAP.colors[box>=0?box:goal]||'#dfd1ba'}" aria-label="${wall?'树篱':box>=0?'糖果 '+String.fromCharCode(65+box):hero?'小伙伴':goal>=0?'镜框 '+String.fromCharCode(65+goal):'空地'}">${!wall&&(hero||box>=0||goal>=0)?'<img alt="" src="'+window.HUNTER_Q_ART.sources[hero?'hero-shadow-hunter':box>=0?'candy-block':'mirror-frame']+'">':''}<b>${hero?'●':box>=0?String.fromCharCode(65+box):goal>=0?String.fromCharCode(65+goal):''}</b></span>`;}).join('');
+ showModal('qPuzzle',`<div class="modal-eyebrow">MIRROR GARDEN / 镜面拼图</div><h2 id="modal-title">把糖果推回同字母的镜框</h2><p>A、B、C 对应三种颜色；小圆点是你。树篱不能穿过，每次只能推一颗。</p><div class="q-puzzle-layout"><div class="q-board" role="group" aria-label="七列六行糖果推箱子">${cells}</div><div class="q-puzzle-help"><p role="status">已归位 ${o.count} / 3<br>已移动 ${b.moves} 步</p><div class="q-dpad"><button data-q-dir="up" aria-label="向上">↑</button><button data-q-dir="left" aria-label="向左">←</button><button data-q-dir="down" aria-label="向下">↓</button><button data-q-dir="right" aria-label="向右">→</button></div><p>WASD / 方向键移动<br>Z 撤销 · Esc 收起</p><button id="q-undo" class="secondary" ${b.history.length?'':'disabled'}>撤销一步 · Z</button><button id="q-reset" class="secondary">重置拼图</button></div></div><button id="q-puzzle-close" class="primary">收起，继续探索 · Esc</button>`);
+ $('modal-card').querySelectorAll('[data-q-dir]').forEach(el=>el.onclick=()=>cloudPuzzleKey({up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[el.dataset.qDir]));
+ $('q-undo').onclick=()=>cloudPuzzleKey('KeyZ');$('q-reset').onclick=()=>{QMAP.resetPuzzle(o);openCloudPuzzle();};$('q-puzzle-close').onclick=()=>closeModal('playing');
+}
+function cloudPuzzleKey(code){
+ const o=state.objective;if(!o||o.kind!=='puzzle')return;
+ if(code==='Escape'){closeModal('playing');return;}
+ if(code==='KeyZ')QMAP.undo(o);
+ else{const dirs={KeyW:[0,-1],ArrowUp:[0,-1],KeyS:[0,1],ArrowDown:[0,1],KeyA:[-1,0],ArrowLeft:[-1,0],KeyD:[1,0],ArrowRight:[1,0]};if(!dirs[code])return;QMAP.movePuzzle(o,...dirs[code]);}
+ if(o.count===3){completeWorldMission();return;}openCloudPuzzle();
+}
+function collectCloudCandy(){
+ for(const c of WORLD.charms){if(state.world.claimed.has(c.id)||distance(player,c)>65)continue;
+  state.world.claimed.add(c.id);const item=expeditionReward('candy:'+c.id,'packed');ring(c.x,c.y,80,c.color);tone(880,.18);toast(`${c.name} · ${state.world.claimed.size} / 5${item?' · '+CAMPAIGN.items[item].name+'已入行囊':''}`,3);
+ }
+}
+function hitCloudEnemy(e,amount,source,cast){
+ if(e.dead)return;
+ if(!e.boss){
+  if(e.qKind==='mirror'&&source==='basic'&&Math.abs(Math.atan2(Math.sin(angle(e,cast?.origin||player)-e.facing),Math.cos(angle(e,cast?.origin||player)-e.facing)))<.85){textFloat(e.x,e.y-60,'绕到镜面侧后，或使用 Q','#9471bc');return;}
+  gainKill(e);const o=state.objective;if(o?.kind==='bubble'&&e.qActivity===o.site.id){o.count++;if(QMAP.finished(o))completeWorldMission();}textFloat(e.x,e.y-25,'啵！','#a86b96');return;
+ }
+ if(e.phase===2&&e.guards.some(id=>enemies.some(t=>t.id===id&&!t.dead))){textFloat(e.x,e.y-95,'先戳破四只小泡泡','#9e6f9f');return;}
+ e.hp=Math.max(0,e.hp-amount);e.hit=.15;burst(e.x,e.y,'#ecc0e4',8);textFloat(e.x,e.y-75,String(Math.round(amount)),'#945887');
+ if(e.hp<=0&&e.phase===1){
+  e.phase=2;e.hp=e.maxHp=240;e.cd=2;ring(e.x,e.y,180,'#e7afd6');
+  e.guards=Array.from({length:4},(_,i)=>{const a=i*TAU/4,t=spawnWorldEnemy('bubble',e.x+Math.cos(a)*145,e.y+Math.sin(a)*145);t.mission=true;return t.id;});
+  toast('外壳破啦！先戳破四只小泡泡，再攻击梦魇本体。',4);
+ }else if(e.hp<=0){gainKill(e);toast(campaignWorld().name+'的试炼完成了！',4);}
+}
+function updateCloudEnemy(e,dt){
+ e.hit=Math.max(0,e.hit-dt);e.patrol=(e.patrol||0)+dt;const d=distance(e,player);if(d>650)return;
+ e.facing=e.qKind==='mirror'?e.patrol*.3:angle(e,player);
+ if(e.telegraph>0){e.telegraph-=dt;if(e.telegraph<=0){
+   const r=e.boss?145:65;if(distance(e,player)<r&&player.dash<=0){hitPlayer(0);const a=angle(e,player);moveEntity(player,Math.cos(a)*35,Math.sin(a)*35);}ring(e.x,e.y,r,'#d69ac5',.4);
+   if(e.qKind==='drop')hazards.push({x:e.x,y:e.y,r:55,life:3,tick:0,friendly:false,color:'#83c9e6',poison:true,qPuddle:true});
+  }return;}
+ if(e.qKind==='bee'){const a=angle(e,player)+.9;if(d>90)moveEntity(e,Math.cos(a)*80*dt,Math.sin(a)*80*dt);}
+ else if(['bunny','ghost','nightmare','giant'].includes(e.qKind)&&!e.boss&&d>70)moveEntity(e,Math.cos(e.facing)*65*dt,Math.sin(e.facing)*65*dt);
+ else if(e.boss&&d>180)moveEntity(e,Math.cos(e.facing)*48*dt,Math.sin(e.facing)*48*dt);
+ e.cd-=dt;if(e.cd<=0&&d<(e.boss?250:150)){e.telegraph=1;e.attack=null;e.cd=e.boss?2:3;}
+}
+function updateCloudUI(){
+ const cloud=isCloud(),o=state.objective,hud=$('q-activity-hud');$('app-shell').classList.toggle('is-cloud',cloud);
+ $('app-shell').dataset.theme=selectedTheme;
+ $('world-theme-title').innerHTML=cloud?'甜梦云原 <span>五张子地图，一场甜甜的梦。</span>':'五境远征 <span>一切梦魇，皆有其影。</span>';
+ hud.classList.toggle('hidden',!cloud||state.phase!=='playing'||!o||!QMAP.types.includes(o.kind));
+ if(!cloud)return;
+ $('room-tag').textContent='活动 '+state.world.completed.size+' / '+WORLD.sites.filter(s=>QMAP.types.includes(s.kind)).length;
+ $('world-progress').textContent='印记 '+Math.min(3,state.world.completed.size)+' / 3 · 区域 '+state.world.visited.size+' / 5';
+ $('mission-hud').classList.add('hidden');$('compact-cost').textContent='Q 免费使用 · 不累积梦蚀';
+ if(o&&QMAP.types.includes(o.kind))hud.textContent=QMAP.status(o);
+ $('field-risk').textContent='甜梦守护 · 不掉血 · Q 无梦蚀';
+ $('world-terrain').textContent=WORLD.terrainAt(player.x,player.y)?'糖霜 / 浅汽水 · 减速，不掉血':'M 全图 · F 活动 · B 回营';
+ if(o&&QMAP.types.includes(o.kind)){$('objective').textContent=QMAP.names[o.kind]+' · '+QMAP.status(o);$('journey-direction').textContent=QMAP.status(o);}
+ const near=state.world.near;if(near&&!o&&QMAP.types.includes(near.kind))$('world-interact').textContent=state.world.completed.has(near.id)?near.name+' · 已完成':'F · '+near.name+' · '+QMAP.names[near.kind];
+}
+
 function openWorldMap(){
  if(!state.world||!['playing','paused','worldmap'].includes(state.phase))return;
  if(state.phase==='worldmap'){closeModal('playing');return;}
  modalReturn='playing';
- showModal('worldmap',`<div class="modal-eyebrow">${campaignWorld().name} / Lv.${campaignWorld().level}–${campaignWorld().level+2}</div><h2 id="modal-title">你的下一站在哪里？</h2><p>已探索 ${state.world.visited.size} / 5 种环境 · 已取得 ${state.world.completed.size} / 3 枚印记。白色圆点是你，金色空框是当前视野。${WORLD.bridges.length?'河道请从两座桥通行。':'沿地表道路探索，避开深色障碍与危险地形。'}</p><div class="world-map-layout"><div class="world-overview">${worldMapSvg()}</div><div class="world-map-choices">${[...WORLD.sites,shopSite()].map(s=>`<button data-track="${s.id}" class="${state.world.track===s.id?'selected':''}"><b>${s.symbol} ${s.name}${state.world.completed.has(s.id)?' ✓':''}</b><small>${s.hint}</small><span>${state.objective&&state.objective.site.id!==s.id?'任务中可查看路线':state.world.track===s.id?'正在追踪':'追踪此地点 →'}</span></button>`).join('')}</div></div>${discoveryMapChoices()}<p class="fine-print">追踪只显示方向，不会传送。地图打开时，敌人和任务计时暂停。</p><button class="primary" id="world-map-close">继续探索 · M / Esc ↗</button><button class="secondary" id="map-atlas">五境星图 ↗</button>`);
+ showModal('worldmap',`<div class="modal-eyebrow">${campaignWorld().name} / Lv.${campaignWorld().level}–${campaignWorld().level+2}</div><h2 id="modal-title">你的下一站在哪里？</h2><p>已探索 ${state.world.visited.size} / 5 种环境 · 已取得 ${Math.min(state.world.completed.size,sealCount())} / ${sealCount()} 枚印记。白色圆点是你，金色空框是当前视野。${WORLD.bridges.length?'河道请从两座桥通行。':'沿地表道路探索，避开深色障碍与危险地形。'}</p><div class="world-map-layout"><div class="world-overview">${worldMapSvg()}</div><div class="world-map-choices">${[...WORLD.sites,shopSite()].map(s=>`<button data-track="${s.id}" class="${state.world.track===s.id?'selected':''}"><b>${s.symbol} ${s.name}${state.world.completed.has(s.id)?' ✓':''}</b><small>${s.hint}</small><span>${state.objective&&state.objective.site.id!==s.id?'任务中可查看路线':state.world.track===s.id?'正在追踪':'追踪此地点 →'}</span></button>`).join('')}</div></div>${discoveryMapChoices()}<p class="fine-print">追踪只显示方向，不会传送。地图打开时，敌人和任务计时暂停。</p><button class="primary" id="world-map-close">继续探索 · M / Esc ↗</button><button class="secondary" id="map-atlas">子地图星图 ↗</button>`);
  $('modal-card').querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>{state.world.track=b.dataset.track;closeModal('playing');});
  $('world-map-close').onclick=()=>closeModal('playing');$('map-atlas').onclick=()=>openAtlas();
 }
 function worldMapSvg(){
+ if(isCloud())return QMAP.mapSvg(WORLD,state.world,player,cameraWorldRect(),shopSite());
  const view=cameraWorldRect();
  return `<svg viewBox="0 0 3600 2400" role="img" aria-label="五区域世界地图，河道上有北桥和南桥"><rect width="3600" height="2400" fill="#152c2a"/>${WORLD.regions.map(r=>`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${r.color}"/><text x="${r.x+r.w/2}" y="${r.y+(r.id==='forest'?1050:r.id==='marsh'?850:170)}" text-anchor="middle" fill="${r.ink}" font-size="98">${r.name}</text>`).join('')}${WORLD.bridges.length?'<path d="M1305 0V2400" stroke="#83b1bc" stroke-width="150"/>':''}${WORLD.walls.filter(w=>w.kind!=='river').map(w=>`<rect x="${w.x}" y="${w.y}" width="${w.w}" height="${w.h}" fill="#8a91a5"/>`).join('')}${WORLD.paths.map(line=>`<polyline points="${line.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#c1bb9266" stroke-width="24"/>`).join('')}${WORLD.bridges.map(y=>`<rect x="1190" y="${y-110}" width="230" height="220" fill="#bbac7d"/>`).join('')}${[...WORLD.sites,shopSite()].map(s=>`<circle cx="${s.x}" cy="${s.y}" r="${state.world.track===s.id?88:60}" fill="${state.world.completed.has(s.id)?'#a9c991':s.color}" fill-opacity=".28" stroke="${s.color}" stroke-width="9"/><text x="${s.x}" y="${s.y+24}" font-size="85" text-anchor="middle" fill="${s.color}">${state.world.completed.has(s.id)?'✓':s.symbol}</text><text x="${s.x}" y="${s.y+140}" text-anchor="middle" font-size="76" fill="#dbe5cb">${s.name}</text>`).join('')}${discoveryMapSvg()}<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="none" stroke="#e1cc8e" stroke-width="12"/><circle cx="${player.x}" cy="${player.y}" r="38" fill="#f4ffe9" stroke="#152c2a" stroke-width="15"/></svg>`;
 }
@@ -1188,11 +1382,11 @@ function drawMinimap(){
  g.fillStyle='#102424';g.fillRect(0,0,width,height);
  for(const r of WORLD.regions){g.fillStyle=r.color;g.fillRect(X(r.x),Y(r.y),r.w*sx,r.h*sy);}
  for(const t of WORLD.terrain||[]){g.fillStyle=t.kind==='embers'?'#d77d4966':'#65a8b066';g.beginPath();g.ellipse(X(t.x),Y(t.y),t.rx*sx,t.ry*sy,0,0,TAU);g.fill();}
- if(WORLD.bridges.length){g.fillStyle='#4e8d9e';g.fillRect(X(1220),0,170*sx,height);}
+ if(WORLD.bridges.length){g.fillStyle='#4e8d9e';if(isCloud()&&!WORLD.river.vertical)g.fillRect(0,Y(WORLD.river.y),width,WORLD.river.h*sy);else g.fillRect(X(1220),0,170*sx,height);}
  g.lineJoin='round';g.lineCap='round';
  for(const line of WORLD.paths){g.beginPath();line.forEach(([x,y],i)=>i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y)));g.strokeStyle='#d5c89a60';g.lineWidth=3;g.stroke();}
  for(const w of WORLD.walls.filter(w=>w.kind!=='river')){g.fillStyle='#5b6d78';g.fillRect(X(w.x),Y(w.y),Math.max(1,w.w*sx),Math.max(1,w.h*sy));}
- for(const y of WORLD.bridges){g.fillStyle='#d9bd83';g.fillRect(X(1190),Y(y-120),230*sx,240*sy);}
+ for(const y of WORLD.bridges){g.fillStyle='#d9bd83';if(isCloud()&&!WORLD.river.vertical)g.fillRect(X(y-120),Y(WORLD.river.y-40),240*sx,250*sy);else g.fillRect(X(1190),Y(y-120),230*sx,240*sy);}
  // Grid stays behind markers and uses screen pixels for crisp strokes.
  g.strokeStyle='#d6e8cf0d';g.lineWidth=.5;g.beginPath();for(let x=40;x<width;x+=40){g.moveTo(x,0);g.lineTo(x,height);}for(let y=40;y<height;y+=40){g.moveTo(0,y);g.lineTo(width,y);}g.stroke();
  const target=currentWorldSite(state.world.track);
@@ -1212,17 +1406,19 @@ function drawMinimap(){
 }
 
 function updateWorldUI(){
+ updateCloudUI();
  const active=!!state.world;$('app-shell').classList.toggle('is-world',active);$('world-hud').classList.toggle('hidden',!active);$('world-map-nav').classList.toggle('hidden',!active);$('world-interact').classList.toggle('hidden',!active||state.phase!=='playing'||!!state.objective||!state.world.near);
  if(!active)return;
  const w=state.world,r=WORLD.regionAt(player.x,player.y),s=currentWorldSite(w.track),near=w.near;
- $('room-name').textContent=r.name.startsWith(campaignWorld().name)?r.name:campaignWorld().name+' · '+r.name;$('room-tag').innerHTML=`旷野探索 <span>印记 ${w.completed.size} / 3</span>`;
+ $('room-name').textContent=r.name.startsWith(campaignWorld().name)?r.name:campaignWorld().name+' · '+r.name;$('room-tag').innerHTML=`旷野探索 <span>印记 ${Math.min(w.completed.size,sealCount())} / ${sealCount()}</span>`;
  $('objective').textContent=state.objective?`${state.objective.site.name} · ${state.objective.kind==='boss'?'击败'+campaignWorld().boss:state.objective.kind==='capture'?'击破幽灵，长按 E 夺取':state.objective.kind==='defend'?'保护梦灯，坚持到倒计时结束':state.objective.kind==='chase'?'追上镜魔，击破后收割或夺影':state.objective.site.hint}`:`追踪：${s.name} · 靠近发光地点按 F`;
- $('world-progress').textContent=`印记 ${w.completed.size} / 3 · 环境 ${w.visited.size} / 5`;
+ $('world-progress').textContent=`印记 ${w.completed.size} / ${sealCount()} · 环境 ${w.visited.size} / 5`;
  const terrain=WORLD.terrainAt(player.x,player.y);$('world-terrain').textContent=terrain?.kind==='mud'?'浅沼 · 移速降低':terrain?.kind==='embers'?'余烬 · 持续灼伤':'M 全图 · F 互动';
- if(near)$('world-interact').textContent=state.objective?'任务进行中':near.kind==='camp'?'F · 营地存档 / 休整':near.kind==='discovery'?w.claimed.has(near.id)?`${near.name} · 已领取`:`F · ${near.name} · 查看奖励`:w.completed.has(near.id)?`${near.name} · 已完成`:near.kind==='boss'&&w.completed.size<3?`首领封印 · 还需 ${3-w.completed.size} 枚印记`:`F · ${near.name} · 开始${{chase:'追猎',defend:'守灯',capture:'夺影',hunt:'清剿',survey:'探索',sequence:'机关',purify:'净化',boss:'首领战'}[near.kind]}`;
- updateViewControls();drawMinimap();
+ if(near)$('world-interact').textContent=state.objective?'任务进行中':near.kind==='camp'?'F · 营地存档 / 休整':near.kind==='discovery'?w.claimed.has(near.id)?`${near.name} · 已领取`:`F · ${near.name} · 查看奖励`:w.completed.has(near.id)?`${near.name} · 已完成`:near.kind==='boss'&&w.completed.size<sealCount()?`首领封印 · 还需 ${sealCount()-w.completed.size} 枚印记`:`F · ${near.name} · 开始${{chase:'追猎',defend:'守灯',capture:'夺影',hunt:'清剿',survey:'探索',sequence:'机关',purify:'净化',boss:'首领战'}[near.kind]}`;
+ updateViewControls();drawMinimap();if(isCloud())updateCloudUI();
 }
 function drawWorldProp(p){
+ if(isCloud()){QMAP.drawProp(ctx,p);return;}
  const {x,y,size:s,kind}=p;
  ctx.save();
  // Fade foliage between the camera and hunter so movement never loses the character.
@@ -1246,20 +1442,22 @@ function drawWorldProp(p){
  ctx.restore();
 }
 function drawWorldLandmark(s){
+ if(isCloud()){QMAP.drawLandmark(ctx,s,state.world.completed.has(s.id),state.objective?.site?.id===s.id,distance(player,s)<130,richVisuals()?clock:0);return;}
  const done=state.world.completed.has(s.id),active=state.objective?.site?.id===s.id;
  glow(s.x,s.y,150,s.color+'20');ctx.save();ctx.strokeStyle=s.color+(done?'44':'99');ctx.lineWidth=2;ctx.setLineDash([8,12]);ctx.beginPath();ctx.ellipse(s.x,s.y,80+Math.sin(clock*2)*3,50,0,0,TAU);ctx.stroke();ctx.setLineDash([]);
  if(s.kind==='camp'){path([[s.x-75,s.y+16],[s.x-42,s.y-65],[s.x+10,s.y+16]],'#4a6452','#a3b48d');path([[s.x-42,s.y-65],[s.x+25,s.y-40],[s.x+48,s.y+15],[s.x+10,s.y+16]],'#263f37');if(!window.HUNTER_SCENE){glow(s.x+55,s.y-10,60,'#e4b76e44');path([[s.x+42,s.y],[s.x+53,s.y-32],[s.x+66,s.y]],'#edc488');}}
  else if(s.kind==='defend'&&!active){path([[s.x-12,s.y+8],[s.x-9,s.y-58],[s.x+9,s.y-58],[s.x+12,s.y+8]],'#50665c',s.color);glow(s.x,s.y-35,32,'#f0cd7c66');}
  else if(s.kind==='capture'){for(const dx of [-95,95]){path([[s.x+dx-14,s.y+8],[s.x+dx-8,s.y-65],[s.x+dx+14,s.y-55],[s.x+dx+18,s.y+8]],'#50606d','#a0c9d05a');}ctx.strokeStyle='#c3a7e655';ctx.beginPath();ctx.ellipse(s.x,s.y,110,65,0,0,TAU);ctx.stroke();}
- ctx.textAlign='center';ctx.font='20px Georgia';ctx.fillStyle=s.color;ctx.fillText(done?'✓':s.symbol,s.x,s.y-84);ctx.font='13px "Microsoft YaHei"';ctx.fillText(s.name,s.x,s.y-105);ctx.font='10px sans-serif';ctx.fillStyle='#c0d3bc';ctx.fillText(done?'印记已取得':active?'任务进行中':s.kind==='boss'&&state.world.completed.size<3?'收集三处印记以解除封印':distance(player,s)<130?'按 F 互动':'靠近发光标记',s.x,s.y+78);ctx.restore();
+ ctx.textAlign='center';ctx.font='20px Georgia';ctx.fillStyle=s.color;ctx.fillText(done?'✓':s.symbol,s.x,s.y-84);ctx.font='13px "Microsoft YaHei"';ctx.fillText(s.name,s.x,s.y-105);ctx.font='10px sans-serif';ctx.fillStyle='#c0d3bc';ctx.fillText(done?'印记已取得':active?'任务进行中':s.kind==='boss'&&state.world.completed.size<sealCount()?'收集全部印记以解除封印':distance(player,s)<130?'按 F 互动':'靠近发光标记',s.x,s.y+78);ctx.restore();
 }
 function drawWorldWaypoint(){
  const site=navigationTarget();if(!site||distance(player,site)<150)return;
  const p=pointOnScreen(site);if(p.x>.12&&p.x<.78&&p.y>.2&&p.y<.72)return;
  const x=clamp(p.x,.08,.76)*camera.w,y=clamp(p.y,.2,.68)*camera.h,a=angle(player,site);
- ctx.save();ctx.translate(x,y);ctx.rotate(a);path([[12,0],[-7,-7],[-4,0],[-7,7]],site.color);ctx.rotate(-a);ctx.fillStyle='#e0e5c7';ctx.textAlign='center';ctx.font='11px sans-serif';ctx.fillText(site.name,0,25);ctx.restore();
+ ctx.save();ctx.translate(x,y);ctx.rotate(a);path([[12,0],[-7,-7],[-4,0],[-7,7]],site.color);ctx.rotate(-a);ctx.fillStyle='#e0e5c7';ctx.textAlign='center';ctx.font='11px sans-serif';if(isCloud())QMAP.label(ctx,0,25,site.name,11);else ctx.fillText(site.name,0,25);ctx.restore();
 }
 function drawHazard(h){
+ if(isCloud()&&h.qPuddle){ctx.save();ctx.fillStyle='#9edff099';ctx.beginPath();ctx.ellipse(h.x,h.y,h.r,h.r*.65,0,0,TAU);ctx.fill();QMAP.label(ctx,h.x,h.y,'浅汽水 · 减速',11);ctx.restore();return;}
  if(window.HUNTER_COMBAT){window.HUNTER_COMBAT.hazard(ctx,h);return;}
  if(h.life<=0)return;
  ctx.save();const color=h.friendly?'#d9b776':h.purple?'#d4a0f2':h.poison?'#a3d19d':'#f5ab77';
@@ -1287,7 +1485,7 @@ function drawRecallPortal(){
  ctx.globalAlpha=1;ctx.textAlign='center';ctx.font='600 14px "Microsoft YaHei",sans-serif';ctx.fillStyle='#e2fff0';ctx.fillText(`回城 ${remaining.toFixed(1)}s`,0,-88);
  ctx.font='11px "Microsoft YaHei",sans-serif';ctx.fillStyle='#b0d7c7';ctx.fillText('保持静止 · 移动取消',0,63);ctx.restore();
 }
-function sceneView(){return {world:WORLD,camera,player,id:state.world.id,time:clock,rich:richVisuals()};}
+function sceneView(){return {world:WORLD,camera,player,id:isCloud()?'cloud':state.world.id,time:clock,rich:richVisuals()};}
 function drawWorld(){
  const dpr=Math.min(window.devicePixelRatio||1,2),width=canvas.clientWidth,height=canvas.clientHeight;
  if(canvas.width!==Math.round(width*dpr)||canvas.height!==Math.round(height*dpr)){canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);updateCamera(0,true);}
@@ -1304,6 +1502,7 @@ function drawWorld(){
  drawShop();for(const s of WORLD.sites)if(worldVisible(s.x,s.y))drawWorldLandmark(s);
  for(const s of worldDiscoveries())if(worldVisible(s.x,s.y))drawDiscovery(s);
  if(state.objective?.kind==='defend')drawMissionScenery();drawCampaignNodes();
+ if(isCloud()){QMAP.drawActivity(ctx,state.objective,richVisuals()?clock:0);for(const c of WORLD.charms)if(!state.world.claimed.has(c.id)&&worldVisible(c.x,c.y)){if(!QMAP.asset(ctx,'star-candy',c.x,c.y+15,72))QMAP.star(ctx,c.x,c.y-15,22,'#f3cc72');QMAP.label(ctx,c.x,c.y-52,c.name,12);}}
  drawEffects();
  const entities=[...worldScenery.props.filter(p=>worldVisible(p.x,p.y)).map(p=>({y:p.y,draw:()=>drawWorldProp(p)})),...worldScenery.rocks.filter(p=>worldVisible(p.x,p.y)).map(p=>({y:p.y,draw:()=>{if(window.HUNTER_SCENE)window.HUNTER_SCENE.rock(ctx,p,state.world.id);else ellipse(p.x,p.y,p.r,p.r*.65,'#596d6466');}})),...enemies.filter(e=>!e.dead&&worldVisible(e.x,e.y)).map(e=>({y:e.y,draw:()=>drawEnemy(e)})),{y:player.y,draw:drawPlayer}];
  entities.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());drawRecallPortal();
@@ -1311,7 +1510,7 @@ function drawWorld(){
  for(const m of minions){if(worldVisible(m.x,m.y,20)){glow(m.x,m.y,13,m.color+'44');path([[m.x,m.y-6],[m.x+4,m.y],[m.x,m.y+6],[m.x-4,m.y]],m.color);}}
  for(const f of floating){if(!worldVisible(f.x,f.y,20))continue;ctx.globalAlpha=f.life;ctx.fillStyle=f.color;ctx.textAlign='center';ctx.font=/^\d+$/.test(f.text)?'bold 15px Georgia':'11px "Microsoft YaHei"';ctx.fillText(f.text,f.x,f.y);}ctx.globalAlpha=1;
  ctx.restore();drawWorldWaypoint();
- const vignette=ctx.createRadialGradient(camera.w*.5,camera.h*.45,100,camera.w*.5,camera.h*.45,camera.w*.7);vignette.addColorStop(0,'transparent');vignette.addColorStop(1,'#06101a85');ctx.fillStyle=vignette;ctx.fillRect(0,0,camera.w,camera.h);
+ const vignette=ctx.createRadialGradient(camera.w*.5,camera.h*.45,100,camera.w*.5,camera.h*.45,camera.w*.7);vignette.addColorStop(0,'transparent');vignette.addColorStop(1,isCloud()?'#fff5df08':'#06101a85');ctx.fillStyle=vignette;ctx.fillRect(0,0,camera.w,camera.h);
 }
 
 
@@ -1321,7 +1520,7 @@ function campStorage(){try{return localStorage;}catch{return null;}}
 function worldDiscoveries(){return WORLD.discoveries||EXPEDITION.discoveries;}
 function shopSite(){
  if(!state.world)return null;
- if(!state.world.shop){const camp=WORLD.sites[0],p=nearestFreeWorldPosition(camp.x+250,camp.y-40,20);state.world.shop={id:'shop',kind:'shop',name:'归途小铺',...p,symbol:'¤',color:'#e2c68b',hint:'购买载具、护符和补给 · 靠近按 F'};}
+ if(!state.world.shop){const camp=WORLD.sites[0],p=nearestFreeWorldPosition(camp.x+250,camp.y-40,20);state.world.shop={id:'shop',kind:'shop',name:isCloud()?'糖果小铺':'归途小铺',...p,symbol:'¤',color:'#e2c68b',hint:'购买载具、护符和补给 · 靠近按 F'};}
  return state.world.shop;
 }
 function rideIcon(id){return `<span class="ride-icon" aria-hidden="true"><svg viewBox="0 0 100 64" fill="none" stroke="#bce6d5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${id==='glideboard'?'<path fill="#4b8390" d="M8 28q38 18 84-2l-8 15q-34 10-69-1Z"/><path d="M20 49h15m28 0h16M30 56h40" stroke="#8cf0e1"/>':'<circle cx="23" cy="43" r="15"/><circle cx="77" cy="43" r="15"/><path d="m23 43 20-27 13 27H23m20-27h23l11 27M38 12h14m9-7h12l-8 14"/><path d="m56 43 10-27"/>'}</svg></span>`;}
@@ -1329,12 +1528,12 @@ function openShop(message=''){
  if(!state.world||!['playing','shop'].includes(state.phase)||state.tutorial||state.mode!=='hunt'||state.objective||distance(player,shopSite())>=130)return false;
  if(campThreat()){toast('先摆脱附近敌人，再与商人交谈',3);return false;}
  const garage=CAMPAIGN.garage(state.campaign);state.mounted=false;modalReturn='playing';
- showModal('shop',`<div class="shop-heading"><div><div class="modal-eyebrow">WAYFARER'S SHOP / 归途小铺</div><h2 id="modal-title">路还长，添些好东西吧。</h2><p>击败普通敌人 +5 币，精英 +12 币，主线任务 +20 币，通关 +40 币。</p></div><b class="shop-wallet">¤ ${garage.coins}</b></div><div class="shop-grid">${CAMPAIGN.shopGoods.map(g=>{const ride=g.ride?CAMPAIGN.rides[g.ride]:null,item=g.item?CAMPAIGN.items[g.item]:null,owned=ride&&garage.owned.includes(ride.id);return `<article class="shop-good">${ride?rideIcon(ride.id):itemIcon(item.id)}<small>${ride?'永久载具':item.kind==='relic'?'可佩戴护符':'消耗补给'}</small><h3>${ride?ride.name:item.name}</h3><p>${ride?ride.description:item.description}</p><button class="${owned?'secondary':'primary'}" data-shop-buy="${g.id}" ${!owned&&garage.coins<g.price?'disabled':''}>${owned?(garage.selected===ride.id?'已选用':'选用载具'):'¤ '+g.price+' · 购买'}</button></article>`;}).join('')}</div><p id="shop-result" role="status">${message||'购买后自动保存。护符在行囊中佩戴，载具按 H 上下车。'}</p><div class="modal-actions"><button class="primary" id="shop-close">继续旅程 ↗</button><button class="secondary" id="shop-bag">查看行囊 / 佩戴护符</button></div>`);
+ showModal('shop',`<div class="shop-heading"><div><div class="modal-eyebrow">WAYFARER'S SHOP / 归途小铺</div><h2 id="modal-title">路还长，添些好东西吧。</h2><p>击败普通敌人 +5 币，精英 +12 币，主线任务 +20 币，通关 +40 币。</p></div><b class="shop-wallet">¤ ${garage.coins}</b></div><div class="shop-grid">${CAMPAIGN.goodsFor(state.campaign).map(g=>{const ride=g.ride?CAMPAIGN.rides[g.ride]:null,item=g.item?CAMPAIGN.items[g.item]:null,owned=ride&&garage.owned.includes(ride.id);return `<article class="shop-good">${ride?rideIcon(ride.id):itemIcon(item.id)}<small>${ride?'永久载具':item.kind==='relic'?'可佩戴护符':'消耗补给'}</small><h3>${ride?ride.name:item.name}</h3><p>${ride?ride.description:item.description}</p><button class="${owned?'secondary':'primary'}" data-shop-buy="${g.id}" ${!owned&&garage.coins<g.price?'disabled':''}>${owned?(garage.selected===ride.id?'已选用':'选用载具'):'¤ '+g.price+' · 购买'}</button></article>`;}).join('')}</div><p id="shop-result" role="status">${message||'购买后自动保存。护符在行囊中佩戴，载具按 H 上下车。'}</p><div class="modal-actions"><button class="primary" id="shop-close">继续旅程 ↗</button><button class="secondary" id="shop-bag">查看行囊 / 佩戴护符</button></div>`);
  $('modal-card').querySelectorAll('[data-shop-buy]').forEach(b=>b.onclick=()=>buyShopGood(b.dataset.shopBuy||b.dataset['shop-buy']));$('shop-close').onclick=()=>closeModal('playing');$('shop-bag').onclick=()=>openInventory('shop');return true;
 }
 function buyShopGood(id){
  if(state.phase!=='shop'||!state.world||distance(player,shopSite())>=130)return false;
- const g=CAMPAIGN.shopGoods.find(g=>g.id===id);if(!g)return false;const garage=CAMPAIGN.garage(state.campaign);
+ const g=CAMPAIGN.goodsFor(state.campaign).find(g=>g.id===id);if(!g)return false;const garage=CAMPAIGN.garage(state.campaign);
  if(g.ride&&garage.owned.includes(g.ride)){garage.selected=g.ride;state.mounted=false;const saved=campaignSave();openShop(saved?'载具已选用，按 H 上车。':'载具已选用，浏览器保存失败，请勿刷新。');return true;}
  const result=CAMPAIGN.buy(state.campaign,id);if(!result.ok){$('shop-result').textContent=result.reason;return false;}
  if(result.ride)state.mounted=false;if(result.item)recordAdventureLoot(result.item);const saved=campaignSave();syncAchievements();openShop((result.ride?'载具已购入并选用，按 H 上车。':'物品已放入行囊。')+(saved?' 已保存。':' 保存未完成，请勿刷新。'));return true;
@@ -1359,15 +1558,16 @@ function drawShop(){
  ctx.save();ctx.translate(s.x,s.y);ellipse(0,18,56,18,'#07151aaa');path([[-48,-28],[48,-28],[42,-65],[-35,-65]],'#456958','#d4d0a0');
  for(let i=0;i<5;i++)path([[-48+i*19,-28],[-29+i*19,-28],[-21+i*15,-65],[-36+i*15,-65]],i%2?'#c4b77e':'#7b9c80');
  path([[-42,-25],[-42,24],[42,24],[42,-25]],'#294c43','#789e82');path([[-47,-6],[47,-6],[47,8],[-47,8]],'#54745d','#b4c595');
- ctx.fillStyle='#eadca4';ctx.font='18px sans-serif';ctx.textAlign='center';ctx.fillText('¤',0,-37);ctx.font='13px sans-serif';ctx.fillText(s.name,0,-84);ctx.font='10px sans-serif';ctx.fillText('靠近按 F · 载具 / 装备 / 补给',0,43);ctx.restore();
+ ctx.fillStyle=isCloud()?'#614e43':'#eadca4';ctx.font='18px sans-serif';ctx.textAlign='center';ctx.fillText('¤',0,-37);ctx.font='13px sans-serif';ctx.fillText(s.name,0,-84);ctx.font='10px sans-serif';ctx.fillText('靠近按 F · 载具 / 装备 / 补给',0,43);ctx.restore();
 }
-function allWorldSites(){return [...WORLD.sites,...worldDiscoveries(),shopSite()];}
+function allWorldSites(){return [...WORLD.sites,...worldDiscoveries(),...(isCloud()?WORLD.charms.map(c=>({...c,kind:'candy',symbol:'☆',hint:'走近即可收集星糖果'})):[]),shopSite()];}
 function currentWorldSite(id){return allWorldSites().find(s=>s.id===id)||WORLD.sites[1];}
 function initializeDiscoveries(){
  const w=state.world;w.claimed=new Set();w.seen=new Set();w.trailCaptured=false;w.track='trail-cache';
+ if(isCloud()){w.track=WORLD.sites[1].id;state.corruption=0;return;}
  const scout=spawnWorldEnemy('archer',650,1530);scout.scout=true;scout.hp=scout.maxHp=40;scout.pressure=scout.maxPressure=35;
 }
-function campThreat(){return enemies.some(e=>!e.dead&&distance(e,player)<460)||projectiles.some(p=>p.enemy&&distance(p,player)<600)||hazards.some(h=>!h.friendly&&distance(h,player)<h.r+150);}
+function campThreat(){if(isCloud())return false;return enemies.some(e=>!e.dead&&distance(e,player)<460)||projectiles.some(p=>p.enemy&&distance(p,player)<600)||hazards.some(h=>!h.friendly&&distance(h,player)<h.r+150);}
 function canSaveCamp(){return !!state.world&&state.mode==='hunt'&&!state.objective&&!state.bossWon&&['playing','camp'].includes(state.phase)&&distance(player,WORLD.sites[0])<130&&!campThreat()&&player.hp>0&&state.nightmare<=0;}
 function saveCamp(){
  if(!canSaveCamp()){toast('请回到守夜营地，脱离战斗后再保存。任务或梦魇形态中无法保存。',4);return false;}
@@ -1376,13 +1576,14 @@ function saveCamp(){
  checkpoint.enemies=checkpoint.enemies.map(e=>({...e,cd:Math.max(1,e.cd),telegraph:0,target:null,attack:null,dash:0,burn:0,bleed:0,hit:0,aggro:false,patrol:e.patrol%TAU}));
  const save={version:1,savedAt:Date.now(),checkpoint,world:{worldId:w.id,visit:w.visit,visited:[...w.visited],claimed:[...w.claimed],seen:[...w.seen],trailCaptured:w.trailCaptured,track:w.track}};
  const ok=EXPEDITION.write(campStorage(),save);
- if(ok){memoryCamp=null;campaignSave();refreshResume();toast('营地存档已保存 · 任务、装备、敌人与奖励进度已记录',4);}else toast('未能保存：浏览器存储不可用或空间不足。当前游戏仍可继续。',5);
- if(!ok&&state.settlement&&EXPEDITION.valid(save))memoryCamp=JSON.parse(JSON.stringify(save));
+ if(ok){memoryCamp=null;delete memoryCamps[selectedTheme];campaignSave();refreshResume();toast('营地存档已保存 · 任务、装备、敌人与奖励进度已记录',4);}else toast('未能保存：浏览器存储不可用或空间不足。当前游戏仍可继续。',5);
+ if(!ok&&state.settlement&&EXPEDITION.valid(save))memoryCamps[selectedTheme]=memoryCamp=JSON.parse(JSON.stringify(save));
  return ok;
 }
-function saveDescription(s){return `${CAMPAIGN.worlds.find(w=>w.id===(s.world.worldId||'forest')).name} · ${s.checkpoint.completed.length} / 3 印记 · ${s.world.claimed.length} / 4 宝藏 · ${formatTime(s.checkpoint.run.time)} · ${new Date(s.savedAt).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})}`;}
+function saveDescription(s){const cloud=CAMPAIGN.themeOf(s.world.worldId)==='cloud';return `${CAMPAIGN.catalog.find(w=>w.id===(s.world.worldId||'forest')).name} · ${cloud?'已完成活动 '+s.checkpoint.completed.length: s.checkpoint.completed.length+' / 3 印记'} · ${s.world.claimed.length} / ${cloud?5:4} ${cloud?'星糖果':'宝藏'} · ${formatTime(s.checkpoint.run.time)} · ${new Date(s.savedAt).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})}`;}
 function refreshResume(){
- const saved=getCampSave();$('continue-run').classList.toggle('hidden',saved.status!=='ready');
+ const saved=getCampSave();$('continue-run').classList.toggle('hidden',!['main','cloud'].some(t=>getCampSave(t).status==='ready'));
+ $('resume-summary').textContent='选择世界 → 选择人物 → 继续营地旅程';
  $('save-note').textContent=saved.status==='ready'?'存档保存在当前浏览器；B 传送回城会自动更新，营地也可按 F 手动保存。':saved.status==='empty'?'首次出发自动建立营地存档；B 回城自动结算保存，也可在营地按 F 手动保存。':saved.status==='invalid'?'营地存档格式不兼容或已损坏；可开始新狩猎，并在营地重新保存。':'当前浏览器无法读取存档；仍可开始新狩猎。';
  if(saved.status==='ready')$('resume-summary').textContent=(saved.temporary?'本页暂存 · ':'')+saveDescription(saved.data);if(saved.temporary)$('save-note').textContent='本轮收获暂存于本页，可继续冒险。请勿刷新或关闭网页；回营后可重试保存。';
 }
@@ -1401,8 +1602,8 @@ function resumeCamp(){
 }
 function openCamp(){
  modalReturn='playing';
- const ready=EXPEDITION.read(campStorage()).status==='ready',w=state.world;
- showModal('camp',`<div class="modal-eyebrow">守夜营地 / 一个可以回来的地方</div><h2 id="modal-title">把这段旅途，留在火光里。</h2><p>保存当前装备、已取得的印记、宝藏与敌人状态。下次从这里继续；保存后的探索不会自动记录。</p><div class="camp-summary"><div><strong>${w.completed.size} / 3</strong><small>任务印记</small></div><div><strong>${w.claimed.size} / 4</strong><small>已领取宝藏</small></div><div><strong>${w.restCharges}</strong><small>剩余休整次数</small></div></div><div class="modal-actions"><button class="primary" id="camp-save">${ready?'保存并覆盖营地存档':'保存营地存档'} ↗</button><button class="secondary" id="camp-rest" ${!w.restCharges?'disabled':''}>休整 · 回满生命 / 净化 / 补满药剂</button><button class="secondary" id="camp-leave">继续探索</button><button class="secondary" id="camp-atlas">五境星图 · 前往其他世界</button><button class="secondary" id="camp-bag">行囊与护符</button></div><p id="camp-status" class="save-status" role="status">保存免费；休整消耗一次机会。休整后请再保存。</p><p class="fine-print">仅保存在当前浏览器，不跨设备同步。教学与试炼不会写入此存档。</p>`);
+ const ready=EXPEDITION.read(campStorage(),selectedTheme).status==='ready',w=state.world;
+ showModal('camp',`<div class="modal-eyebrow">守夜营地 / 一个可以回来的地方</div><h2 id="modal-title">把这段旅途，留在火光里。</h2><p>保存当前装备、已取得的印记、宝藏与敌人状态。下次从这里继续；保存后的探索不会自动记录。</p><div class="camp-summary"><div><strong>${w.completed.size} / ${sealCount()}</strong><small>任务印记</small></div><div><strong>${w.claimed.size} / ${collectionCount()}</strong><small>已领取宝藏</small></div><div><strong>${w.restCharges}</strong><small>剩余休整次数</small></div></div><div class="modal-actions"><button class="primary" id="camp-save">${ready?'保存并覆盖营地存档':'保存营地存档'} ↗</button><button class="secondary" id="camp-rest" ${!w.restCharges?'disabled':''}>休整 · 回满生命 / 净化 / 补满药剂</button><button class="secondary" id="camp-leave">继续探索</button><button class="secondary" id="camp-atlas">子地图星图 · 前往其他世界</button><button class="secondary" id="camp-bag">行囊与护符</button></div><p id="camp-status" class="save-status" role="status">保存免费；休整消耗一次机会。休整后请再保存。</p><p class="fine-print">仅保存在当前浏览器，不跨设备同步。教学与试炼不会写入此存档。</p>`);
  $('camp-save').onclick=()=>{$('camp-status').textContent=saveCamp()?'已保存。可以关闭页面，下次从首页「继续营地存档」回来。':'保存失败。请脱离战斗；若仍失败，检查浏览器是否允许本地存储。';};
  $('camp-rest').onclick=()=>{if(!w.restCharges||campThreat())return;w.restCharges--;state.journey.flasks=state.journey.maxFlasks;state.journey.flaskCd=0;player.hp=100;state.corruption=Math.max(0,state.corruption-25);state.skillCd=0;state.dashCd=0;updateBuild();openCamp();$('camp-status').textContent='已恢复生命、净化 25 梦蚀、补满月露药剂。请点击保存，记录休整后的状态。';};
  $('camp-leave').onclick=()=>closeModal('playing');$('camp-atlas').onclick=()=>openAtlas();$('camp-bag').onclick=()=>openInventory('camp');
@@ -1460,6 +1661,7 @@ function updateDiscoveries(){
  if(unfamiliar){w.seen.add(unfamiliar.variant);toast(`首次遭遇 · ${WORLD.variants[unfamiliar.variant].name}：${WORLD.variants[unfamiliar.variant].tip}`,5);}
 }
 function updateJourneyHint(){
+ if(isCloud()){$('journey-hint').classList.add('hidden');return;}
  const w=state.world,show=w&&state.phase==='playing'&&!state.objective&&!w.claimed.has('trail-cache')&&distance(player,worldDiscoveries()[0])<900;
  $('journey-hint').classList.toggle('hidden',!show);if(!show)return;
  const scout=enemies.find(e=>e.scout&&!e.dead);
@@ -1473,14 +1675,14 @@ function drawDiscovery(s){
  ctx.fillStyle=s.color;ctx.fillRect(s.x-3,s.y-13,6,19);ctx.font='12px "Microsoft YaHei"';ctx.textAlign='center';ctx.fillText((done?'✓ ':'')+s.name,s.x,s.y-49);ctx.font='10px sans-serif';ctx.fillStyle=done?'#9aaf9e':'#dfe4be';ctx.fillText(done?'已经领取':s.id==='trail-cache'&&!state.world.trailCaptured?'夺取斥候影子以解锁':'靠近按 F · 清除守卫后领取',s.x,s.y+37);ctx.restore();
 }
 function discoveryMapSvg(){return worldDiscoveries().map(s=>`<rect x="${s.x-32}" y="${s.y-32}" width="64" height="64" fill="${state.world.claimed.has(s.id)?'#668273':s.color}" stroke="#e3ecc8" stroke-width="8"/>`).join('');}
-function discoveryMapChoices(){return `<details class="discovery-options"><summary>可选探索 · 宝藏 ${state.world.claimed.size} / 4（方形标记）</summary><div class="world-map-choices">${worldDiscoveries().map(s=>`<button data-track="${s.id}"><b>${s.symbol} ${s.name}${state.world.claimed.has(s.id)?' ✓':''}</b><small>${s.reward}</small><span>${s.hint}</span></button>`).join('')}</div></details>`;}
+function discoveryMapChoices(){if(isCloud())return `<details class="discovery-options"><summary>星糖果 ${state.world.claimed.size} / 5 · 走近即可收集</summary><div class="world-map-choices">${WORLD.charms.map(c=>`<button data-track="${c.id}"><b>${state.world.claimed.has(c.id)?'✓':'☆'} ${c.name}</b><small>额外探索奖励 · 不影响印记解锁</small></button>`).join('')}</div></details>`;return `<details class="discovery-options"><summary>可选探索 · 宝藏 ${state.world.claimed.size} / 4（方形标记）</summary><div class="world-map-choices">${worldDiscoveries().map(s=>`<button data-track="${s.id}"><b>${s.symbol} ${s.name}${state.world.claimed.has(s.id)?' ✓':''}</b><small>${s.reward}</small><span>${s.hint}</span></button>`).join('')}</div></details>`;}
 function telegraphInfo(e){
  const t=e.target||e,a=e.attack;
  const color=a==='curse'?'#d69bff':a==='lantern'?'#f3cf81':'#ff785e';
  const data={lunge:['冲锋 · 向侧面闪避',0],shot:['射击 · 横向移动',0],slam:['重击 · 离开橙圈',e.boss?160:e.type==='giant'?110:85],lantern:['袭击梦灯 · 攻击打断',0],meteor:['落火 · 离开橙圈',88],venom:['毒雾 · 离开橙圈',72],shieldBash:['盾击 · 离开橙圈',145],curse:['× 梦蚀 · 必须走出紫圈',135]}[a]||['攻击预警',85];
  return {enemy:e,label:data[0],color,radius:data[1],kind:data[1]?'circle':a==='lunge'?'charge':a==='lantern'?'objective':'shot',x:['meteor','venom','curse'].includes(a)?t.x:e.x,y:['meteor','venom','curse'].includes(a)?t.y:e.y,length:a==='lunge'?(e.dash>0?e.dash:e.boss?.58:.36)*650:(e.type==='archer'?260:200)*3,halfWidth:e.r+player.r+8,angle:e.dash>0?Math.atan2(e.dy,e.dx):angle(e,t),count:e.type==='mirror'?5:e.type==='swarm'?3:1,progress:e.dash>0?1:clamp(1-e.telegraph/(e.windup||1.25),0,1)};
 }
-function attackCue(e){
+function attackCue(e){if(isCloud())return;
  const before=e.cueActive;const active=e.telegraph>0&&!e.exposed&&!e.dead;
  if(active&&!before){e.windup=e.telegraph;if(distance(e,player)<600){tone(e.attack==='curse'?180:e.attack==='shot'?610:e.attack==='meteor'?330:240,.13,'triangle',.035);}}
  e.cueActive=active;
@@ -1506,11 +1708,11 @@ function makeGround(){const real=ctx;const g=ground.getContext('2d');g.fillStyle
 }
 function drawHumanoid(x,y,a=0,color='#a4d9c7',scale=1,enemy=false){ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ellipse(5,12,22,8,'#04151ca0');const walk=state.phase==='playing'?Math.sin(clock*10)*3:0;path([[-7,3],[-10,24+walk],[-2,22],[3,6]],'#0b171e');path([[3,4],[7,23-walk],[14,21],[10,1]],'#0c1720');path([[-12,-12],[-18,9],[-7,16],[0,9],[11,15],[16,7],[10,-15]],enemy?'#18222e':'#13202c','#416365');path([[-11,-11],[-16,7],[-3,4],[4,-16]],enemy?'#343442':'#37545a');path([[-9,-16],[-5,-31],[4,-34],[13,-22],[8,-11]],enemy?'#151d2c':'#172634',color+'99');path([[-5,-22],[8,-23],[5,-16],[-3,-16]],'#061316');ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-4,-20);ctx.lineTo(4,-20);ctx.stroke();path([[5,-11],[18,-4],[27,18],[12,13]],color+'3a');ctx.save();ctx.rotate(a);ctx.strokeStyle='#90aaab';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(11,-3);ctx.lineTo(27,-3);ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(27,-3);ctx.lineTo(47,-10);ctx.stroke();ctx.restore();ctx.restore();}
 function drawWolf(e){const {x,y}=e,s=e.boss?2.5:e.elite?1.4:1;ctx.save();ctx.translate(x,y);if(player.x<x)ctx.scale(-1,1);ctx.scale(s,s);ellipse(0,13,28,9,'#04171ac0');path([[-22,5],[-12,20],[-6,19],[-9,1],[10,3],[15,20],[21,19],[18,0]],'#14232a');path([[-29,-3],[-16,-18],[3,-17],[18,-27],[20,-13],[33,-4],[24,6],[8,3],[-9,10],[-21,5]],e.boss?'#242c39':'#1a3035',e.hit>0?'#f1f9df':'#608374');path([[4,-17],[11,-34],[16,-21],[20,-36],[24,-13]],'#203440','#78998d');path([[-23,-2],[-41,-22],[-32,-1],[-23,7]],'#1b3236');ctx.strokeStyle=e.boss?'#d7a9f1':'#b7edc6';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(19,-13);ctx.lineTo(26,-10);ctx.stroke();ctx.strokeStyle='#9dc8b966';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-15,-16);ctx.lineTo(-3,-5);ctx.lineTo(4,-16);ctx.stroke();if(e.boss){path([[0,-13],[-3,-32],[5,-40],[7,-19]],'#6e7d8977');glow(18,-11,20,'#c39fed55');}ctx.restore();}
-function drawEnemy(e){if(e.dead)return;if(state.world){ctx.font='10px sans-serif';ctx.fillStyle=campaignWorld().color;ctx.textAlign='center';ctx.fillText('Lv.'+(e.level||campaignWorld().level)+(state.objective?.targets?.includes(e.id)?' ◆ 清剿目标':''),e.x,e.y-e.r-76);}if(e.variant){const v=WORLD.variants[e.variant];ctx.save();ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillStyle=v.color;ctx.fillText(v.name+' · '+shadows[e.type].name,e.x,e.y-e.r-55);if(e.variant==='stalker'&&!e.aggro)ctx.globalAlpha=.35;if(e.variant==='sentinel'){ctx.strokeStyle=v.color;ctx.lineWidth=5;ctx.beginPath();ctx.arc(e.x,e.y-8,31,e.facing-1.1,e.facing+1.1);ctx.stroke();}if(e.variant==='cinder'){glow(e.x+20,e.y-35,32,'#efa46855');ellipse(e.x+20,e.y-35,5,10,'#efbe85');}ctx.restore();}
+function drawEnemy(e){if(e.dead)return;if(isCloud()&&e.qKind){QMAP.drawEnemy(ctx,e,richVisuals()?clock:0);return;}const labelY=MONSTERS?.labelY(e,state.world?.id||'forest')??e.y;if(state.world){ctx.font='10px sans-serif';ctx.fillStyle=campaignWorld().color;ctx.textAlign='center';ctx.fillText('Lv.'+(e.level||campaignWorld().level)+(state.objective?.targets?.includes(e.id)?' ◆ 清剿目标':''),e.x,labelY-e.r-76);}if(e.variant){const v=WORLD.variants[e.variant];ctx.save();ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillStyle=v.color;ctx.fillText(v.name+' · '+shadows[e.type].name,e.x,labelY-e.r-55);if(e.variant==='stalker'&&!e.aggro)ctx.globalAlpha=.35;if(e.variant==='sentinel'){ctx.strokeStyle=v.color;ctx.lineWidth=5;ctx.beginPath();ctx.arc(e.x,e.y-8,31,e.facing-1.1,e.facing+1.1);ctx.stroke();}if(e.variant==='cinder'){glow(e.x+20,e.y-35,32,'#efa46855');ellipse(e.x+20,e.y-35,5,10,'#efbe85');}ctx.restore();}
  if(e.exposed){glow(e.x,e.y,65,'#bfffe51b');ctx.save();ctx.strokeStyle='#d4ffed';ctx.lineWidth=1.5;ctx.setLineDash([4,8]);ctx.beginPath();ctx.ellipse(e.x,e.y+8,e.r+19,(e.r+19)*.6,clock,0,TAU);ctx.stroke();ctx.restore();ctx.globalAlpha=.65+Math.sin(clock*9)*.15;}
- if(e.variant==='stalker'&&!e.aggro&&!e.exposed)ctx.globalAlpha=.35;if(e.type==='wolf')drawWolf(e);else if(e.type==='ghost'){ellipse(e.x,e.y+13,21,7,'#041a2190');glow(e.x,e.y-4,35,'#8edde125');const bob=Math.sin(clock*3)*4;path([[e.x-17,e.y+12+bob],[e.x-15,e.y-22+bob],[e.x-5,e.y-34+bob],[e.x+9,e.y-32+bob],[e.x+17,e.y-17+bob],[e.x+19,e.y+13+bob],[e.x+7,e.y+8+bob],[e.x,e.y+19+bob],[e.x-6,e.y+8+bob]],'#233e4b','#87c9c399');ctx.fillStyle='#c6f9e5';ctx.fillRect(e.x-6,e.y-19+bob,3,3);ctx.fillRect(e.x+4,e.y-19+bob,3,3);}else if(e.type==='swarm'){drawHumanoid(e.x,e.y,angle(e,player),shadows.swarm.color,e.elite?1.3:1,true);for(let i=0;i<3;i++){const a=clock*2+i*TAU/3;ellipse(e.x+Math.cos(a)*25,e.y-12+Math.sin(a)*15,3,2,'#d0c788');}}else{drawHumanoid(e.x,e.y,angle(e,player),shadows[e.type].color,e.type==='giant'?1.5:e.elite?1.3:1,true);if(e.type==='shield')path([[e.x-20,e.y-22],[e.x-4,e.y-18],[e.x-5,e.y+4],[e.x-16,e.y+13],[e.x-26,e.y+2]],'#334550','#8ca8b6');if(e.type==='fire')glow(e.x+23,e.y-5,30,'#f3a26055');if(e.type==='mirror'){ctx.save();ctx.translate(e.x,e.y-8);ctx.rotate(clock);ctx.strokeStyle='#b29bd777';ctx.strokeRect(-25,-25,50,50);ctx.restore();}}
- ctx.globalAlpha=1;if(e.scout){ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillStyle='#e1d99c';ctx.fillText('斥候 · 夺影解锁补给',e.x,e.y-e.r-63);}if(e.hit>0){glow(e.x,e.y-12,45,'#eef9dc44');}if(state.objective?.targetId===e.id){ctx.fillStyle='#e6ce8e';ctx.textAlign='center';ctx.font='bold 12px sans-serif';ctx.fillText(state.objective.kind==='capture'?'◆ 指定夺影目标':'◆ 追猎目标',e.x,e.y-e.r-58);}if(e.exposed){ctx.font='11px "Microsoft YaHei"';ctx.textAlign='center';ctx.fillStyle='#e1ffea';ctx.fillText(distance(e,player)<115?'长按 E 夺影':'影子暴露',e.x,e.y-e.r-38);ctx.fillStyle='#213c38';ctx.fillRect(e.x-24,e.y-e.r-30,48,2);ctx.fillStyle='#c7e8cc';ctx.fillRect(e.x-24,e.y-e.r-30,48*e.exposed/(e.boss?8:7),2);}else if(e.hp<e.maxHp||e.elite||state.tutorial||state.mode==='practice'){const size=e.boss?80:40;ctx.fillStyle='#081b1e';ctx.fillRect(e.x-size/2,e.y-e.r-29,size,4);ctx.fillStyle=e.boss?'#c597cc':'#92b093';ctx.fillRect(e.x-size/2,e.y-e.r-29,size*clamp(e.hp/e.maxHp,0,1),4);ctx.fillStyle='#aabfe28c';ctx.fillRect(e.x-size/2,e.y-e.r-23,size*clamp(e.pressure/e.maxPressure,0,1),2);if(state.tutorial){ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillStyle='#d8eccb';ctx.fillText(`${shadows[e.type].name} · 练习目标`,e.x,e.y-e.r-52);ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillStyle='#a2c79e';ctx.fillText('生命',e.x-size/2-7,e.y-e.r-25);ctx.fillStyle='#b7c9e6';ctx.fillText('影压',e.x-size/2-7,e.y-e.r-17);}if(e.elite&&!e.boss){ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillStyle='#cfb785';ctx.fillText('◆ 精英',e.x,e.y-e.r-37);}}}
-function drawPlayer(){drawRide();const p=player;p.appearance=characterAppearance;glow(p.x,p.y,65,state.nightmare>0?'#a85cdd45':'#a4dfb619');if(p.invincible>0&&Math.sin(clock*35)>.5)ctx.globalAlpha=.55;if(state.nightmare>0){ctx.save();ctx.strokeStyle='#cfa1eb';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y+7,43,19,0,0,TAU);ctx.stroke();ctx.restore();}drawHumanoid(p.x,p.y,p.angle,state.nightmare>0?'#ddb0f2':'#beffe0',1.15);ctx.globalAlpha=1;
+ if(e.variant==='stalker'&&!e.aggro&&!e.exposed)ctx.globalAlpha=.35;if(!MONSTERS?.draw(ctx,e,player,state.time,state.world?.id||'forest',richVisuals())){if(e.type==='wolf')drawWolf(e);else if(e.type==='ghost'){ellipse(e.x,e.y+13,21,7,'#041a2190');glow(e.x,e.y-4,35,'#8edde125');const bob=Math.sin(clock*3)*4;path([[e.x-17,e.y+12+bob],[e.x-15,e.y-22+bob],[e.x-5,e.y-34+bob],[e.x+9,e.y-32+bob],[e.x+17,e.y-17+bob],[e.x+19,e.y+13+bob],[e.x+7,e.y+8+bob],[e.x,e.y+19+bob],[e.x-6,e.y+8+bob]],'#233e4b','#87c9c399');ctx.fillStyle='#c6f9e5';ctx.fillRect(e.x-6,e.y-19+bob,3,3);ctx.fillRect(e.x+4,e.y-19+bob,3,3);}else if(e.type==='swarm'){drawHumanoid(e.x,e.y,angle(e,player),shadows.swarm.color,e.elite?1.3:1,true);for(let i=0;i<3;i++){const a=clock*2+i*TAU/3;ellipse(e.x+Math.cos(a)*25,e.y-12+Math.sin(a)*15,3,2,'#d0c788');}}else{drawHumanoid(e.x,e.y,angle(e,player),shadows[e.type].color,e.type==='giant'?1.5:e.elite?1.3:1,true);if(e.type==='shield')path([[e.x-20,e.y-22],[e.x-4,e.y-18],[e.x-5,e.y+4],[e.x-16,e.y+13],[e.x-26,e.y+2]],'#334550','#8ca8b6');if(e.type==='fire')glow(e.x+23,e.y-5,30,'#f3a26055');if(e.type==='mirror'){ctx.save();ctx.translate(e.x,e.y-8);ctx.rotate(clock);ctx.strokeStyle='#b29bd777';ctx.strokeRect(-25,-25,50,50);ctx.restore();}}}
+ ctx.globalAlpha=1;if(e.scout){ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillStyle='#e1d99c';ctx.fillText('斥候 · 夺影解锁补给',e.x,labelY-e.r-63);}if(e.hit>0){glow(e.x,e.y-12,45,'#eef9dc44');}if(state.objective?.targetId===e.id){ctx.fillStyle='#e6ce8e';ctx.textAlign='center';ctx.font='bold 12px sans-serif';ctx.fillText(state.objective.kind==='capture'?'◆ 指定夺影目标':'◆ 追猎目标',e.x,labelY-e.r-58);}if(e.exposed){ctx.font='11px "Microsoft YaHei"';ctx.textAlign='center';ctx.fillStyle='#e1ffea';ctx.fillText(distance(e,player)<115?'长按 E 夺影':'影子暴露',e.x,labelY-e.r-38);ctx.fillStyle='#213c38';ctx.fillRect(e.x-24,labelY-e.r-30,48,2);ctx.fillStyle='#c7e8cc';ctx.fillRect(e.x-24,labelY-e.r-30,48*e.exposed/(e.boss?8:7),2);}else if(e.hp<e.maxHp||e.elite||state.tutorial||state.mode==='practice'){const size=e.boss?80:40;ctx.fillStyle='#081b1e';ctx.fillRect(e.x-size/2,labelY-e.r-29,size,4);ctx.fillStyle=e.boss?'#c597cc':'#92b093';ctx.fillRect(e.x-size/2,labelY-e.r-29,size*clamp(e.hp/e.maxHp,0,1),4);ctx.fillStyle='#aabfe28c';ctx.fillRect(e.x-size/2,labelY-e.r-23,size*clamp(e.pressure/e.maxPressure,0,1),2);if(state.tutorial){ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillStyle='#d8eccb';ctx.fillText(`${shadows[e.type].name} · 练习目标`,e.x,labelY-e.r-52);ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillStyle='#a2c79e';ctx.fillText('生命',e.x-size/2-7,labelY-e.r-25);ctx.fillStyle='#b7c9e6';ctx.fillText('影压',e.x-size/2-7,labelY-e.r-17);}if(e.elite&&!e.boss){ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillStyle='#cfb785';ctx.fillText('◆ 精英',e.x,labelY-e.r-37);}}}
+function drawPlayer(){drawRide();const p=player;p.appearance=characterAppearance;glow(p.x,p.y,65,state.nightmare>0?'#a85cdd45':'#a4dfb619');if(p.invincible>0&&Math.sin(clock*35)>.5)ctx.globalAlpha=.55;if(state.nightmare>0){ctx.save();ctx.strokeStyle='#cfa1eb';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y+7,43,19,0,0,TAU);ctx.stroke();ctx.restore();}if(!drawQHero())drawHumanoid(p.x,p.y,p.angle,state.nightmare>0?'#ddb0f2':'#beffe0',1.15);ctx.globalAlpha=1;
  if(p.shield>0){ctx.strokeStyle='#b6e3f0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y-8,38,0,TAU);ctx.stroke();glow(p.x,p.y,45,'#a1d8e222');}
  state.slots.forEach((s,i)=>{const a=clock*.6+i*TAU/3,x=p.x+Math.cos(a)*39,y=p.y+Math.sin(a)*19+6;glow(x,y,14,shadows[s].color+'44');path([[x,y-5],[x+4,y],[x,y+5],[x-4,y]],shadows[s].color);});
  if(p.charging>.15){ctx.strokeStyle=p.charging>=.5?'#e5efb9':'#9dccba';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,33,-Math.PI/2,-Math.PI/2+TAU*Math.min(1,p.charging/.5));ctx.stroke();}
@@ -1538,15 +1740,23 @@ $('view-range').addEventListener('input',e=>{if(state.world&&state.phase==='play
 for(const id of ['view-range','view-near','view-far','view-reset'])$(id).addEventListener('focus',()=>{keys={};mouse.down=false;state.capture=0;state.captureTarget=null;$('capture-hud').classList.add('hidden');});
 for(const [id,delta] of [['view-near',-10],['view-far',10],['view-reset',0]])$(id).onclick=()=>{if(!state.world||state.phase!=='playing')return;setViewRange(delta?viewRange+delta:VIEW_RANGE.default);canvas.focus({preventScroll:true});};
 canvas.addEventListener('pointermove',mousePosition);canvas.addEventListener('pointerdown',e=>{if(e.button!==0||state.phase!=='playing')return;mousePosition(e);cancelRecall();mouse.down=true;mouse.held=0;canvas.setPointerCapture(e.pointerId);canvas.focus({preventScroll:true});});canvas.addEventListener('pointerup',e=>{if(e.button!==0)return;if(mouse.down){const charged=mouse.held>=.5;mouse.down=false;basicAttack(charged);mouse.held=0;}});canvas.addEventListener('pointercancel',()=>{mouse.down=false;});canvas.addEventListener('contextmenu',e=>e.preventDefault());
-window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName)||e.target?.isContentEditable||e.target?.closest?.(".view-controls"))return;if(state.world&&state.phase==='playing'&&['Minus','Equal','NumpadSubtract','NumpadAdd','Digit0','Numpad0'].includes(e.code)){e.preventDefault();setViewRange(['Digit0','Numpad0'].includes(e.code)?VIEW_RANGE.default:viewRange+(['Minus','NumpadSubtract'].includes(e.code)?-10:10));return;}const tabShortcut=e.code==='Tab'&&['intro','playing','map'].includes(state.phase);if(tabShortcut||state.phase==='playing'&&['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(state.phase==='discoveryChoice'&&e.code==='Escape'){e.preventDefault();cancelChestChoice();return;}if(state.phase==='achievements'&&e.code==='Escape'){e.preventDefault();closeReleasePanel();return;}if(state.phase==='encounter'){if(['Space','Enter','Escape'].includes(e.code)){e.preventDefault();if(!e.repeat){if(e.code==='Escape')finishEncounter();else advanceEncounter();}}return;}if(e.repeat){keys[e.code]=true;return;}keys[e.code]=true;if(state.journey.recall>0&&['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyE','KeyJ','KeyQ','KeyV','Space','KeyR','KeyC','KeyF'].includes(e.code))cancelRecall();if(state.phase==='settlement'){if(e.code==='Escape'){e.preventDefault();closeSettlement();}return;}if(e.code==='Escape'&&state.phase==='profession'){closeModal('intro');return;}if(e.code==='Escape'&&state.phase==='atlas'){closeAtlas();return;}if(e.code==='Escape'&&state.phase==='inventory'){$('inventory-close').onclick();return;}if(e.code==='KeyN'){openAtlas();return;}if(e.code==='Escape'){if(['guide','codex','skillinfo','worldmap','camp','discovery','shop'].includes(state.phase))closeModal();else if(state.phase==='build'){if(modalReturn==='map')showRoute();else closeModal();}else pause();}if(tabShortcut)openBuild();if(e.code==='KeyC')useFlask();if(e.code==='KeyB')startRecall();if(e.code==='KeyH')toggleRide();if(e.code==='KeyM')openWorldMap();if(e.code==='KeyF')interactWorld();if(e.code==='Space')dash();if(e.code==='KeyQ')skill();if(e.code==='KeyV')basketballSkill();if(e.code==='KeyR'&&state.phase==='playing'&&!state.tutorial){state.weapon=state.weapon==='blade'?'bow':'blade';updateUI();toast(state.weapon==='bow'?'弓形 · 远程精准攻击':'刃形 · 近身弧形斩击',1.5);}if(e.code==='KeyJ')basicAttack();if(e.code==='KeyE'&&state.phase==='playing'&&!enemies.some(t=>!t.dead&&t.exposed&&distance(t,player)<115))toast('夺影条件：敌人变白后，走近它，再按住 E 约 1 秒',2);});window.addEventListener('keyup',e=>{keys[e.code]=false;});window.addEventListener('blur',()=>{keys={};mouse.down=false;if(state.phase==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){keys={};mouse.down=false;if(state.phase==='playing')pause();}});
-$('atlas-button').onclick=()=>openAtlas();$('atlas-nav').onclick=()=>openAtlas();$('start-button').onclick=()=>openProfession(true);$('skip-intro').onclick=()=>openProfession(false);$('skip-tutorial').onclick=finishTutorial;$('skill-detail-button').onclick=openSkillDetails;$('pause-button').onclick=pause;$('guide-button').onclick=openGuide;$('codex-button').onclick=openCodex;$('build-button').onclick=()=>openBuild();$('hunt-tab').onclick=()=>{if(['guide','codex','paused','skillinfo','worldmap'].includes(state.phase))closeModal();};$('skill-button').onclick=skill;$('basketball-button').onclick=()=>basketballSkill();$('dash-button').onclick=dash;$('attack-button').onclick=()=>basicAttack();$('capture-button').onpointerdown=e=>{keys.KeyE=true;e.currentTarget.setPointerCapture(e.pointerId);};$('capture-button').onpointerup=()=>{keys.KeyE=false;};$('capture-button').onpointercancel=()=>{keys.KeyE=false;};$('sound-button').onclick=()=>{soundOn=!soundOn;$('sound-button').innerHTML=soundOn?'♫':'♫<span class="sound-off">/</span>';$('sound-button').ariaLabel=soundOn?'关闭声音':'开启声音';$('sound-button').title=soundOn?'关闭声音':'开启声音';tone(660,.25);};$('fullscreen-button').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch{toast('当前窗口不支持全屏，请在独立浏览器中打开');}};
+window.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName)||e.target?.isContentEditable||e.target?.closest?.(".view-controls"))return;if(state.phase==='qPuzzle'&&!['KeyP','KeyO'].includes(e.code)){e.preventDefault();if(!e.repeat)cloudPuzzleKey(e.code);return;}if(state.world&&state.phase==='playing'&&['Minus','Equal','NumpadSubtract','NumpadAdd','Digit0','Numpad0'].includes(e.code)){e.preventDefault();setViewRange(['Digit0','Numpad0'].includes(e.code)?VIEW_RANGE.default:viewRange+(['Minus','NumpadSubtract'].includes(e.code)?-10:10));return;}const tabShortcut=e.code==='Tab'&&['intro','playing','map'].includes(state.phase);if(tabShortcut||state.phase==='playing'&&['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(['KeyP','KeyO'].includes(e.code)){e.preventDefault();if(!e.repeat){if(e.code==='KeyP')openCharacterWardrobe();else openMonsterWardrobe();}return;}if(state.phase==='discoveryChoice'&&e.code==='Escape'){e.preventDefault();cancelChestChoice();return;}if(state.phase==='achievements'&&e.code==='Escape'){e.preventDefault();closeReleasePanel();return;}if(state.phase==='encounter'){if(['Space','Enter','Escape'].includes(e.code)){e.preventDefault();if(!e.repeat){if(e.code==='Escape')finishEncounter();else advanceEncounter();}}return;}if(e.repeat){keys[e.code]=true;return;}keys[e.code]=true;if(state.journey.recall>0&&['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyE','KeyJ','KeyQ','KeyV','Space','KeyR','KeyC','KeyF'].includes(e.code))cancelRecall();if(state.phase==='settlement'){if(e.code==='Escape'){e.preventDefault();closeSettlement();}return;}if(e.code==='Escape'&&['profession','monsters'].includes(state.phase)){e.preventDefault();closeAppearance();return;}if(e.code==='Escape'&&state.phase==='saveChooser'){closeModal('intro');return;}if(e.code==='Escape'&&state.phase==='atlas'){closeAtlas();return;}if(e.code==='Escape'&&state.phase==='inventory'){$('inventory-close').onclick();return;}if(e.code==='KeyN'){openAtlas();return;}if(e.code==='Escape'){if(['guide','codex','skillinfo','worldmap','camp','discovery','shop'].includes(state.phase))closeModal();else if(state.phase==='build'){if(modalReturn==='map')showRoute();else closeModal();}else pause();}if(tabShortcut)openBuild();if(e.code==='KeyC')useFlask();if(e.code==='KeyB')startRecall();if(e.code==='KeyH')toggleRide();if(e.code==='KeyM')openWorldMap();if(e.code==='KeyF')interactWorld();if(e.code==='Space')dash();if(e.code==='KeyQ')skill();if(e.code==='KeyV')basketballSkill();if(e.code==='KeyR'&&state.phase==='playing'&&!state.tutorial){state.weapon=state.weapon==='blade'?'bow':'blade';updateUI();toast(state.weapon==='bow'?'弓形 · 远程精准攻击':'刃形 · 近身弧形斩击',1.5);}if(e.code==='KeyJ')basicAttack();if(e.code==='KeyE'&&!isCloud()&&state.phase==='playing'&&!enemies.some(t=>!t.dead&&t.exposed&&distance(t,player)<115))toast('夺影条件：敌人变白后，走近它，再按住 E 约 1 秒',2);});window.addEventListener('keyup',e=>{keys[e.code]=false;});window.addEventListener('blur',()=>{keys={};mouse.down=false;if(state.phase==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){keys={};mouse.down=false;if(state.phase==='playing')pause();}});
+$('atlas-button').onclick=()=>openTheme('main');$('atlas-nav').onclick=()=>openAtlas();$('start-button').onclick=()=>{selectTheme('main');openProfession(true);};$('skip-intro').onclick=()=>{selectTheme('main');openProfession(false);};$('skip-tutorial').onclick=finishTutorial;$('skill-detail-button').onclick=openSkillDetails;$('pause-button').onclick=pause;$('guide-button').onclick=openGuide;$('codex-button').onclick=openCodex;$('build-button').onclick=()=>openBuild();$('hunt-tab').onclick=()=>{if(['guide','codex','paused','skillinfo','worldmap'].includes(state.phase))closeModal();};$('skill-button').onclick=skill;$('basketball-button').onclick=()=>basketballSkill();$('dash-button').onclick=dash;$('attack-button').onclick=()=>basicAttack();$('capture-button').onpointerdown=e=>{keys.KeyE=true;e.currentTarget.setPointerCapture(e.pointerId);};$('capture-button').onpointerup=()=>{keys.KeyE=false;};$('capture-button').onpointercancel=()=>{keys.KeyE=false;};$('sound-button').onclick=()=>{soundOn=!soundOn;$('sound-button').innerHTML=soundOn?'♫':'♫<span class="sound-off">/</span>';$('sound-button').ariaLabel=soundOn?'关闭声音':'开启声音';$('sound-button').title=soundOn?'关闭声音':'开启声音';tone(660,.25);};$('fullscreen-button').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen();}catch{toast('当前窗口不支持全屏，请在独立浏览器中打开');}};
 
 $('practice-intro').onclick=startPractice;$('practice-button').onclick=requestPractice;
 $('practice-dummy').onclick=()=>practiceTargets('dummy');$('practice-mobs').onclick=()=>practiceTargets('mobs');
 $('practice-refresh').onclick=refreshPractice;$('practice-exit').onclick=()=>{if(state.mode==='practice')reset();};
 $('compact-detail').onclick=openSkillDetails;$('compact-edit').onclick=()=>openBuild();
 
-$('continue-run').onclick=resumeCamp;
+$('continue-run').onclick=openSaveChooser;
+$('character-nav').onclick=openCharacterWardrobe;$('monster-nav').onclick=openMonsterWardrobe;
+window.addEventListener('keydown',e=>{
+ if(e.code!=='Tab'||!['profession','monsters'].includes(state.phase))return;
+ const buttons=Array.from($('modal-card').querySelectorAll('button:not(:disabled)'));
+ const first=buttons[0],last=buttons[buttons.length-1];if(!first)return;
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+ else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+});
 $('flask-button').onclick=useFlask;$('recall-button').onclick=startRecall;$('world-map-nav').onclick=openWorldMap;$('world-map-button').onclick=openWorldMap;$('world-interact').onclick=interactWorld;
 
 // A read-only snapshot is intentionally available for automated smoke verification.
@@ -1622,7 +1832,7 @@ function syncAchievements(){
   if(state.captures>0)awardAchievement('capture');if(state.world?.completed.size>0)awardAchievement('seal');if(state.world?.completed.size>=3)awardAchievement('trinity');if(state.nightmare>0||state.locked)awardAchievement('nightmare');
   const release=window.HUNTER_RELEASE;
   const inventory=Object.entries(state.campaign.inventory).filter(([,n])=>n>0);
-  release?.observe({kills:state.kills,captures:state.captures,seals:state.world?.completed.size||0,forest:state.campaign.cleared.includes('forest')?1:0,nightmare:state.nightmare>0||state.locked?1:0,chain:state.journey.bestStreak||0,skillLevel:Math.max(...skillIds.map(id=>state.levels[id]+1)),skills:skillIds.filter(id=>state.owned.has(id)).length,regions:state.world?.visited.size||0,discoveries:state.world?.claimed.size||0,items:inventory.length,relics:inventory.filter(([id])=>CAMPAIGN.items[id]?.kind==='relic').length,worlds:state.campaign.cleared.length,returns:state.settlement?1:0});
+  release?.observe({kills:state.kills,captures:state.captures,seals:state.world?.completed.size||0,forest:state.campaign.cleared.includes('forest')?1:0,nightmare:state.nightmare>0||state.locked?1:0,chain:state.journey.bestStreak||0,skillLevel:Math.max(...skillIds.map(id=>state.levels[id]+1)),skills:skillIds.filter(id=>state.owned.has(id)).length,regions:state.world?.visited.size||0,discoveries:state.world?.claimed.size||0,items:inventory.length,relics:inventory.filter(([id])=>CAMPAIGN.items[id]?.kind==='relic').length,worlds:state.campaign.cleared.length,mainWorlds:state.campaign.cleared.filter(id=>CAMPAIGN.themeOf(id)==='main').length,returns:state.settlement?1:0});
   for(const id of release?.journal().achievements||[])queueAchievement(id);
  }
 }
@@ -1649,7 +1859,7 @@ function drawFeedback(dt){
  const g=overlay.getContext('2d'),sx=overlay.width/(state.world?camera.w:W),sy=overlay.height/height;
  g.save();g.setTransform(sx,0,0,sy,0,0);g.translate(renderShake.x-(state.world?camera.x:0),renderShake.y-(state.world?camera.y:0));
  const cues=enemies.filter(e=>!e.dead&&!e.exposed&&e.target&&(e.telegraph>0||e.dash>0)).map(telegraphInfo);
- window.HUNTER_COMBAT.render(g,{enemies:visible,cues,hazards,projectiles,player,time:clock,scale,rich:richVisuals()});g.restore();
+ window.HUNTER_COMBAT.render(g,{enemies:visible,cues,hazards,projectiles,player,time:clock,scale,rich:richVisuals(),healthBars:visible.filter(e=>!e.dead).map(e=>({x:e.x,y:(MONSTERS?.labelY(e,state.world?.id||'forest')??e.y)-e.r-27,w:e.boss?84:52,h:14}))});g.restore();
 }
 function playEquipFeedback(id,action='equip'){
  const color=shadows[id]?.color||'#c1e6d5';
@@ -1692,6 +1902,7 @@ function initializeRelease(){
 }
 initializeRelease();
 initializeExperience();
+$('qmap-entry').onclick=()=>openTheme('cloud');
 makeGround();reset();requestAnimationFrame(frame);
 })();
 

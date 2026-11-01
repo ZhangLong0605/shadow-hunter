@@ -4,7 +4,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b1216">
   <meta name="description" content="影子猎手：五境远征。夺取敌人的能力，选择四种技能，穿越五境，迎接黎明。离线单人动作探索游戏。">
-  <title>影子猎手 — 五境远征 · 成就修复 R2</title>
+  <title>影子猎手 — 五境远征 · 甜梦云原</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='16' fill='%238be4cb'/%3E%3Ccircle cx='27' cy='14' r='15' fill='%230c171c'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="onboarding.css">
@@ -24,15 +24,17 @@
   <link rel="stylesheet" href="typography.css">
   <link rel="stylesheet" href="professions.css">
   <link rel="stylesheet" href="dialogue.css">
+  <link rel="stylesheet" href="appearance.css">
+  <link rel="stylesheet" href="q-map.css">
 </head>
 <body>
   <header class="header">
     <a class="brand" href="./" aria-label="影子猎手首页"><span class="brand-mark">◒</span><span>影子猎手<small>SHADOW HUNTER</small></span></a>
-    <nav aria-label="主导航"><button class="nav-button active" id="hunt-tab">狩猎</button><button class="nav-button hidden" id="world-map-nav">区域地图 <kbd>M</kbd></button><button class="nav-button" id="practice-button">试炼场</button><button class="nav-button" id="codex-button">技能图鉴</button><button class="nav-button" id="achievements-nav">成就</button><button class="nav-button" id="guide-button">猎人手册</button></nav>
+    <nav aria-label="主导航"><button class="nav-button active" id="hunt-tab">狩猎</button><button class="nav-button hidden" id="world-map-nav">区域地图 <kbd>M</kbd></button><button class="nav-button appearance-entry" id="character-nav" title="选择人物 · P">人物 <kbd>P</kbd></button><button class="nav-button appearance-entry" id="monster-nav" title="怪物形象 · O">怪物 <kbd>O</kbd></button><button class="nav-button" id="practice-button">试炼场</button><button class="nav-button" id="codex-button">技能图鉴</button><button class="nav-button" id="achievements-nav">成就</button><button class="nav-button" id="guide-button">猎人手册</button></nav>
     <div class="header-end"><span class="demo-tag"><i></i>五境远征 <b>1.4</b></span><button id="settings-button" class="icon-button" title="声音、画面与难度" aria-label="游戏设置">⚙</button><button id="sound-button" class="icon-button" title="静音" aria-label="静音全部声音">♫</button><button id="pause-button" class="icon-button" title="暂停 · Esc" aria-label="暂停">Ⅱ</button></div>
   </header>
   <main id="app-shell">
-    <div class="page-heading"><div><span class="eyebrow">THE LONG DREAM / FIVE WORLDS</span><h1>五境远征 <span>一切梦魇，皆有其影。</span></h1></div><div class="run-meta"><span><i class="live-dot"></i><span id="phase-label">等待入梦</span></span><span class="divider"></span><span id="timer">00:00</span><span class="run-number">RUN <b id="run-count">01</b></span></div></div>
+    <div class="page-heading"><div><span class="eyebrow">THE LONG DREAM / FIVE WORLDS</span><h1 id="world-theme-title">五境远征 <span>一切梦魇，皆有其影。</span></h1></div><div class="run-meta"><span><i class="live-dot"></i><span id="phase-label">等待入梦</span></span><span class="divider"></span><span id="timer">00:00</span><span class="run-number">RUN <b id="run-count">01</b></span></div></div>
     <div class="game-layout">
       <section class="game-column" aria-label="狩猎场">
         <div class="arena" id="arena">
@@ -41,7 +43,7 @@
           <div class="scene-top"><div class="location"><span class="small-rune">⌖</span><div><span id="room-name">遗忘林地</span><small id="objective">穿过月光，追寻你的第一枚影子</small></div></div><div class="room-tag" id="room-tag">猎场 <span>01 / 05</span></div></div>
           <div id="world-hud" class="world-hud hidden">
             <button id="world-map-button" aria-label="打开世界地图"><canvas id="world-minimap" aria-label="当前位置与任务地点小地图"></canvas><span id="world-progress"></span></button><div class="minimap-legend"><i>◉ 你</i><i>◆ 任务</i><i>▪ 宝箱</i><i>¤ 商店</i><i>● 敌人</i></div><small id="world-terrain">M 全图 · F 互动</small>
-            <button id="atlas-nav" class="atlas-nav">N · 五境星图 ↗</button><div class="view-controls" aria-label="视野设置">
+            <button id="atlas-nav" class="atlas-nav">N · 世界星图 ↗</button><div class="view-controls" aria-label="视野设置">
               <div class="view-heading"><label for="view-range">视野范围</label><output id="view-value" for="view-range">100%</output></div>
               <div class="view-slider"><button id="view-near" aria-label="拉近视角" title="拉近 · 看清近处">−</button><input id="view-range" type="range" min="50" max="200" step="1" value="100" aria-describedby="view-help"><button id="view-far" aria-label="拉远视角" title="拉远 · 看得更远">+</button></div>
               <div class="view-footer"><small id="view-help">滚轮调节 · 越大越远</small><button id="view-reset" title="恢复默认视野 · 0">复位</button></div>
@@ -66,12 +68,12 @@
             <h2 class="art-title" aria-label="影子猎手"><span aria-hidden="true">影</span><span aria-hidden="true">子</span><span aria-hidden="true">猎</span><span aria-hidden="true">手</span></h2>
             <p class="intro-explainer">伙伴消失的那一夜，只剩一盏灯还亮着。<br>穿越五境，带他们一起回家。</p>
             <div class="intro-actions">
-              <button id="continue-run" class="camp-resume hidden"><span>继续旅程<small id="resume-summary"></small></span><b>↗</b></button>
+              <button id="continue-run" class="camp-resume hidden"><span>继续存档 · 选择世界与人物<small id="resume-summary"></small></span><b>↗</b></button>
               <div class="intro-start"><button class="primary" id="start-button">开始旅程 <span>↗</span></button><button id="skip-intro" class="text-button">跳过教学 →</button></div>
             </div>
             <div class="intro-destinations" aria-label="探索与试炼">
               <button id="practice-intro" class="practice-entry">试炼场 <span>自由练习 ↗</span></button>
-              <button id="atlas-button" class="atlas-entry">五境星图 <span>世界与行囊 ↗</span></button>
+              <button id="qmap-entry" class="atlas-entry qmap-entry">甜梦云原 · Q 版世界 <span>五张子地图 · 独立旅程 ↗</span></button><button id="atlas-button" class="atlas-entry">五境远征 · 原世界 <span>五张子地图 · 独立旅程 ↗</span></button>
             </div>
             <div class="title-links"><button id="intro-settings">设置</button><button id="story-button">故事序章</button><button id="achievements-button">成就</button><button id="records-button">猎人纪事</button><button id="credits-button">制作与鸣谢</button><details class="intro-save-help"><summary>存档说明</summary><p id="save-note" class="save-note"></p></details></div>
             <div class="intro-note" id="audio-note">首次点击后启用背景音乐 · 右上角可静音</div>
@@ -79,6 +81,7 @@
           <section class="tutorial-card hidden" id="tutorial-card" aria-label="当前教学任务"><div class="tutorial-top"><span id="tutorial-step">新手教学 1 / 6</span><button id="skip-tutorial">跳过教学 →</button></div><div id="tutorial-progress" class="tutorial-progress"></div><h2 id="tutorial-title"></h2><div class="tutorial-do"><kbd id="tutorial-key"></kbd><strong id="tutorial-action"></strong></div><p id="tutorial-text"></p><small id="tutorial-note"></small></section><div class="context-hint hidden" id="context-hint" role="status"></div><div class="toast hidden" id="toast" role="status"></div>
           <div class="capture-hud hidden" id="capture-hud"><span>正在剥离影子…</span><div><i id="capture-bar"></i></div><small>持续按住 E · 受伤将中断</small></div>
           <div class="player-hud"><div id="hud-portrait" class="hunter-portrait" role="img" aria-label="影子猎手">⟡</div><div class="vitals"><div><strong id="hud-character-name">影子猎手</strong><span id="hp-text">100 / 100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="focus-row"><span>专注</span><div class="focus-track"><i id="focus-bar"></i></div><small id="focus-text">0 / 100</small></div></div><div class="kill-count"><small>已猎杀</small><strong id="kills">00</strong></div></div>
+          <div id="q-activity-hud" class="q-activity-hud hidden" role="status"></div>
           <div class="arena-stamp">月蚀之下 · 勿失其形</div>
           <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div id="modal-card" class="modal-card"></div></div>
         </div>
@@ -97,6 +100,8 @@
   <script src="release-data.js"></script>
   <script src="audio.js"></script>
   <script src="art.js"></script>
+  <script src="monster-data.js"></script>
+  <script src="monster-art.js"></script>
   <script src="feedback.js"></script>
   <script src="scene-fx.js"></script>
   <script src="combat-cues.js"></script>
@@ -104,6 +109,9 @@
   <script src="world-data.js"></script>
   <script src="expedition-data.js"></script>
   <script src="journey-data.js"></script>
+  <script src="q-map-data.js"></script>
+  <script src="q-object-art.js"></script>
+  <script src="q-adventure.js"></script>
   <script src="campaign-data.js"></script>
   <script src="game.js"></script>
 </body>
