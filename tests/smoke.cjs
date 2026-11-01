@@ -10,6 +10,8 @@ class Element {
   constructor(){this.style={setProperty(k,v){this[k]=v;}};this.dataset={};this.listeners={};this.children=[];this.clientWidth=1000;this.clientHeight=650;const classes=new Set();this.classList={add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k),toggle:(k,v)=>v?classes.add(k):classes.delete(k)};}
   set innerHTML(html){this.html=html;this.children=[];for(const m of html.matchAll(/<button\b([^>]*)>/g)){const e=new Element();e.disabled=m[1].includes('disabled');for(const a of m[1].matchAll(/([\w-]+)="([^"]*)"/g)){if(a[1]==='id')elements.set(a[2],e);if(a[1].startsWith('data-'))e.dataset[a[1].slice(5)]=a[2];}this.children.push(e);}}
   get innerHTML(){return this.html||'';}
+  get childNodes(){return this.children;}
+  replaceChildren(...nodes){this.children=nodes;}
   querySelectorAll(s){if(s==='button')return this.children;const key=s.match(/data-([\w-]+)/)?.[1];return this.children.filter(c=>key in c.dataset);}
   querySelector(s){return this.querySelectorAll(s)[0]||null;}
   addEventListener(k,f){this.listeners[k]=f;}
@@ -22,7 +24,7 @@ const document={getElementById:el,createElement:()=>new Element(),addEventListen
 const storage=new Map();let storageFail=false;
 const localStorage={getItem:k=>{if(storageFail)throw Error('Storage blocked');return storage.get(k)||null;},setItem:(k,v)=>{if(storageFail)throw Error('Storage blocked');storage.set(k,v);}};
 const sandbox={window,document,localStorage,requestAnimationFrame:noop,console,Math};
-for(const name of ['release-data.js','art.js','feedback.js','scene-fx.js','combat-cues.js'])vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist',name),'utf8'),sandbox);
+for(const name of ['release-data.js','art.js','monster-data.js','monster-art.js','feedback.js','scene-fx.js','combat-cues.js','q-map-data.js','q-adventure.js'])vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist',name),'utf8'),sandbox);
 const code=fs.readFileSync(require('node:path').join(__dirname,'../dist/game.js'),'utf8');
 const hook=`window.testGame={shopSite,openShop,buyShopGood,toggleRide,worldMoveSpeed,basketballSkill,updateQuickInventory,selectChestChoice,confirmChestChoice,cancelChestChoice,get knownAchievements(){return knownAchievements},openAchievements,renderAchievements,skillGrowth,updateLevelCelebration,itemIcon,lootMarkup,showKillReward,showSettlement,updateKillRewards,showPrologue,storyCompanions,storyChapterMarkup,openEncounter,checkEncounter,advanceEncounter,finishEncounter,updateEncounter,get encounterSeen(){return encounterSeen},openProfession,selectProfession,confirmProfession,get state(){return state},get player(){return player},get enemies(){return enemies},get projectiles(){return projectiles},get minions(){return minions},get effects(){return effects},get keys(){return keys},get mouse(){return mouse},reset,start,update,enterRoom,damageEnemy,hitPlayer,expose,gainKill,skill,dash,basicAttack,updateCapture,openBuild,openCodex,openGuide,pause,closeModal,showRoute,combo,normalizeSkills,showReward,equipSkill,beginTutorial,finishTutorial,updateTutorial,setTutorialStep,openSkillDetails,startPractice,practiceTargets,refreshPractice,updateObjective,retryObjective,requestPractice,draw,enterWorld,updateCamera,get camera(){return {...camera}},pointOnScreen,mousePosition,moveEntity,worldPositionFree,worldMoveSpeed,worldTravelEnd,spawnWorldEnemy,updateWorldEnemy,performEnemyAttack,interactWorld,startWorldMission,completeWorldMission,openWorldMap,updateWorld,useFlask,startRecall,updateJourney,chooseBoon,navigationTarget,leaveWorldMission,stunBoss,pressureBreak,updateEnemy,shoot,spawnMinion,showModal,projectileBlocked,drawHazard,get hazards(){return hazards}};\n`;
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/guide-data.js'),'utf8'),sandbox);
@@ -601,7 +603,7 @@ test('Acquisition has two choices and the picker has four icon cards with option
 test('All five campaigns finish through their actual mission handlers and AND-gated travel',()=>{
  const c=window.HUNTER_CAMPAIGN,x=window.campaignTest;g.reset();x.openAtlas('forge');assert.ok(el('atlas-travel').disabled);assert.equal(x.travelWorld('forge'),false);x.closeAtlas();
  x.openAtlas('forest');assert.ok(x.travelWorld('forest'));el('world-begin').onclick();
- for(const w of c.worlds){
+ for(const w of c.worlds.filter(w=>w.id!=='cloud')){
   assert.equal(g.state.world.id,w.id);assert.ok(window.expeditionTest.canSaveCamp());assert.ok(g.enemies.every(e=>g.worldPositionFree(e.x,e.y,e.r)));g.draw();
   const originalVisit=g.state.world.visit;assert.ok(window.expeditionTest.saveCamp());assert.ok(window.expeditionTest.resumeCamp());assert.equal(g.state.world.visit,originalVisit);assert.equal(g.state.world.id,w.id);
   for(const site of x.map.sites.filter(s=>!['camp','boss'].includes(s.kind))){
@@ -620,7 +622,7 @@ test('All five campaigns finish through their actual mission handlers and AND-ga
   target.cd=0;g.updateEnemy(target,.02);if(w.id!=='forest')assert.ok([w.bossMove,'slam'].includes(target.attack));g.gainKill(target);g.updateWorld(.02);assert.equal(g.state.phase,'worldVictory');assert.ok(g.state.campaign.cleared.includes(w.id));assert.ok(g.state.campaign.inventory[w.loot[3]]>0);
   const inventory=JSON.stringify(g.state.campaign.inventory);x.completeCampaignWorld();assert.equal(JSON.stringify(g.state.campaign.inventory),inventory,'No double victory reward');
   if(w.id==='forge')assert.ok(!c.unlocked(g.state.campaign,'ruins'),'Both branch worlds are required');
-  const next=c.worlds[w.number];if(next){x.openAtlas(next.id);assert.ok(!el('atlas-travel').disabled);assert.ok(x.travelWorld(next.id));el('world-begin').onclick();assert.equal(g.state.world.completed.size,0);assert.equal(g.state.journey.perks.length,0);}
+  const next=c.worlds.slice(0,5)[w.number];if(next){x.openAtlas(next.id);assert.ok(!el('atlas-travel').disabled);assert.ok(x.travelWorld(next.id));el('world-begin').onclick();assert.equal(g.state.world.completed.size,0);assert.equal(g.state.journey.perks.length,0);}
  }
  assert.equal(g.state.campaign.cleared.length,5);x.openAtlas('forge');assert.ok(x.travelWorld('forge'));el('world-begin').onclick();assert.equal(g.state.world.id,'forge');assert.equal(g.state.world.completed.size,0);assert.ok(Object.keys(g.state.campaign.inventory).length>=5);
  g.reset();assert.equal(g.state.campaign.cleared.length,5);assert.equal(g.state.phase,'intro');
@@ -756,14 +758,14 @@ test('Slaying awards a real item, accurate resources and a timed reward notice e
  g.gainKill(enemy);assert.equal(count(),before+1);assert.equal(g.state.xp[skill],xp+1);
  g.updateKillRewards(5);assert.equal(el('kill-rewards').innerHTML,'');g.reset();assert.equal(el('kill-rewards').innerHTML,'');
 });
-test('All 20 items have distinct shared artwork in drops, inventory and settlement',()=>{
- g.reset();g.start();el('world-begin').onclick();const ids=Object.keys(window.HUNTER_CAMPAIGN.items),art=new Set();assert.equal(ids.length,20);
+test('All 24 items have distinct shared artwork in drops, inventory and settlement',()=>{
+ g.reset();g.start();el('world-begin').onclick();const ids=Object.keys(window.HUNTER_CAMPAIGN.items),art=new Set();assert.equal(ids.length,24);
  for(const id of ids){
   const icon=g.itemIcon(id);assert.ok(icon.includes('data-item-icon="'+id+'"'));assert.ok(icon.includes('<svg'));assert.ok(g.lootMarkup(id).includes(icon));
   art.add(icon.match(/<g[^>]*>([\s\S]*?)<\/g>/)[1]);g.state.campaign.inventory[id]=1;
   g.showKillReward({x:100,y:100},id,[]);assert.ok(el('kill-rewards').innerHTML.includes(icon));
  }
- assert.equal(art.size,20);assert.equal(g.itemIcon('unknown'),'');
+ assert.equal(art.size,24);assert.equal(g.itemIcon('unknown'),'');
  g.state.phase='camp';window.campaignTest.openInventory('camp');
  for(const id of ids)assert.ok(el('modal-card').innerHTML.includes(g.itemIcon(id)));
  g.state.settlement={items:Object.fromEntries(ids.map(id=>[id,1])),skills:[],perks:[],discoveries:[],elapsed:10,kills:20,captures:0,completed:0,campSaved:true,profileSaved:true};g.showSettlement();

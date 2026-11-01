@@ -2,10 +2,12 @@
   "name": "shadow-hunter-demo",
   "version": "1.4.0",
   "private": true,
-  "description": "影子猎手：五境远征，四种易上手技能、五个独立世界与随机战利品",
+  "description": "影子猎手：五境远征与甜梦云原，两个独立世界，各五张子地图",
   "scripts": {
     "start": "node server.cjs",
-    "check": "node --check dist/game.js && node --check dist/journey-data.js && node --check dist/expedition-data.js && node --check dist/world-data.js && node --check dist/guide-data.js && node --check dist/audio.js && node --check dist/art.js && node --check dist/release-data.js && node --check dist/feedback.js && node --check dist/campaign-data.js && node --check dist/scene-fx.js && node --check dist/combat-cues.js",
-    "test": "node tests/campaign-data.cjs && node tests/journey-data.cjs && node tests/save-data.cjs && node tests/release.cjs && node tests/visuals.cjs && node tests/combat-clarity.cjs && node tests/smoke.cjs && node tests/appearance.cjs && node tests/achievements.cjs && node tests/commerce.cjs"
+    "check": "node --check dist/game.js && node --check dist/journey-data.js && node --check dist/expedition-data.js && node --check dist/world-data.js && node --check dist/guide-data.js && node --check dist/audio.js && node --check dist/art.js && node --check dist/release-data.js && node --check dist/feedback.js && node --check dist/campaign-data.js && node --check dist/scene-fx.js && node --check dist/combat-cues.js && node --check dist/monster-data.js && node --check dist/monster-art.js && node --check dist/q-map-data.js && node --check dist/q-adventure.js && node --check dist/q-object-art.js",
+    "test": "node tests/campaign-data.cjs && node tests/journey-data.cjs && node tests/save-data.cjs && node tests/release.cjs && node tests/visuals.cjs && node tests/combat-clarity.cjs && node tests/smoke.cjs && node tests/appearance.cjs && node tests/achievements.cjs && node tests/commerce.cjs && node tests/monster-art.cjs && node tests/q-map.cjs",
+    "test:wardrobe": "node tests/wardrobe-browser.cjs",
+    "test:qmap": "node tests/qmap-browser.cjs"
   }
 }

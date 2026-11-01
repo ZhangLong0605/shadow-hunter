@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-const window={};for(const name of ['world-data.js','expedition-data.js','campaign-data.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../dist',name),'utf8'),{window,Math});
+const window={};for(const name of ['world-data.js','q-map-data.js','expedition-data.js','campaign-data.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../dist',name),'utf8'),{window,Math});
 const c=window.HUNTER_CAMPAIGN,p=c.empty();
-assert.equal(c.worlds.length,5);assert.equal(Object.keys(c.items).length,20);assert.ok(c.valid(p));
+assert.equal(c.worlds.length,5);assert.equal(Object.keys(c.items).length,24);assert.ok(c.valid(p));
 assert.ok(c.unlocked(p,'forest'));assert.ok(!c.unlocked(p,'forge'));assert.equal(c.complete(p,'ruins','invalid'),null);
 c.complete(p,'forest','a');assert.ok(c.unlocked(p,'forge')&&c.unlocked(p,'tide'));assert.ok(!c.unlocked(p,'ruins'));c.complete(p,'forge','b');assert.ok(!c.unlocked(p,'ruins'));c.complete(p,'tide','c');assert.ok(c.unlocked(p,'ruins'));c.complete(p,'ruins','d');assert.ok(c.unlocked(p,'eclipse'));c.complete(p,'eclipse','e');assert.equal(p.cleared.length,5);
 const before=JSON.stringify(p);assert.equal(c.complete(p,'forest','a'),null);assert.equal(JSON.stringify(p),before);assert.ok(c.valid(p));
@@ -13,7 +13,7 @@ const stale=JSON.stringify(p);data.set(c.key,stale);c.read(storage);p.inventory.
 // Grid flood fill through the real walls and scenery, from camp to every objective,
 // cache and boss. Use four-neighbour moves so diagonal corner cutting cannot pass.
 const layouts=new Set();
-for(const w of c.worlds){const m=c.map(w.id),sc=m.create(),step=40,cols=m.width/step,rows=m.height/step;
+for(const w of c.catalog){const m=c.map(w.id),sc=m.create(),step=40,cols=m.width/step,rows=m.height/step;
  layouts.add(JSON.stringify(m.sites.map(s=>[s.x,s.y,s.kind])));
  function free(x,y){return x>=40&&x<m.width-40&&y>=40&&y<m.height-40&&!m.walls.some(r=>Math.hypot(x-Math.max(r.x,Math.min(x,r.x+r.w)),y-Math.max(r.y,Math.min(y,r.y+r.h)))<18)&&!sc.rocks.some(r=>Math.hypot(x-r.x,y-r.y)<r.r+18);}
  const start=[Math.round(m.sites[0].x/step),Math.round(m.sites[0].y/step)],queue=[start],seen=new Set([start.join(',')]);
@@ -22,7 +22,7 @@ for(const w of c.worlds){const m=c.map(w.id),sc=m.create(),step=40,cols=m.width/
  for(const s of m.sites.filter(s=>['sequence','survey','purify'].includes(s.kind)))for(const [dx,dy] of [[-220,-170],[230,-120],[0,230]])assert.ok(queue.some(([x,y])=>Math.hypot(x*step-s.x-dx,y*step-s.y-dy)<90),w.id+': unreachable interaction node');
  console.log('PASS reachable map, camp, caches and mission nodes: '+w.name);
 }
-assert.equal(layouts.size,5);
+assert.equal(layouts.size,10);
 console.log('Campaign: AND unlocks, repeat rewards, distinct loot, persistence, denial and five connected maps passed.');
 for(const w of c.worlds){
  const rewards=c.empty();
@@ -35,3 +35,9 @@ for(const w of c.worlds){
  }
 }
 console.log('Kill loot: every world guarantees a basic supply on a failed bonus roll; repeated claims never duplicate it.');
+
+const q=c.empty('cloud');assert.equal(c.qWorlds.length,5);assert.equal(c.catalog.length,10);assert.ok(!c.unlocked(p,'candy-town'));assert.ok(!c.unlocked(q,'forest'));
+for(const w of c.qWorlds){assert.ok(c.unlocked(q,w.id));assert.ok(c.complete(q,w.id,'q-'+w.id));assert.ok(c.valid(q));}assert.equal(q.cleared.length,5);assert.ok(c.save(storage,q));assert.equal(c.read(storage,'cloud').cleared.length,5);assert.equal(c.read(storage,'main').inventory.leaf,29);
+const mainRaw=data.get(c.keys.main);c.garage(q).coins=150;c.buy(q,'moonbike');c.buy(q,'rainbow');assert.equal(c.buy(q,'fang').ok,false);c.save(storage,q);assert.equal(data.get(c.keys.main),mainRaw);
+assert.equal(c.reward(q,'forest','cross-theme','boss').item,null);assert.ok(!c.valid({...q,inventory:{leaf:1}}));assert.ok(!c.valid({...p,cleared:['candy-town']}));
+console.log('Independent campaign keys, AND unlocks, currency, inventory, rewards and shops passed.');
