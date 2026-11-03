@@ -1,0 +1,23 @@
+window.HUNTER_MAZE=(()=>{
+ 'use strict';
+ const dirs={h:[0,-1],j:[1,0],k:[-1,0],l:[0,1],a:[0,-1],s:[1,0],w:[-1,0],d:[0,1],ArrowLeft:[0,-1],ArrowDown:[1,0],ArrowUp:[-1,0],ArrowRight:[0,1]};
+ const around=[[0,-1],[1,0],[-1,0],[0,1]], block=3;
+ function rng(seed){let x=(seed>>>0)||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return (x>>>0)/4294967296;};}
+ function generate(width=31,height=21,density=2,seed=Date.now(),enemyCount=3){
+  const rows=Math.floor((height-2)/3),cols=Math.floor((width-2)/3);if(rows<3||cols<3||density<1||density>6)throw Error('迷宫参数无效');
+  const random=rng(seed),startBlock=[0,0],goalBlock=[rows-1,cols-1],seen=new Set(['0,0']),parent=new Map(),stack=[[0,0]];
+  while(stack.length){const [r,c]=stack.at(-1),opts=around.map(([dr,dc])=>[r+dr,c+dc]).filter(([nr,nc])=>nr>=0&&nr<rows&&nc>=0&&nc<cols&&!seen.has(`${nr},${nc}`));if(!opts.length){stack.pop();continue;}const next=opts[Math.floor(random()*opts.length)],key=next.join(',');seen.add(key);parent.set(key,[r,c]);stack.push(next);}
+  const route=[goalBlock];while(route.at(-1).join(',')!=='0,0')route.push(parent.get(route.at(-1).join(',')));route.reverse();const cells=[];
+  const edge=([dr,dc])=>dr<0?[0,1]:dr>0?[2,1]:dc<0?[1,0]:[1,2];
+  route.forEach(([r,c],i)=>{const entry=i?edge([route[i-1][0]-r,route[i-1][1]-c]):[1,1],exit=i===route.length-1?[1,1]:edge([route[i+1][0]-r,route[i+1][1]-c]),local=[entry];if(entry.join(',')!=='1,1')local.push([1,1]);if(exit.join(',')!=='1,1')local.push(exit);local.forEach(([y,x])=>cells.push([1+r*3+y,1+c*3+x]));});
+  const carved=new Set(cells.map(p=>p.join(','))),walls=new Set();for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(y===0||x===0||y===height-1||x===width-1||y>=1+rows*3||x>=1+cols*3)walls.add(`${y},${x}`);
+  for(let br=0;br<rows;br++)for(let bc=0;bc<cols;bc++){const available=[];for(let y=0;y<3;y++)for(let x=0;x<3;x++){const pos=[1+br*3+y,1+bc*3+x];if(!carved.has(pos.join(',')))available.push(pos);}const count=Math.floor(density+random()*(7-density));for(let i=0;i<count;i++){const j=i+Math.floor(random()*(available.length-i));[available[i],available[j]]=[available[j],available[i]];walls.add(available[i].join(','));}}
+  const start=cells[0],goal=[2+(rows-1)*3,2+(cols-1)*3],distances=distancesFrom(start,walls,width,height),free=[...distances.keys()].filter(p=>p!==start.join(',')&&p!==goal.join(','));for(let i=free.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[free[i],free[j]]=[free[j],free[i]];}
+  return {width,height,density,seed,walls:[...walls],start,goal,enemies:free.slice(0,enemyCount).map(p=>p.split(',').map(Number))};
+ }
+ function distancesFrom(start,walls,width,height){const blocked=walls instanceof Set?walls:new Set(walls),dist=new Map([[start.join(','),0]]),queue=[start];for(let i=0;i<queue.length;i++){const [y,x]=queue[i];for(const [dy,dx] of around){const n=[y+dy,x+dx],k=n.join(',');if(n[0]<0||n[0]>=height||n[1]<0||n[1]>=width||blocked.has(k)||dist.has(k))continue;dist.set(k,dist.get(`${y},${x}`)+1);queue.push(n);}}return dist;}
+ function shortestStep(start,goal,walls,width,height){if(start.join(',')===goal.join(','))return start;const blocked=walls instanceof Set?walls:new Set(walls),parent=new Map([[start.join(','),null]]),queue=[start];for(let i=0;i<queue.length;i++){const [y,x]=queue[i];for(const [dy,dx] of around){const next=[y+dy,x+dx],key=next.join(',');if(next[0]<0||next[0]>=height||next[1]<0||next[1]>=width||blocked.has(key)||parent.has(key))continue;parent.set(key,[y,x]);if(key===goal.join(',')){let step=next;while(parent.get(step.join(','))?.join(',')!==start.join(','))step=parent.get(step.join(','));return step;}queue.push(next);}}return start;}
+ function state(maze,difficulty='normal'){return {maze,player:[...maze.start],enemies:maze.enemies.map(p=>[...p]),difficulty,mode:'step',fog:false,won:false,lost:false,moves:0,message:'找到出口，避开追击者'};}
+ function move(s,delta){if(s.won||s.lost)return false;let moved=false;while(true){const next=[s.player[0]+delta[0],s.player[1]+delta[1]],key=next.join(',');if(s.maze.walls.includes(key))break;s.player=next;s.moves++;moved=true;if(s.enemies.some(e=>e.join(',')===key)){s.lost=true;s.message='被追击者截住';break;}if(key===s.maze.goal.join(',')){s.won=true;s.message='抵达出口';break;}const count={easy:1,normal:1,hard:2}[s.difficulty]||1;for(let step=0;step<count;step++){s.enemies=s.enemies.map(e=>shortestStep(e,s.player,s.maze.walls,s.maze.width,s.maze.height));if(s.enemies.some(e=>e.join(',')===s.player.join(','))){s.lost=true;s.message='被追击者追上';break;}}if(s.lost||s.mode==='step')break;}if(!moved)s.message='前方是墙';return moved;}
+ return {generate,state,move,distancesFrom,shortestStep,directions:dirs};
+})();

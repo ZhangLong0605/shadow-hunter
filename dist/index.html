@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="dialogue.css">
   <link rel="stylesheet" href="appearance.css">
   <link rel="stylesheet" href="q-map.css">
+  <link rel="stylesheet" href="maze.css">
 </head>
 <body>
   <header class="header">
@@ -38,6 +39,14 @@
     <div class="game-layout">
       <section class="game-column" aria-label="狩猎场">
         <div class="arena" id="arena">
+          <section id="maze-view" class="maze-view hidden" aria-label="迷雾迷宫">
+            <canvas id="maze-canvas" tabindex="0" aria-label="迷宫网格，方向键或 H J K L 移动"></canvas>
+            <div class="maze-top"><div><small>THIRD JOURNEY / GRID HUNT</small><h2>迷雾迷宫</h2></div><button id="maze-exit" class="maze-icon" title="返回标题" aria-label="返回标题">↩</button></div>
+            <div class="maze-status"><span id="maze-state">寻找出口</span><span id="maze-count">追击者 3</span><span id="maze-moves">步数 0</span></div>
+            <div class="maze-controls"><button id="maze-left" aria-label="向左">←</button><div><button id="maze-up" aria-label="向上">↑</button><button id="maze-down" aria-label="向下">↓</button></div><button id="maze-right" aria-label="向右">→</button></div>
+            <div class="maze-footer"><button id="maze-fog" title="切换迷雾">迷雾：关闭</button><button id="maze-mode" title="单步或滑行">单步</button><button id="maze-restart">重开</button><button id="maze-new">新地图</button><button id="maze-home">返回标题</button></div>
+            <div id="maze-result" class="maze-result hidden" role="status"></div>
+          </section>
           <canvas id="game" tabindex="0" aria-label="五境远征游戏画面。WASD 移动，鼠标左键攻击，空格闪避，Q 影技，长按 E 夺影。"></canvas>
           <canvas id="feedback-canvas" aria-hidden="true"></canvas>
           <div class="scene-top"><div class="location"><span class="small-rune">⌖</span><div><span id="room-name">遗忘林地</span><small id="objective">穿过月光，追寻你的第一枚影子</small></div></div><div class="room-tag" id="room-tag">猎场 <span>01 / 05</span></div></div>
@@ -69,10 +78,12 @@
             <p class="intro-explainer">伙伴消失的那一夜，只剩一盏灯还亮着。<br>穿越五境，带他们一起回家。</p>
             <div class="intro-actions">
               <button id="continue-run" class="camp-resume hidden"><span>继续存档 · 选择世界与人物<small id="resume-summary"></small></span><b>↗</b></button>
+              <button id="maze-resume-title" class="camp-resume hidden"><span>继续迷宫进度<small id="maze-resume-summary">第三旅程 · 独立存档</small></span><b>↗</b></button>
               <div class="intro-start"><button class="primary" id="start-button">开始旅程 <span>↗</span></button><button id="skip-intro" class="text-button">跳过教学 →</button></div>
             </div>
             <div class="intro-destinations" aria-label="探索与试炼">
               <button id="practice-intro" class="practice-entry">试炼场 <span>自由练习 ↗</span></button>
+              <button id="maze-entry" class="atlas-entry maze-entry">迷雾迷宫 <span>第三旅程 · 网格追猎 ↗</span></button>
               <button id="qmap-entry" class="atlas-entry qmap-entry">甜梦云原 · Q 版世界 <span>五张子地图 · 独立旅程 ↗</span></button><button id="atlas-button" class="atlas-entry">五境远征 · 原世界 <span>五张子地图 · 独立旅程 ↗</span></button>
             </div>
             <div class="title-links"><button id="intro-settings">设置</button><button id="story-button">故事序章</button><button id="achievements-button">成就</button><button id="records-button">猎人纪事</button><button id="credits-button">制作与鸣谢</button><details class="intro-save-help"><summary>存档说明</summary><p id="save-note" class="save-note"></p></details></div>
@@ -112,6 +123,8 @@
   <script src="q-map-data.js"></script>
   <script src="q-object-art.js"></script>
   <script src="q-adventure.js"></script>
+  <script src="maze-data.js"></script>
+  <script src="maze-adventure.js"></script>
   <script src="campaign-data.js"></script>
   <script src="game.js"></script>
 </body>

@@ -972,8 +972,9 @@ function selectTheme(theme){
 function openTheme(theme){if(selectTheme(theme))openAtlas(activeWorlds()[0].id);}
 function openSaveChooser(){
  if(state.phase!=='intro')return;
- showModal('saveChooser',`<div class="modal-eyebrow">CONTINUE / 两个世界，各自的旅程</div><h2 id="modal-title">继续哪一段冒险？</h2><p>每个世界拥有五张子地图，地图解锁、行囊、货币与营地存档各自保存。选择后还可更换人物。</p><div class="theme-saves">${['main','cloud'].map(theme=>{const saved=getCampSave(theme);return `<button class="theme-save" data-resume-theme="${theme}" ${saved.status==='ready'?'':'disabled'}><strong>${themeName(theme)}</strong><span>${saved.status==='ready'?saveDescription(saved.data):saved.status==='legacy'?'旧版单地图存档已保留备份，请从新世界入口出发。':'尚无营地存档，从首页对应世界出发。'}</span><b>${saved.status==='ready'?'选择人物，继续 ↗':'未建立旅程'}</b></button>`;}).join('')}</div><button class="secondary" id="save-chooser-back">返回标题</button>`);
+ showModal('saveChooser',`<div class="modal-eyebrow">CONTINUE / 三段独立旅程</div><h2 id="modal-title">继续哪一段冒险？</h2><p>五境、甜梦云原和迷雾迷宫分别保存进度。选择迷宫不会更改其他旅程的存档。</p><div class="theme-saves">${['main','cloud'].map(theme=>{const saved=getCampSave(theme);return `<button class="theme-save" data-resume-theme="${theme}" ${saved.status==='ready'?'':'disabled'}><strong>${themeName(theme)}</strong><span>${saved.status==='ready'?saveDescription(saved.data):saved.status==='legacy'?'旧版单地图存档已保留备份，请从新世界入口出发。':'尚无营地存档，从首页对应世界出发。'}</span><b>${saved.status==='ready'?'选择人物，继续 ↗':'未建立旅程'}</b></button>`;}).join('')}<button class="theme-save maze-save-choice" id="resume-maze-choice" ${window.HUNTER_MAZE_ADVENTURE?.hasSave()?'':'disabled'}><strong>迷雾迷宫</strong><span>网格探索 · 独立进度与难度</span><b>${window.HUNTER_MAZE_ADVENTURE?.hasSave()?'继续迷宫 ↗':'尚无迷宫进度'}</b></button></div><button class="secondary" id="save-chooser-back">返回标题</button>`);
  $('modal-card').querySelectorAll('[data-resume-theme]').forEach(el=>el.onclick=()=>{closeModal('intro');selectTheme(el.dataset.resumeTheme);openResumeProfession();});
+ if($('resume-maze-choice'))$('resume-maze-choice').onclick=()=>{closeModal('intro');window.HUNTER_MAZE_ADVENTURE.resume();};
  $('save-chooser-back').onclick=()=>closeModal('intro');
 }
 function drawQHero(){
@@ -1582,7 +1583,7 @@ function saveCamp(){
 }
 function saveDescription(s){const cloud=CAMPAIGN.themeOf(s.world.worldId)==='cloud';return `${CAMPAIGN.catalog.find(w=>w.id===(s.world.worldId||'forest')).name} · ${cloud?'已完成活动 '+s.checkpoint.completed.length: s.checkpoint.completed.length+' / 3 印记'} · ${s.world.claimed.length} / ${cloud?5:4} ${cloud?'星糖果':'宝藏'} · ${formatTime(s.checkpoint.run.time)} · ${new Date(s.savedAt).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})}`;}
 function refreshResume(){
- const saved=getCampSave();$('continue-run').classList.toggle('hidden',!['main','cloud'].some(t=>getCampSave(t).status==='ready'));
+ const saved=getCampSave();$('continue-run').classList.toggle('hidden',!['main','cloud'].some(t=>getCampSave(t).status==='ready')&&!window.HUNTER_MAZE_ADVENTURE?.hasSave());$('maze-resume-title').classList.toggle('hidden',!window.HUNTER_MAZE_ADVENTURE?.hasSave());
  $('resume-summary').textContent='选择世界 → 选择人物 → 继续营地旅程';
  $('save-note').textContent=saved.status==='ready'?'存档保存在当前浏览器；B 传送回城会自动更新，营地也可按 F 手动保存。':saved.status==='empty'?'首次出发自动建立营地存档；B 回城自动结算保存，也可在营地按 F 手动保存。':saved.status==='invalid'?'营地存档格式不兼容或已损坏；可开始新狩猎，并在营地重新保存。':'当前浏览器无法读取存档；仍可开始新狩猎。';
  if(saved.status==='ready')$('resume-summary').textContent=(saved.temporary?'本页暂存 · ':'')+saveDescription(saved.data);if(saved.temporary)$('save-note').textContent='本轮收获暂存于本页，可继续冒险。请勿刷新或关闭网页；回营后可重试保存。';
@@ -1761,6 +1762,7 @@ $('flask-button').onclick=useFlask;$('recall-button').onclick=startRecall;$('wor
 
 // A read-only snapshot is intentionally available for automated smoke verification.
 window.shadowHunter={snapshot:()=>({appearance:characterAppearance,phase:state.phase,mode:state.mode,campaign:{cleared:[...state.campaign.cleared],inventory:{...state.campaign.inventory},equipped:state.campaign.equipped},journey:{...state.journey,perks:[...state.journey.perks]},world:state.world?{id:state.world.id,completed:[...state.world.completed],visited:[...state.world.visited],track:state.world.track,camera:{...camera}}:null,objective:state.objective?{kind:state.objective.kind,status:state.objective.status,remaining:state.objective.remaining,lanternHp:state.objective.lantern?.hp}:null,room:state.room,time:state.time,hp:player.hp,focus:player.focus,kills:state.kills,captures:state.captures,slots:[...state.slots],owned:[...state.owned],corruption:state.corruption,locked:state.locked,skillCd:state.skillCd,weapon:state.weapon,player:{x:player.x,y:player.y},enemies:enemies.filter(e=>!e.dead).map(e=>({type:e.type,x:e.x,y:e.y,hp:e.hp,pressure:e.pressure,exposed:e.exposed,boss:e.boss})),tutorial:state.tutorial?{step:state.tutorial.step}:null,projectiles:projectiles.length,minions:minions.length,combo:combo().name})};
+window.shadowHunter.returnTitle=()=>reset();
 /* Release integration keeps camp data and original combat rules compatible. */
 let achievementQueue=[];
 let releaseReturn='intro',releaseClock=0,lastAudioScene='',releaseLastOutcome='defeat';
@@ -1905,5 +1907,3 @@ initializeExperience();
 $('qmap-entry').onclick=()=>openTheme('cloud');
 makeGround();reset();requestAnimationFrame(frame);
 })();
-
-
