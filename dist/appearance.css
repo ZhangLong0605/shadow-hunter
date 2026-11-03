@@ -1,0 +1,74 @@
+/* Shared in-game wardrobes. */
+.appearance-entry { color:#d4eddc!important;white-space:nowrap; }
+.appearance-entry kbd { font-size:9px;margin-left:4px;opacity:.7; }
+body:has(#intro:not(.hidden)) .header nav .appearance-entry { display:block; }
+.profession-art.has-image img { position:absolute;inset:0;min-height:0;min-width:0; }
+body:has(#modal:not(.hidden):is([data-kind="profession"],[data-kind="monsters"])) #achievement-toast { visibility:hidden; }
+.header nav { gap:clamp(10px,1.5vw,24px); }
+.header .nav-button { white-space:nowrap; }
+.appearance-save { display:grid;gap:8px;padding:16px 20px;margin-bottom:20px;border-left:3px solid #b8dca0;background:#b8dca00c; }
+.appearance-save span { font-size:11px;color:#95b3a4; }
+.appearance-save b { font-size:14px;color:#d3e9cc;font-weight:500; }
+.modal[data-kind="profession"],.modal[data-kind="monsters"] { position:fixed;inset:0;z-index:40;padding:24px;background:linear-gradient(125deg,#08191bf7,#081016fa); }
+.modal[data-kind="profession"] .modal-card,.modal[data-kind="monsters"] .modal-card { width:1120px;max-height:calc(100svh - 48px);padding:8px 14px 0 8px; }
+.modal[data-kind="monsters"] .profession-heading h2 { font-size:28px; }
+.profession-confirm { position:sticky;bottom:0;z-index:2;padding:18px 12px;margin-top:22px;background:#0c191ef5;backdrop-filter:blur(12px); }
+.profession-confirm .primary { margin-top:0; }
+.monster-layout { display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px; }
+.monster-browser { border-right:1px solid #a4d9cf20;padding-right:20px; }
+.monster-filters { display:flex;gap:8px;margin-bottom:16px; }
+.monster-filters button { padding:10px 12px;font-size:12px;border-bottom:2px solid transparent;color:#8ea99f; }
+.monster-filters button[aria-pressed="true"] { color:#dcf3d9;border-color:#b8dca0; }
+.monster-filters small { margin-left:4px;opacity:.65; }
+.monster-roster { display:grid;grid-template-columns:1fr;gap:7px;max-height:490px;overflow:auto;scrollbar-width:thin;padding:3px; }
+.monster-entry { display:flex;align-items:center;gap:12px;padding:4px 10px 4px 2px;text-align:left;border:1px solid #a4d9cf18;border-radius:6px;background:#102027; }
+.monster-entry img { width:56px;height:56px;object-fit:contain; }
+.monster-entry span { display:grid;gap:5px; }
+.monster-entry strong { font-size:13px;font-weight:500;color:#d8eadd; }
+.monster-entry small { font-size:10px;color:#8da89e; }
+.monster-entry.selected { border-color:var(--profession-color);background:#1e3438; }
+.monster-detail-heading>small { color:var(--profession-color);letter-spacing:2px;font-size:11px; }
+.monster-detail-heading h3 { font-size:27px;margin:9px 0;color:#d9ede3;letter-spacing:3px; }
+.monster-detail-heading p { font-size:12px;margin-bottom:16px; }
+.monster-style-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+.monster-style-grid .profession-art { height:235px;background:radial-gradient(ellipse at 50% 65%,#344448,#122025 75%); }
+.monster-style-grid .profession-art img { padding:12px; }
+.monster-style-grid .profession-copy { padding:16px; }
+.monster-style-grid .profession-copy strong { font-size:21px; }
+.monster-original { display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:14px;padding:10px 16px;border:1px solid #a4d9cf30;border-radius:6px;background:#102027; }
+.monster-original .shadow-icon { width:38px;height:38px;color:var(--profession-color); }
+.monster-original>span:not(.shadow-icon) { display:grid;gap:5px;flex:1; }
+.monster-original b { font-size:13px;color:#cbded4;font-weight:500; }
+.monster-original small { color:#87a498;font-size:11px; }
+.monster-original>strong { color:var(--profession-color);font-weight:400; }
+.monster-original.selected { border-color:var(--profession-color); }
+.monster-presets { display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:20px;color:#7b998c;font-size:11px; }
+.monster-presets button { border:1px solid #58726370;padding:7px 10px;color:#b4cbbd;border-radius:4px; }
+.monster-presets button:hover { border-color:#c0dfad; }
+.monster-entry:focus-visible,.profession-card:focus-visible,.monster-original:focus-visible { outline:2px solid #d8edba;outline-offset:3px; }
+@media(max-width:1100px) {
+ .header nav { overflow-x:auto;min-width:0;gap:14px;scrollbar-width:thin; }
+ .header .brand,.header-end { flex-shrink:0; }
+ .appearance-entry kbd { display:none; }
+}
+@media(max-width:800px) {
+ .monster-layout { grid-template-columns:1fr;gap:22px; }
+ .monster-browser { border-right:0;border-bottom:1px solid #a4d9cf20;padding:0 0 18px; }
+ .monster-roster { grid-template-columns:repeat(3,minmax(0,1fr));max-height:180px; }
+ .monster-entry { gap:4px; }
+ .monster-entry img { width:40px;height:48px; }
+ .monster-entry strong { font-size:11px; }
+ .monster-style-grid .profession-card { display:flex; }
+ .monster-style-grid .profession-art { height:200px;min-height:0; }
+ .modal[data-kind="profession"],.modal[data-kind="monsters"] { padding:12px; }
+ .modal[data-kind="profession"] .modal-card,.modal[data-kind="monsters"] .modal-card { max-height:calc(100svh - 24px);padding:4px 6px; }
+}
+@media(max-width:550px) {
+ .monster-roster { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .monster-style-grid { gap:10px; }
+ .monster-style-grid .profession-art { height:170px; }
+ .monster-style-grid .profession-copy { padding:12px; }
+ .monster-style-grid .profession-copy strong { font-size:18px; }
+ .monster-style-grid .profession-copy>span { font-size:11px; }
+ .profession-confirm { gap:10px;padding:12px 8px; }
+}

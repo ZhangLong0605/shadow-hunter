@@ -80,7 +80,7 @@ window.HUNTER_COMBAT=(()=>{
   // Keep a crowded encounter readable: six nearby text instructions at most;
   // every danger boundary and direction still renders independently of text.
   // Reserve health / pressure bars as well as earlier labels.
-  const occupied=enemies.filter(e=>!e.dead).map(e=>({x:e.x,y:e.y-e.r-27,w:e.boss?84:52,h:14}));labels.sort((a,b)=>Math.hypot(a.x-v.player.x,a.y-v.player.y)-Math.hypot(b.x-v.player.x,b.y-v.player.y));
+  const occupied=(v.healthBars||enemies.filter(e=>!e.dead).map(e=>({x:e.x,y:e.y-e.r-27,w:e.boss?84:52,h:14}))).map(box=>({...box}));labels.sort((a,b)=>Math.hypot(a.x-v.player.x,a.y-v.player.y)-Math.hypot(b.x-v.player.x,b.y-v.player.y));
   for(const entry of labels.slice(0,6))label(g,entry,u,occupied);g.restore();
  }
  return {palette,render,hazard};

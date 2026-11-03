@@ -24,7 +24,7 @@ window.HUNTER_RELEASE = (() => {
  ['relic3','配饰比武器还多','行囊同时拥有 3 种护符','收集','relics',3],
  ['return','灯火可亲','完成一次传送回城结算','旅途','returns',1],
  ['worlds3','跨境旅人','通关任意三个世界','旅途','worlds',3],
- ['worlds5','谁也不留下','通关全部五境，让归途灯重新亮起','旅途','worlds',5],
+ ['worlds5','谁也不留下','通关全部五境，让归途灯重新亮起','旅途','mainWorlds',5],
  ['perfectdodge','你打的是残影','在敌方攻击预警中完成一次精准闪避','战斗','perfectdodge',1],
  ['shieldcounter','盾说不行','用护盾抵挡一次攻击并触发反击','战斗','shieldcounter',1],
  ['lastsip','先喝一口再逞强','生命不高于 15 时成功饮用月露','成长','lastsip',1],
@@ -43,7 +43,7 @@ window.HUNTER_RELEASE = (() => {
   const limit=(value,min,max,fallback)=>typeof value==='number'&&Number.isFinite(value)?Math.round(Math.max(min,Math.min(max,value))):fallback;
   function normalize(input){const s=input&&typeof input==='object'?input:{};return {sound:typeof s.sound==='boolean'?s.sound:defaults.sound,music:limit(s.music,0,100,48),effects:limit(s.effects,0,100,65),brightness:limit(s.brightness,85,130,108),shake:typeof s.shake==='boolean'?s.shake:true,atmosphere:typeof s.atmosphere==='boolean'?s.atmosphere:true,difficulty:Object.hasOwn(modes,s.difficulty)?s.difficulty:'standard'};}
   let settings=normalize(read(settingsKey));
-  function normalizeJournal(raw){raw=raw&&typeof raw==='object'?raw:{};return {wins:limit(raw.wins,0,999999,0),runs:limit(raw.runs,0,999999,0),bestTime:typeof raw.bestTime==='number'&&Number.isFinite(raw.bestTime)&&raw.bestTime>0?raw.bestTime:null,achievements:Array.isArray(raw.achievements)?[...new Set(raw.achievements.filter(id=>achievements.some(a=>a[0]===id)))]:[],progress:Object.fromEntries(metricKeys.map(k=>[k,limit(raw.progress?.[k],0,999999,0)])),last:raw.last&&typeof raw.last==='object'?{ending:['dawn','assimilated','fallen'].includes(raw.last.ending)?raw.last.ending:'fallen',time:limit(raw.last.time,0,999999,0),kills:limit(raw.last.kills,0,999999,0),captures:limit(raw.last.captures,0,999999,0)}:null};}
+  function normalizeJournal(raw){raw=raw&&typeof raw==='object'?raw:{};return {wins:limit(raw.wins,0,999999,0),runs:limit(raw.runs,0,999999,0),bestTime:typeof raw.bestTime==='number'&&Number.isFinite(raw.bestTime)&&raw.bestTime>0?raw.bestTime:null,achievements:Array.isArray(raw.achievements)?[...new Set(raw.achievements.filter(id=>achievements.some(a=>a[0]===id)))]:[],progress:Object.fromEntries(metricKeys.map(k=>[k,limit(k==='mainWorlds'?(raw.progress?.mainWorlds??raw.progress?.worlds):raw.progress?.[k],0,999999,0)])),last:raw.last&&typeof raw.last==='object'?{ending:['dawn','assimilated','fallen'].includes(raw.last.ending)?raw.last.ending:'fallen',time:limit(raw.last.time,0,999999,0),kills:limit(raw.last.kills,0,999999,0),captures:limit(raw.last.captures,0,999999,0)}:null};}
   function journal(){
    try{const text=localStorage.getItem(journalKey);if(journalDirty&&text===journalRaw)return normalizeJournal(journalMemory);journalRaw=text;journalMemory=normalizeJournal(text?JSON.parse(text):null);journalDirty=false;journalStorageOK=true;}
    catch{journalStorageOK=false;if(!journalMemory)journalMemory=normalizeJournal(null);}
@@ -57,7 +57,7 @@ window.HUNTER_RELEASE = (() => {
    for(const [id,,,category,key,target] of achievements){if(!data.achievements.includes(id)&&data.progress[key]>=target){data.achievements.push(id);fresh.push(id);changed=true;}}
    if(changed||journalDirty)saveJournal(data);return fresh;
   }
-  function record(result){const data=journal();data.runs++;if(result.ending==='dawn'){data.wins++;if(!data.bestTime||result.time<data.bestTime)data.bestTime=result.time;}data.last={ending:result.ending,time:result.time,kills:result.kills,captures:result.captures};saveJournal(data);unlock(result.ending==='dawn'?'dawn':result.ending==='assimilated'?'assimilated':'');return journal();}
+  function record(result){const data=journal();data.runs++;if(result.ending==='dawn'){data.wins++;if(!data.bestTime||result.time<data.bestTime)data.bestTime=result.time;}data.last={ending:result.ending,time:result.time,kills:result.kills,captures:result.captures};saveJournal(data);unlock(result.ending==='dawn'&&result.forest!==false?'dawn':result.ending==='assimilated'?'assimilated':'');return journal();}
   function configure(patch){settings=normalize({...settings,...patch});return write(settingsKey,settings);}
   return {defaults,modes,achievements,normalize,journal,unlock,observe,record,configure,get journalStorageOK(){return journalStorageOK;},get settings(){return {...settings};},incoming:()=>modes[settings.difficulty].incoming};
 })();

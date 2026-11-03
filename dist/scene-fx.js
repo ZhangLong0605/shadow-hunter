@@ -4,6 +4,7 @@
 window.HUNTER_SCENE=(()=>{
  const TAU=Math.PI*2;
  const palettes={forest:{light:'#b4e5db',mist:'#739faa',spark:'#c8edb4',soil:'#9bbd91'},forge:{light:'#f8b06b',mist:'#845963',spark:'#ffc27b',soil:'#d6a582'},tide:{light:'#91e9eb',mist:'#7ab3c3',spark:'#b9ffff',soil:'#a2c8bd'},ruins:{light:'#f4dc9a',mist:'#a4997e',spark:'#ffe9b6',soil:'#cebf94'},eclipse:{light:'#bda4f6',mist:'#7b71a6',spark:'#e1c4ff',soil:'#9f9bc1'}};
+ Object.assign(palettes,{cloud:{light:'#fff4ce',mist:'#fff8ed',spark:'#fffdf5',soil:'#b5d79c'},meadow:{light:'#e9fadb',mist:'#cbf0bb',spark:'#fffdf5',soil:'#9adca2'},lagoon:{light:'#e4f7ff',mist:'#bde9fb',spark:'#fffdf5',soil:'#8ed2f0'},honey:{light:'#fff6df',mist:'#ffe9b8',spark:'#fffdf5',soil:'#f7c96f'},mirror:{light:'#f8f1ff',mist:'#e9d8fb',spark:'#fffdf5',soil:'#cbaaee'},throne:{light:'#fff2f7',mist:'#ffdfea',spark:'#fffdf5',soil:'#f8b3cd'}});
  const hash=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
  const visible=(p,c,pad=200)=>p.x>c.x-pad&&p.y>c.y-pad&&p.x<c.x+c.w+pad&&p.y<c.y+c.h+pad;
  function oval(g,x,y,rx,ry,color){g.fillStyle=color;g.beginPath();g.ellipse(x,y,rx,ry,0,0,TAU);g.fill();}
@@ -17,6 +18,7 @@ window.HUNTER_SCENE=(()=>{
   return mist;
  }
  function bake(g,world,scenery,id='forest'){
+  if(id==='cloud')return;
   const p=palettes[id]||palettes.forest;g.save();
   // Broad mineral / moss patches break up flat fills. Keep the river, paths and
   // solid walls legible; cache this work once per map entry, never every frame.
@@ -45,6 +47,7 @@ window.HUNTER_SCENE=(()=>{
   g.restore();
  }
  function rock(g,p,id='forest'){
+  if(id==='cloud'){oval(g,p.x,p.y,p.r,p.r*.65,'#b6cea1');oval(g,p.x-4,p.y-5,p.r*.75,p.r*.42,'#e6f1ce');return;}
   const color=palettes[id]?.soil||'#9bbd91',r=p.r;g.save();g.translate(p.x,p.y);
   shape(g,[[-r,0],[-r*.6,-r*.65],[r*.25,-r*.8],[r*.85,-r*.3],[r,3],[r*.35,r*.4],[-r*.6,r*.35]],'#34494e','#71888366');
   shape(g,[[-r,0],[-r*.6,-r*.65],[r*.25,-r*.8],[0,-r*.1]],color+'50');
@@ -52,6 +55,7 @@ window.HUNTER_SCENE=(()=>{
   g.strokeStyle='#b1c9ba66';g.lineWidth=1;g.beginPath();g.moveTo(-r*.6,-r*.65);g.lineTo(r*.25,-r*.8);g.lineTo(r*.85,-r*.3);g.stroke();g.restore();
  }
  function floor(g,v){
+  if(v.id==='cloud')return;
   const {world,camera:c,player,id,rich}=v,p=palettes[id]||palettes.forest,t=rich?v.time:0;
   g.save();g.globalCompositeOperation='screen';
   // Directional, soft edged pools make the player silhouette read against the ground.
@@ -76,6 +80,11 @@ window.HUNTER_SCENE=(()=>{
   g.restore();
  }
  function atmosphere(g,v){
+  if(v.id==='cloud'){
+   if(!v.rich)return;
+   const p=palettes[v.world.regionAt(v.player.x,v.player.y).id]||palettes.cloud;
+   for(let i=0;i<24;i++){const x=v.camera.x+hash(i+21)*v.camera.w,y=v.camera.y+(hash(i+48)*v.camera.h+v.time*5)%v.camera.h;oval(g,x,y,2+i%3,2+i%3,p.spark+'88');}return;
+  }
   const {camera:c,id,player,rich,world}=v,p=palettes[id]||palettes.forest,t=rich?v.time:0;g.save();
   // Local light shafts have a bright inner sliver and a soft outer spread.
   g.globalCompositeOperation='screen';
