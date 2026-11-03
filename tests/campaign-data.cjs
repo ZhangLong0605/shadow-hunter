@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const window={};for(const name of ['world-data.js','expedition-data.js','campaign-data.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../dist',name),'utf8'),{window,Math});
 const c=window.HUNTER_CAMPAIGN,p=c.empty();
 assert.equal(c.worlds.length,5);assert.equal(Object.keys(c.items).length,20);assert.ok(c.valid(p));
-assert.ok(c.unlocked(p,'forest'));assert.ok(!c.unlocked(p,'forge'));assert.equal(c.complete(p,'ruins','invalid'),null);
+assert.ok(c.unlocked(p,'forest'));assert.ok(c.unlocked(p,'forge'));assert.equal(c.complete(p,'ruins','invalid'),null);
 c.complete(p,'forest','a');assert.ok(c.unlocked(p,'forge')&&c.unlocked(p,'tide'));assert.ok(!c.unlocked(p,'ruins'));c.complete(p,'forge','b');assert.ok(!c.unlocked(p,'ruins'));c.complete(p,'tide','c');assert.ok(c.unlocked(p,'ruins'));c.complete(p,'ruins','d');assert.ok(c.unlocked(p,'eclipse'));c.complete(p,'eclipse','e');assert.equal(p.cleared.length,5);
 const before=JSON.stringify(p);assert.equal(c.complete(p,'forest','a'),null);assert.equal(JSON.stringify(p),before);assert.ok(c.valid(p));
 for(const w of c.worlds){assert.ok(p.inventory[w.loot[3]]>=1);const found=new Set();for(const n of [0,.65,.8,.98])found.add(c.roll(w.id,'mission',()=>n));assert.equal(found.size,4);assert.equal(c.roll(w.id,'monster',()=>.9),null);for(const item of found)assert.equal(c.items[item].world,w.id);}
@@ -35,3 +35,7 @@ for(const w of c.worlds){
  }
 }
 console.log('Kill loot: every world guarantees a basic supply on a failed bonus roll; repeated claims never duplicate it.');
+assert.equal(c.worlds[1].name,'帝国之巅');assert.equal(c.worlds[1].mode,'climb');assert.equal(c.worlds[1].pos[0],c.worlds[2].pos[0]);assert.equal(c.worlds[3].name,'熔火裂谷');
+console.log('World order: Empire is the second branch beside Tide, with Forge in fourth position.');
+
+const demo=c.empty();assert.ok(c.complete(demo,'forge','demo-direct'));assert.ok(c.valid(demo));assert.ok(!c.unlocked(demo,'ruins'));assert.ok(!c.unlocked(demo,'tide'));

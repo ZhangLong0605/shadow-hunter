@@ -3,16 +3,16 @@ window.HUNTER_CAMPAIGN = (() => {
  'use strict';
  const worlds=[
   {id:'forest',number:1,name:'月蚀森林',subtitle:'第一盏灯，第一条归路',level:1,requires:[],color:'#bad4a0',symbol:'♧',pos:[100,220],theme:'forest',description:'沿月光小径追猎镜魔、守住梦灯、夺取幽灵。三枚印记将唤醒月狼。',feature:'双桥河道 · 夺影入门',enemies:['wolf','archer','mirror'],boss:'饥饿月狼',bossType:'wolf',bossMove:'lunge',loot:['leaf','dew','seed','fang']},
-  {id:'forge',number:2,name:'熔火裂谷',subtitle:'在灰烬中，重新点燃炉心',level:3,requires:['forest'],color:'#efa777',symbol:'♨',pos:[310,100],theme:'ash',description:'猎杀熔炉守卫，保卫余火，穿过熔岩带关闭三座散热阀。小心祭司锁定的落火。',feature:'余烬地形 · 阀门探索',enemies:['cinder','fire','giant'],boss:'熔心巨像',bossType:'giant',bossMove:'meteor',loot:['coal','ember','ore','heart']},
+  {id:'forge',number:2,name:'帝国之巅',subtitle:'把旗帜交给风，把黎明带回人间',level:3,requires:[],color:'#dec898',symbol:'◇',pos:[310,100],theme:'ruins',description:'攀登 443 米的帝国大厦，绕过建筑障碍和随机亮窗，在媒体声援、警方布防与直升机干扰中登顶挥旗，点亮第二盏归途灯。',feature:'垂直攀爬 · 自定义旗帜 · 登顶演出',mode:'climb',enemies:['sentinel','archer','mirror'],boss:'砂冠守卫',bossType:'shield',bossMove:'shieldBash',loot:['sand','rune','alloy','compass']},
   {id:'tide',number:3,name:'潮汐群岛',subtitle:'循着潮声，找回失落航标',level:3,requires:['forest'],color:'#8ddbd4',symbol:'≈',pos:[310,340],theme:'marsh',description:'走过浅滩连接的岛屿，点亮三座航标，捕获潮灵，清除潜伏的水泽梦魇。',feature:'浅滩减速 · 航标寻路',enemies:['stalker','ghost','swarm'],boss:'深潮幽魂',bossType:'ghost',bossMove:'venom',loot:['shell','pearl','kelp','tideglass']},
-  {id:'ruins',number:4,name:'风蚀遗迹',subtitle:'当两条归路，在旧城交汇',level:5,requires:['forge','tide'],color:'#dec898',symbol:'◇',pos:[535,220],theme:'ruins',description:'按「日 → 月 → 星」复原古代机关，截住镜魔信使，从侧后方击破遗迹卫士。',feature:'顺序机关 · 重甲侧击',enemies:['sentinel','archer','mirror'],boss:'砂冠守卫',bossType:'shield',bossMove:'shieldBash',loot:['sand','rune','alloy','compass']},
+  {id:'ruins',number:4,name:'熔火裂谷',subtitle:'在灰烬中，重新点燃炉心',level:5,requires:['forge','tide'],color:'#efa777',symbol:'♨',pos:[535,220],theme:'ash',description:'猎杀熔炉守卫，保卫余火，穿过熔岩带关闭三座散热阀。小心祭司锁定的落火。',feature:'余烬地形 · 阀门探索',enemies:['cinder','fire','giant'],boss:'熔心巨像',bossType:'giant',bossMove:'meteor',loot:['coal','ember','ore','heart']},
   {id:'eclipse',number:5,name:'永夜王庭',subtitle:'穿越裂隙，把黎明带回来',level:7,requires:['ruins'],color:'#c5a5ee',symbol:'☾',pos:[750,220],theme:'lair',description:'清剿王庭精英，守护最后的梦灯，逐一净化裂隙。暮影君王会在第二阶段释放梦蚀。',feature:'混合精英 · 裂隙净化',enemies:['cinder','sentinel','stalker','mirror'],boss:'暮影君王',bossType:'mirror',bossMove:'shot',loot:['dust','star','prism','crown']}
  ];
  const items={};
  const names=[['月纹叶','澄净月露','萤光种子','月狼牙坠'],['温热煤晶','不熄余火','赤铜矿','熔心护符'],['潮纹贝','清潮珠','银叶海藻','潮汐琉璃'],['星纹砂','风语符','古代合金','归途罗盘'],['月蚀尘','破晓星屑','夜光棱晶','曙光冠冕']];
  const effects=[['heal',22,'purge',18,'focus',35],['focus',30,'heal',30,'purge',22],['heal',25,'purge',25,'focus',40],['focus',40,'purge',28,'heal',35],['purge',30,'heal',45,'focus',55]];
  const relics=[{attack:1.1,text:'普攻伤害 +10%'},{incoming:.9,text:'受到伤害 −10%'},{heal:10,text:'月露药剂额外恢复 10 生命'},{dash:.85,text:'闪避冷却 −15%'},{skill:1.15,text:'影技伤害 +15%'}];
- worlds.forEach((w,i)=>w.loot.forEach((id,j)=>{const effect=j===3?relics[i]:{[effects[i][j*2]]:effects[i][j*2+1]};items[id]={id,name:names[i][j],world:w.id,rarity:j===3?'珍稀':j===0?'普通':'精良',kind:j===3?'relic':'supply',effect,description:j===3?effect.text:`${{heal:'恢复生命',purge:'净化梦蚀',focus:'获得专注'}[effects[i][j*2]]} ${effects[i][j*2+1]}`};}));
+ worlds.forEach((w,index)=>{const i=w.mode==='climb'?3:w.id==='ruins'?1:index;w.loot.forEach((id,j)=>{const effect=j===3?relics[i]:{[effects[i][j*2]]:effects[i][j*2+1]};items[id]={id,name:names[i][j],world:w.id,rarity:j===3?'珍稀':j===0?'普通':'精良',kind:j===3?'relic':'supply',effect,description:j===3?effect.text:`${{heal:'恢复生命',purge:'净化梦蚀',focus:'获得专注'}[effects[i][j*2]]} ${effects[i][j*2+1]}`};});});
  const rides={moonbike:{id:'moonbike',name:'月轮单车',price:60,speed:1.45,description:'骑乘移动速度 +45%，保持地形碰撞。'},glideboard:{id:'glideboard',name:'浮光滑板',price:120,speed:1.75,description:'骑乘移动速度 +75%，浅沼仍会减速。'}};
  const shopGoods=[{id:'moonbike',ride:'moonbike',price:60},{id:'glideboard',ride:'glideboard',price:120},{id:'leaf',item:'leaf',price:10},{id:'dew',item:'dew',price:12},{id:'fang',item:'fang',price:50},{id:'heart',item:'heart',price:65},{id:'compass',item:'compass',price:65}];
  function garage(p){return p.transport||(p.transport={coins:0,owned:[],selected:null});}
@@ -37,8 +37,8 @@ window.HUNTER_CAMPAIGN = (() => {
  };
  const hints={hunt:'清剿本处标记敌群 · 收割或夺影均计入',defend:'守护梦灯 36 秒 · 抵御四波敌人',capture:'指定夺影 · 击破幽灵并长按 E',chase:'追上镜魔 · 45 秒内收割或夺影',survey:'探索三处光标 · 靠近后按 F 激活',sequence:'依照日 → 月 → 星顺序，靠近石碑按 F',purify:'击败裂隙守卫 · 靠近三处裂隙按 F 净化'};
  const palettes={forge:['#402c29','#6c4330','#3b2526','#e9a16c'],tide:['#173d43','#317782','#214e57','#a4dfd3'],ruins:['#444038','#71654d','#343944','#dfc990'],eclipse:['#29263d','#4e3d66','#202136','#c3a3e6']};
- function map(id){if(id==='forest')return window.HUNTER_WORLD;const w=worlds.find(w=>w.id===id),l=layouts[id];if(!w||!l)throw Error('Unknown world');
-  const p=palettes[id],width=3600,height=2400,bridges=[];
+ function map(id){if(id==='forest')return window.HUNTER_WORLD;const w=worlds.find(w=>w.id===id),l=layouts[id==='ruins'?'forge':id==='forge'?'ruins':id];if(!w||!l)throw Error('Unknown world');
+  const p=palettes[id==='ruins'?'forge':id==='forge'?'ruins':id],width=3600,height=2400,bridges=[];
   const sites=[{id:'camp',name:'界门营地',kind:'camp',x:520,y:2010,symbol:'✧',color:w.color,hint:'保存、休整、使用物品或前往其他已解锁世界'},...l.points.map(([x,y],i)=>({id:['chase','defend','capture','boss'][i],x,y,kind:i===3?'boss':l.kinds[i],name:l.names[i],symbol:i===3?'☾':['◇','✦','◈'][i],color:w.color,hint:i===3?'取得三枚印记后挑战'+w.boss:hints[l.kinds[i]]}))];
   const regions=[{id:'forest',name:w.name+' · 边境',x:0,y:0,w:1200,h:2400},{id:'ash',name:'上层回廊',x:1200,y:0,w:1200,h:1200},{id:'marsh',name:'下层荒野',x:1200,y:1200,w:1200,h:1200},{id:'ruins',name:'遗落腹地',x:2400,y:1200,w:1200,h:1200},{id:'lair',name:l.names[3],x:2400,y:0,w:1200,h:1200}].map((r,i)=>({...r,color:i%2?p[2]:p[0],light:p[1],ink:p[3],hint:w.feature}));
   const walls=l.walls.map(v=>({...v,kind:'wall'})),terrain=l.terrain,paths=l.paths;

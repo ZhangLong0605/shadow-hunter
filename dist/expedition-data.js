@@ -25,6 +25,7 @@ window.HUNTER_EXPEDITION = (() => {
     if(!num(p.hp,0,100)||p.hp===0||!num(p.focus,0,100)||!num(p.x,390,650)||!num(p.y,1880,2140)||Math.hypot(p.x-520,p.y-2010)>131)return false;
     if(!list(c.completed,['chase','defend','capture'],3)||!Number.isInteger(c.restCharges)||!num(c.restCharges,0,20))return false;
     if(!list(w.visited,['forest','ash','marsh','ruins','lair'],5)||!list(w.claimed,discoveries.map(d=>d.id),4)||!list(w.seen,['cinder','stalker','sentinel'],3)||typeof w.trailCaptured!=='boolean')return false;
+    if(w.regionGate!==undefined&&w.regionGate!==null){const gate=w.regionGate;if(!record(gate)||!list(gate.open,['forest','ash','marsh','ruins','lair'],5)||!gate.open.includes('forest')||!list(gate.cleared,gate.open,5))return false;}
     if(!['shop','camp','chase','defend','capture','boss',...discoveries.map(d=>d.id)].includes(w.track))return false;
     if(!Array.isArray(c.enemies)||c.enemies.length>120)return false;
     const enemyIds=new Set();

@@ -24,7 +24,7 @@ const localStorage={getItem:k=>{if(storageFail)throw Error('Storage blocked');re
 const sandbox={window,document,localStorage,requestAnimationFrame:noop,console,Math};
 for(const name of ['release-data.js','art.js','feedback.js','scene-fx.js','combat-cues.js'])vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist',name),'utf8'),sandbox);
 const code=fs.readFileSync(require('node:path').join(__dirname,'../dist/game.js'),'utf8');
-const hook=`window.testGame={shopSite,openShop,buyShopGood,toggleRide,worldMoveSpeed,basketballSkill,updateQuickInventory,selectChestChoice,confirmChestChoice,cancelChestChoice,get knownAchievements(){return knownAchievements},openAchievements,renderAchievements,skillGrowth,updateLevelCelebration,itemIcon,lootMarkup,showKillReward,showSettlement,updateKillRewards,showPrologue,storyCompanions,storyChapterMarkup,openEncounter,checkEncounter,advanceEncounter,finishEncounter,updateEncounter,get encounterSeen(){return encounterSeen},openProfession,selectProfession,confirmProfession,get state(){return state},get player(){return player},get enemies(){return enemies},get projectiles(){return projectiles},get minions(){return minions},get effects(){return effects},get keys(){return keys},get mouse(){return mouse},reset,start,update,enterRoom,damageEnemy,hitPlayer,expose,gainKill,skill,dash,basicAttack,updateCapture,openBuild,openCodex,openGuide,pause,closeModal,showRoute,combo,normalizeSkills,showReward,equipSkill,beginTutorial,finishTutorial,updateTutorial,setTutorialStep,openSkillDetails,startPractice,practiceTargets,refreshPractice,updateObjective,retryObjective,requestPractice,draw,enterWorld,updateCamera,get camera(){return {...camera}},pointOnScreen,mousePosition,moveEntity,worldPositionFree,worldMoveSpeed,worldTravelEnd,spawnWorldEnemy,updateWorldEnemy,performEnemyAttack,interactWorld,startWorldMission,completeWorldMission,openWorldMap,updateWorld,useFlask,startRecall,updateJourney,chooseBoon,navigationTarget,leaveWorldMission,stunBoss,pressureBreak,updateEnemy,shoot,spawnMinion,showModal,projectileBlocked,drawHazard,get hazards(){return hazards}};\n`;
+const hook=`window.testGame={updateEnemyBubbles,drawEnemyBubbles,get enemyBubbles(){return enemyBubbles},openEnemyStyles,setEnemyStyle,enemyAppearance,encounterPortrait,forestGate,gateChoices,gateCredits,gateRemaining,regionOpen,gateAdjacent,openRegionChoices,unlockRegion,updateRegionGate,worldCheckpoint,restoreWorldCheckpoint,shopSite,openShop,buyShopGood,toggleRide,worldMoveSpeed,basketballSkill,updateQuickInventory,selectChestChoice,confirmChestChoice,cancelChestChoice,get knownAchievements(){return knownAchievements},openAchievements,renderAchievements,skillGrowth,updateLevelCelebration,itemIcon,lootMarkup,showKillReward,showSettlement,updateKillRewards,showPrologue,storyCompanions,storyChapterMarkup,openEncounter,checkEncounter,advanceEncounter,finishEncounter,updateEncounter,get encounterSeen(){return encounterSeen},openProfession,selectProfession,confirmProfession,get state(){return state},get player(){return player},get enemies(){return enemies},get projectiles(){return projectiles},get minions(){return minions},get effects(){return effects},get keys(){return keys},get mouse(){return mouse},reset,start,update,enterRoom,damageEnemy,hitPlayer,expose,gainKill,skill,dash,basicAttack,updateCapture,openBuild,openCodex,openGuide,pause,closeModal,showRoute,combo,normalizeSkills,showReward,equipSkill,beginTutorial,finishTutorial,updateTutorial,setTutorialStep,openSkillDetails,startPractice,practiceTargets,refreshPractice,updateObjective,retryObjective,requestPractice,draw,enterWorld,updateCamera,get camera(){return {...camera}},pointOnScreen,mousePosition,moveEntity,worldPositionFree,worldMoveSpeed,worldTravelEnd,spawnWorldEnemy,updateWorldEnemy,performEnemyAttack,interactWorld,startWorldMission,completeWorldMission,openWorldMap,updateWorld,useFlask,startRecall,updateJourney,chooseBoon,navigationTarget,leaveWorldMission,stunBoss,pressureBreak,updateEnemy,shoot,spawnMinion,showModal,projectileBlocked,drawHazard,get hazards(){return hazards}};\n`;
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/guide-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/world-data.js'),'utf8'),sandbox);
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/expedition-data.js'),'utf8'),sandbox);
@@ -32,6 +32,7 @@ vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/campaign-data.js'),'utf8'),sandbox);
 const expeditionHook='window.expeditionTest={saveCamp,resumeCamp,canSaveCamp,claimDiscovery,discoveryBlocked,openCamp,telegraphInfo,attackCue,updateJourneyHint,allWorldSites,expeditionReward,closeSettlement,saveSettlement};window.cameraTest={setViewRange,readViewRange,cameraWorldRect,worldMapSvg,changeViewByWheel,VIEW_RANGE,get range(){return viewRange}};';
 const releaseHook='window.releaseTest={openSettings,openRecords,openCredits,updateRelease,updateReleaseSettings,releaseSettings,endRun};';
+vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../dist/empire.js'),'utf8'),sandbox);
 const campaignHook='window.campaignTest={openAtlas,closeAtlas,travelWorld,openInventory,useCampaignItem,campaignWorld,journeyMods,setupCampaignObjective,interactCampaignNode,completeCampaignWorld,get map(){return WORLD}};';
 vm.runInNewContext(code.replace('makeGround();reset();requestAnimationFrame(frame);',hook+expeditionHook+releaseHook+campaignHook+'makeGround();reset();'),sandbox);
 const g=window.testGame;
@@ -149,7 +150,8 @@ test('Idle lantern defense fails naturally; chase exposure alone is insufficient
  start();g.enterRoom(1,'defend');el('mission-start').onclick();tick(37);assert.equal(g.state.phase,'missionFailed');assert.equal(g.state.objective.lantern.hp,0);
  start();g.enterRoom(1,'chase');el('mission-start').onclick();const e=g.enemies.find(e=>e.id===g.state.objective.targetId);g.expose(e);g.player.invincible=100;tick(7.5);assert.equal(g.state.phase,'playing');assert.ok(!e.dead);assert.equal(e.exposed,0);g.gainKill(e);tick(.1);assert.equal(g.state.phase,'map');
 });
-function expedition(){g.reset();g.start();assert.equal(g.state.phase,'worldIntro');el('world-begin').onclick();}
+// Legacy movement/combat tests use an already explored forest; gated progression has its own scenarios below.
+function expedition(){g.reset();g.start();assert.equal(g.state.phase,'worldIntro');el('world-begin').onclick();g.state.world.regionGate={open:['forest','ash','marsh','ruins','lair'],cleared:[]};}
 test('Expedition opens a persistent world with five biomes and variant packs',()=>{
  g.reset();g.start();assert.equal(g.state.phase,'worldIntro');const t=g.state.time;tick(1);assert.equal(g.state.time,t);el('world-begin').onclick();
  assert.ok(g.state.world);assert.equal(g.enemies.length,31);assert.equal(window.HUNTER_WORLD.regions.length,5);assert.ok(g.enemies.some(e=>e.variant==='cinder'));assert.ok(g.enemies.some(e=>e.variant==='stalker'));assert.ok(g.enemies.some(e=>e.variant==='sentinel'));
@@ -374,7 +376,7 @@ test('Every world returns to its own initial camp and settlement close controls 
   g.player.x=350;g.player.y=2010;keyEvent('keydown','KeyB');keyEvent('keyup','KeyB');tick(3.1);
   assert.equal(g.state.phase,'settlement');assert.equal(g.state.world.id,world.id);assert.equal(g.player.x,camp.x);assert.equal(g.player.y,camp.y);
   const control=controls[index%controls.length];if(control==='Escape'){keyEvent('keydown','Escape');keyEvent('keyup','Escape');}else el(control).onclick();
-  assert.equal(g.state.phase,'intro');assert.ok(!el('continue-run').classList.contains('hidden'));assert.ok(x.resumeCamp());assert.equal(g.state.world.id,world.id);assert.equal(g.player.x,camp.x);assert.equal(g.player.y,camp.y);
+  assert.equal(g.state.phase,'intro');assert.ok(!el('continue-run').classList.contains('hidden'));assert.ok(x.resumeCamp());if(world.mode==='climb'){assert.equal(g.state.phase,'atlas');assert.equal(g.state.world,null);}else{assert.equal(g.state.world.id,world.id);assert.equal(g.player.x,camp.x);assert.equal(g.player.y,camp.y);}
  }
 });
 test('Mission blessings require one offered choice and repeated or foreign choices do not stack',()=>{
@@ -598,10 +600,13 @@ test('Acquisition has two choices and the picker has four icon cards with option
  const html=el('modal-card').innerHTML;assert.match(html,/skill-icon/);assert.equal(el('modal-card').querySelectorAll('[data-equip]').length,1);assert.equal(el('modal-card').querySelectorAll('button').length,2);
  choice('equip',0).onclick();assert.ok(window.HUNTER_FEEDBACK.snapshot().some(e=>e.kind==='equip'));g.openBuild();assert.match(el('modal-card').innerHTML,/skill-grid/);assert.match(el('modal-card').innerHTML,/成长与施法规则/);assert.doesNotMatch(el('modal-card').innerHTML,/推荐组合|附魔|回响/);
 });
-test('All five campaigns finish through their actual mission handlers and AND-gated travel',()=>{
- const c=window.HUNTER_CAMPAIGN,x=window.campaignTest;g.reset();x.openAtlas('forge');assert.ok(el('atlas-travel').disabled);assert.equal(x.travelWorld('forge'),false);x.closeAtlas();
+test('Five mainline worlds include the climbing chapter and preserve AND-gated travel',()=>{
+ const originalEmpire=window.HUNTER_EMPIRE.open;let climbs=0;window.HUNTER_EMPIRE.open=options=>{climbs++;assert.equal(g.state.phase,'empire');options.onWin();const inventory=JSON.stringify(g.state.campaign);options.onWin();assert.equal(JSON.stringify(g.state.campaign),inventory);options.onExit();};
+ const c=window.HUNTER_CAMPAIGN,x=window.campaignTest;g.reset();x.openAtlas('forge');assert.ok(!el('atlas-travel').disabled);x.closeAtlas();x.openAtlas('tide');assert.ok(el('atlas-travel').disabled);assert.equal(x.travelWorld('tide'),false);x.closeAtlas();
  x.openAtlas('forest');assert.ok(x.travelWorld('forest'));el('world-begin').onclick();
  for(const w of c.worlds){
+  if(w.id==='forest')g.state.world.regionGate={open:['forest','ash','marsh','ruins','lair'],cleared:[]};
+  if(w.mode==='climb'){assert.equal(climbs,1);assert.ok(g.state.campaign.cleared.includes(w.id));assert.ok(g.state.campaign.inventory.compass>0);assert.ok(!c.unlocked(g.state.campaign,'ruins'));x.openAtlas('tide');assert.ok(x.travelWorld('tide'));el('world-begin').onclick();continue;}
   assert.equal(g.state.world.id,w.id);assert.ok(window.expeditionTest.canSaveCamp());assert.ok(g.enemies.every(e=>g.worldPositionFree(e.x,e.y,e.r)));g.draw();
   const originalVisit=g.state.world.visit;assert.ok(window.expeditionTest.saveCamp());assert.ok(window.expeditionTest.resumeCamp());assert.equal(g.state.world.visit,originalVisit);assert.equal(g.state.world.id,w.id);
   for(const site of x.map.sites.filter(s=>!['camp','boss'].includes(s.kind))){
@@ -620,15 +625,15 @@ test('All five campaigns finish through their actual mission handlers and AND-ga
   target.cd=0;g.updateEnemy(target,.02);if(w.id!=='forest')assert.ok([w.bossMove,'slam'].includes(target.attack));g.gainKill(target);g.updateWorld(.02);assert.equal(g.state.phase,'worldVictory');assert.ok(g.state.campaign.cleared.includes(w.id));assert.ok(g.state.campaign.inventory[w.loot[3]]>0);
   const inventory=JSON.stringify(g.state.campaign.inventory);x.completeCampaignWorld();assert.equal(JSON.stringify(g.state.campaign.inventory),inventory,'No double victory reward');
   if(w.id==='forge')assert.ok(!c.unlocked(g.state.campaign,'ruins'),'Both branch worlds are required');
-  const next=c.worlds[w.number];if(next){x.openAtlas(next.id);assert.ok(!el('atlas-travel').disabled);assert.ok(x.travelWorld(next.id));el('world-begin').onclick();assert.equal(g.state.world.completed.size,0);assert.equal(g.state.journey.perks.length,0);}
+  const next=c.worlds[w.number];if(next){x.openAtlas(next.id);assert.ok(!el('atlas-travel').disabled);assert.ok(x.travelWorld(next.id));if(next.mode!=='climb'){el('world-begin').onclick();assert.equal(g.state.world.completed.size,0);assert.equal(g.state.journey.perks.length,0);}}
  }
- assert.equal(g.state.campaign.cleared.length,5);x.openAtlas('forge');assert.ok(x.travelWorld('forge'));el('world-begin').onclick();assert.equal(g.state.world.id,'forge');assert.equal(g.state.world.completed.size,0);assert.ok(Object.keys(g.state.campaign.inventory).length>=5);
- g.reset();assert.equal(g.state.campaign.cleared.length,5);assert.equal(g.state.phase,'intro');
+ assert.equal(g.state.campaign.cleared.length,5);x.openAtlas('ruins');assert.ok(x.travelWorld('ruins'));el('world-begin').onclick();assert.equal(g.state.world.id,'ruins');assert.equal(g.state.world.completed.size,0);assert.ok(Object.keys(g.state.campaign.inventory).length>=5);
+ window.HUNTER_EMPIRE.open=originalEmpire;g.reset();assert.equal(g.state.campaign.cleared.length,5);assert.equal(g.state.phase,'intro');
 });
 test('Saved enemy drops and retried mission guards cannot duplicate inventory rewards',()=>{
  expedition();const x=window.expeditionTest,c=window.HUNTER_CAMPAIGN;
  const enemy=g.enemies.find(e=>!e.scout),id=enemy.id,visit=g.state.world.visit;g.gainKill(enemy);const first=JSON.stringify(g.state.campaign.inventory);assert.ok(Object.hasOwn(g.state.campaign.claims,visit+':enemy:'+id));
- x.resumeCamp();assert.ok(g.enemies.some(e=>e.id===id&&!e.dead));g.gainKill(g.enemies.find(e=>e.id===id));assert.equal(JSON.stringify(g.state.campaign.inventory),first);
+ x.resumeCamp();g.state.world.regionGate={open:['forest','ash','marsh','ruins','lair'],cleared:[]};assert.ok(g.enemies.some(e=>e.id===id&&!e.dead));g.gainKill(g.enemies.find(e=>e.id===id));assert.equal(JSON.stringify(g.state.campaign.inventory),first);
  const s=window.campaignTest.map.sites.find(s=>s.kind==='defend');g.player.x=s.x;g.player.y=s.y;g.interactWorld();el('mission-start').onclick();for(const e of g.enemies.filter(e=>e.mission))g.gainKill(e);const inventory=JSON.stringify(g.state.campaign.inventory);g.state.objective.lantern.hp=0;g.updateObjective(.1);el('mission-retry').onclick();el('mission-start').onclick();for(const e of g.enemies.filter(e=>e.mission))g.gainKill(e);assert.equal(JSON.stringify(g.state.campaign.inventory),inventory);
  assert.ok(c.valid(g.state.campaign));
 });
@@ -896,6 +901,60 @@ test('World shop buys real items and vehicles, pauses the world and riding chang
  g.state.attackCd=0;g.basicAttack();assert.equal(g.state.mounted,false);assert.equal(g.worldMoveSpeed(),speed);
  const camp=window.HUNTER_CAMPAIGN.map(g.state.world.id).sites[0];g.player.x=camp.x;g.player.y=camp.y;g.state.world.track='shop';assert.ok(window.expeditionTest.saveCamp());assert.equal(ex.read(localStorage).data.world.track,'shop');
 
+});
+test('Forest fog blocks movement and damage until a real clear earns one adjacent unlock',()=>{
+ g.reset();g.start();el('world-begin').onclick();assert.deepEqual(Array.from(g.forestGate().open),['forest']);assert.equal(g.gateChoices().length,0);
+ g.player.x=1390;g.player.y=670;g.moveEntity(g.player,700,0);assert.ok(g.player.x<1420-g.player.r);assert.ok(g.worldTravelEnd(1390,670,1900,670).x<1420);
+ const hidden=g.enemies.find(e=>!g.regionOpen(e.home.x,e.home.y)),hp=hidden.hp;g.damageEnemy(hidden,9999);assert.equal(hidden.hp,hp);g.gainKill(hidden);assert.ok(!hidden.dead);
+ g.openRegionChoices();assert.equal(g.unlockRegion('ash'),false);g.closeModal('playing');
+ for(const e of g.enemies.filter(e=>g.regionOpen(e.home.x,e.home.y)))g.gainKill(e,true);g.updateRegionGate();
+ assert.equal(g.gateRemaining('forest'),0);assert.deepEqual(g.gateChoices().map(r=>r.id).sort().join(','),'ash,marsh');
+ g.openRegionChoices();const regionUI=el('modal-card').innerHTML;assert.ok(regionUI.includes('region-choice-map'));assert.ok(regionUI.includes('viewBox="0 0 3600 2400"'));assert.ok(!regionUI.includes('region-choices'));assert.equal(el('modal-card').querySelectorAll('[data-region]').length,5);assert.equal(el('modal-card').querySelectorAll('[data-region]').filter(b=>!b.disabled).length,2);assert.equal(g.unlockRegion('lair'),false);el('modal-card').querySelectorAll('[data-region]').find(b=>b.dataset.region==='ash').onclick();assert.ok(g.forestGate().open.includes('ash'));assert.equal(g.gateCredits(),0);assert.equal(g.regionOpen(2000,500),true);assert.equal(g.regionOpen(2000,1600),false);
+ g.openRegionChoices();assert.equal(g.unlockRegion('marsh'),false);g.closeModal('playing');
+ g.player.x=1390;g.player.y=670;g.moveEntity(g.player,400,0);assert.ok(g.player.x>1420);g.draw();g.openWorldMap();assert.ok(el('modal-card').innerHTML.includes('迷雾 · 未解锁'));g.closeModal('playing');
+ g.player.x=520;g.player.y=2010;assert.ok(window.expeditionTest.saveCamp());assert.ok(window.expeditionTest.resumeCamp());assert.deepEqual(Array.from(g.forestGate().open),['forest','ash']);assert.deepEqual(Array.from(g.forestGate().cleared),['forest']);
+ const cp=g.worldCheckpoint();g.forestGate().open.push('marsh');g.restoreWorldCheckpoint(cp);assert.equal(g.forestGate().open.includes('marsh'),false);
+});
+test('Every permitted forest unlock order can reach all five regions without a dead end',()=>{
+ g.reset();g.start();el('world-begin').onclick();
+ function explore(open,cleared){g.state.world.regionGate={open:[...open],cleared:[...cleared]};if(open.length===5)return;const choices=g.gateChoices();assert.ok(choices.length,'frontier must remain reachable');for(const r of choices)explore([...open,r.id],[...cleared,r.id]);}
+ explore(['forest'],['forest']);
+});
+test('Forest enemy appearance changes only visuals, supports mixed styles and preserves bosses',()=>{
+ g.reset();g.openProfession(false);g.selectProfession('shade');g.confirmProfession();expedition();const enemy=g.enemies[0],before=JSON.stringify(enemy);g.openEnemyStyles();assert.equal(g.state.phase,'enemyStyles');const time=g.state.time;tick(1);assert.equal(g.state.time,time);
+ for(const id of ['sun','bull','orange','round','basket']){assert.ok(g.setEnemyStyle(id));assert.equal(g.enemyAppearance(enemy).id,id);assert.ok(g.encounterPortrait(enemy).includes('character-'+id+'.png'));}
+ assert.equal(JSON.stringify(enemy),before);assert.equal(g.setEnemyStyle('fake'),false);assert.ok(g.setEnemyStyle('mixed'));const mixed=g.enemyAppearance(enemy).id;assert.equal(g.enemyAppearance(enemy).id,mixed);assert.equal(g.enemyAppearance({...enemy,boss:true}),null);assert.equal(localStorage.getItem('shadow-hunter-enemy-style'),'mixed');
+ const art=window.HUNTER_ART,calls=[];window.HUNTER_ART={hunter(...args){calls.push(args);}};g.closeModal('playing');g.spawnWorldEnemy('wolf',g.player.x+70,g.player.y);g.draw();assert.ok(calls.some(args=>['sun','bull','orange','round','basket'].includes(args[10].appearance)));window.HUNTER_ART=art;
+ g.openEnemyStyles();g.setEnemyStyle('original');assert.equal(g.enemyAppearance(enemy),null);g.closeModal('playing');g.enterWorld('forge');assert.equal(g.enemyAppearance(enemy),null);assert.ok(el('enemy-style-button').classList.contains('hidden'));
+});
+test('Skinned forest enemies speak in nearby overhead bubbles without opening VN dialogue',()=>{
+ expedition();for(const e of g.enemies)e.dead=true;const enemy=g.spawnWorldEnemy('wolf',g.player.x+90,g.player.y);g.encounterSeen.clear();
+ g.openEnemyStyles();g.setEnemyStyle('bull');g.closeModal('playing');g.updateEnemyBubbles(.02);assert.equal(g.enemyBubbles[0].text,'妈妈-------');assert.equal(g.checkEncounter(),false);assert.equal(g.state.phase,'playing');g.drawEnemyBubbles();
+ const life=g.enemyBubbles[0].life;g.pause();g.updateEnemyBubbles(2);assert.equal(g.enemyBubbles[0].life,life);g.closeModal('playing');g.updateEnemyBubbles(5);assert.equal(g.enemyBubbles.length,0);g.updateEnemyBubbles(.02);assert.equal(g.enemyBubbles.length,0,'nearby enemies do not spam');
+ g.openEnemyStyles();g.setEnemyStyle('basket');g.closeModal('playing');g.updateEnemyBubbles(.02);assert.equal(g.enemyBubbles[0].text,'全民制作人们大家好，我是练习时长两年半的个人练习生，喜欢唱、跳、rap、篮球。');assert.ok(g.enemyBubbles[0].life>9);g.drawEnemyBubbles();
+ g.openEnemyStyles();g.setEnemyStyle('sun');g.closeModal('playing');g.updateEnemyBubbles(.02);assert.equal(g.enemyBubbles[0].text,'你的胆子肥嘟嘟的');enemy.dead=true;g.updateEnemyBubbles(.02);assert.equal(g.enemyBubbles.length,0);
+ g.openEnemyStyles();g.setEnemyStyle('original');g.closeModal('playing');enemy.dead=false;g.updateEnemyBubbles(.02);assert.equal(g.enemyBubbles.length,0);g.openEnemyStyles();g.setEnemyStyle('basket');g.closeModal('playing');g.enterWorld('forge');g.closeModal('playing');g.updateEnemyBubbles(.02);assert.equal(g.enemyBubbles.length,0);
+ // Restore the default for later runs and keep boss behaviour unchanged.
+ g.enterWorld('forest');g.closeModal('playing');g.openEnemyStyles();g.setEnemyStyle('original');g.closeModal('playing');
+});
+test('Enemy skins exclude the player in single, mixed and saved-preference cases',()=>{
+ // Choose each skin as an enemy preference, then become that same character.
+ for(const id of ['sun','bull','orange','round','basket']){
+  g.reset();g.openProfession(false);g.selectProfession('shade');g.confirmProfession();g.closeModal('playing');g.openEnemyStyles();assert.ok(g.setEnemyStyle(id));g.closeModal('playing');
+  g.reset();g.openProfession(false);g.selectProfession(id);g.confirmProfession();g.closeModal('playing');
+  for(const e of g.enemies)assert.notEqual(g.enemyAppearance(e)?.id,id,'old single-style preferences cannot match the new player');
+  g.openEnemyStyles();assert.equal(g.setEnemyStyle(id),false);assert.ok(g.setEnemyStyle('mixed'));for(const e of g.enemies)assert.notEqual(g.enemyAppearance(e)?.id,id);
+  assert.ok(g.setEnemyStyle('original'));g.closeModal('playing');
+ }
+});
+test('Empire demo can launch and save a summit clear without any previous world completion',()=>{
+ g.reset();const c=window.HUNTER_CAMPAIGN,x=window.campaignTest,open=window.HUNTER_EMPIRE.open;let launched=false;
+ window.HUNTER_EMPIRE.open=options=>{launched=true;options.onWin();options.onExit();};
+ x.openAtlas('forge');assert.ok(!el('atlas-travel').disabled);assert.ok(x.travelWorld('forge'));assert.ok(launched);assert.deepEqual(Array.from(g.state.campaign.cleared),['forge']);assert.ok(c.valid(g.state.campaign));assert.ok(c.valid(c.read(localStorage)));assert.ok(!c.unlocked(g.state.campaign,'tide'));assert.ok(!c.unlocked(g.state.campaign,'ruins'));window.HUNTER_EMPIRE.open=open;
+});
+test('Climbing shares player health with the forest and keeps equipped damage reduction',()=>{
+ expedition();g.player.hp=61;g.state.campaign.inventory.heart=1;g.state.campaign.equipped='heart';g.player.x=520;g.player.y=2010;const original=window.HUNTER_EMPIRE.open;let options;
+ window.HUNTER_EMPIRE.open=config=>{options=config;};window.campaignTest.openAtlas('forge');assert.ok(window.campaignTest.travelWorld('forge'));assert.equal(options.hp,61);assert.equal(options.maxHp,100);assert.ok(options.incoming<1);options.onHealthChange(45);assert.equal(g.player.hp,45);options.onExit();assert.equal(g.state.phase,'atlas');assert.equal(g.player.hp,45);window.HUNTER_EMPIRE.open=original;
 });
 console.log(`\n${passed} gameplay smoke scenarios passed.`);
 
